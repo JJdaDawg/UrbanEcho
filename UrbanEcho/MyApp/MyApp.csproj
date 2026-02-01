@@ -19,4 +19,29 @@
     </PackageReference>
     <PackageReference Include="Mapsui.Avalonia" Version="5.0.2" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Resources\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Resources\ShapeFiles\Traffic_Volumes\Traffic_Volumes.cpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\ShapeFiles\Traffic_Volumes\Traffic_Volumes.dbf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\ShapeFiles\Traffic_Volumes\Traffic_Volumes.prj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\ShapeFiles\Traffic_Volumes\Traffic_Volumes.shp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\ShapeFiles\Traffic_Volumes\Traffic_Volumes.shp.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\ShapeFiles\Traffic_Volumes\Traffic_Volumes.shx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
