@@ -9,9 +9,10 @@
 
             <!-- Menu bar -->
             <Menu DockPanel.Dock="Left"
-                    Background="Transparent"
                     Foreground="White"
-                    HorizontalAlignment="Left">
+                    Background="{DynamicResource ThemeMicaBrush}"
+                    HorizontalAlignment="Left"
+                    Height="32">
 
                 <MenuItem Header="Project">
                     <MenuItem Header="_Open Project" Background="Transparent">

@@ -1,0 +1,14 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="MyApp.FooterBar">
+
+    <Border Background="Transparent"
+            Padding="10"
+            Height="32">
+
+        <TextBlock Text="Ready"
+                   VerticalAlignment="Center"
+                   Foreground="White"/>
+
+    </Border>
+</UserControl>
