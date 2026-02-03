@@ -76,34 +76,110 @@
                     </MenuItem>
 
                     <MenuItem Header="View">
-                        <MenuItem Header="Traffic Volume"/>
-                        <MenuItem Header="Traffic Speed Heatmap"/>
+                        <MenuItem Header="Traffic Volume">
+                            <MenuItem.Icon>
+								<icon:SymbolIcon Symbol="DataBarVertical"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Traffic Speed Heatmap">
+                            <MenuItem.Icon>
+								<icon:SymbolIcon Symbol="TopSpeed"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
                         <Separator />
-                        <MenuItem Header="Raster Background Image"/>
-                        <MenuItem Header="Road Names"/>
-                        <MenuItem Header="Intersection Details"/>
+                        <MenuItem Header="Raster Background Image">
+                            <MenuItem.Icon>
+								<icon:SymbolIcon Symbol="Image"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Road Names">
+                            <MenuItem.Icon>
+								<icon:SymbolIcon Symbol="Road"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Intersection Details">
+                            <MenuItem.Icon>
+								<icon:SymbolIcon Symbol="Info"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
                         <Separator />
-                        <MenuItem Header="Console Window"/>
-                        <MenuItem Header="Project Explorer"/>
-                        <MenuItem Header="Statistics Window"/>
-                        <MenuItem Header="Properties Window"/>
-                        <MenuItem Header="Real Time Data"/>
+                        <MenuItem Header="Console Window">
+                            <MenuItem.Icon>
+								<icon:SymbolIcon Symbol="WindowConsole"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Project Explorer">
+                            <MenuItem.Icon>
+								<icon:SymbolIcon Symbol="Library"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Statistics Window">
+                            <MenuItem.Icon>
+								<icon:SymbolIcon Symbol="ChartMultiple"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Properties Window">
+                            <MenuItem.Icon>
+								<icon:SymbolIcon Symbol="TableCellsSplit"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Real Time Data">
+                            <MenuItem.Icon>
+								<icon:SymbolIcon Symbol="LocationLive"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
                     </MenuItem>
 
                     <MenuItem Header="Reports">
-                        <MenuItem Header="Export Report..."/>
-                        <MenuItem Header="View Export"/>
-                        <MenuItem Header="Open Report"/>
-                        <MenuItem Header="Compare Reports..."/>
+                        <MenuItem Header="Export Report...">
+                            <MenuItem.Icon>
+								<icon:SymbolIcon Symbol="ArrowDownload"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="View Export">
+                            <MenuItem.Icon>
+								<icon:SymbolIcon Symbol="DocumentSearch"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Open Report">
+                            <MenuItem.Icon>
+								<icon:SymbolIcon Symbol="FolderOpen"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Compare Reports...">
+                            <MenuItem.Icon>
+								<icon:SymbolIcon Symbol="DocumentOnePageMultiple"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
                     </MenuItem>
 
                     <MenuItem Header="Tools">
-                        <MenuItem Header="Edit Mode"/>
+                        <MenuItem Header="Edit Mode">
+                            <MenuItem.Icon>
+								<icon:SymbolIcon Symbol="DesktopEdit"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
                         <Separator />
-                        <MenuItem Header="Create Roads"/>
-                        <MenuItem Header="Create Traffic Signalling"/>
-                        <MenuItem Header="Delete Roads"/>
-                        <MenuItem Header="Delete Traffic Signalling"/>
+                        <MenuItem Header="Create Roads">
+                            <MenuItem.Icon>
+								<icon:SymbolIcon Symbol="Add"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Create Traffic Signalling">
+                            <MenuItem.Icon>
+								<icon:SymbolIcon Symbol="Add"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Delete Roads">
+                            <MenuItem.Icon>
+								<icon:SymbolIcon Symbol="Delete"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Delete Traffic Signalling">
+                            <MenuItem.Icon>
+								<icon:SymbolIcon Symbol="Delete"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
                     </MenuItem>
                 </Menu>
 
