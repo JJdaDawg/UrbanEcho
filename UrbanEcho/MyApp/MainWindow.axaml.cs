@@ -1,12 +1,21 @@
 using Avalonia.Controls;
-
 using BruTile;
+using BruTile.MbTiles;
 using Mapsui;
+using Mapsui.Extensions.Provider;
 using Mapsui.Layers;
 using Mapsui.Nts.Providers.Shapefile;
 using Mapsui.Providers;
+using Mapsui.Rendering.Skia;
 using Mapsui.Styles;
 using Mapsui.Tiling;
+using Mapsui.Tiling.Layers;
+using Mapsui.UI;
+using Mapsui.UI.Avalonia;
+using NetTopologySuite.Geometries;
+using SQLite;
+
+using System.Collections.Generic;
 using System.IO;
 
 namespace MyApp;
@@ -16,46 +25,121 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        MyMapControl.Map.CRS = "EPSG:3857"; // The Map CRS needs to be set
 
         //https://mapsui.com/v5/samples/#/DataFormats/ShapefileWithLabels
 
-        string trafficVolumesPath = Path.Combine("Resources\\ShapeFiles\\Traffic_Volumes", "Traffic_Volumes.shp");
-        ShapeFile trafficVolumes = new ShapeFile(trafficVolumesPath);
-        //MRect? panBounds = trafficVolumes.GetExtent();
+        string roadNetworkPath = Path.Combine("Resources\\ShapeFiles\\Road_Network", "Road_Network.shp");
+        ShapeFile roadNetwork = new ShapeFile(roadNetworkPath);
 
-        RasterizingLayer layer = new RasterizingLayer(CreateLayer(trafficVolumes));
+        //TileLayer openStreetMapLayer = Mapsui.Tiling.OpenStreetMap.CreateTileLayer();
+
+        //for loading geotiff (too slow so using mbtiles)
+        //string backgroundImagePath = Path.Combine("Resources\\Rasters", "LandCover.tif");
+        //https://github.com/Mapsui/Mapsui/blob/main/Tests/Mapsui.Tests/GeoTiff/GeoTiffProviderTests.cs
+
+        //follow this when exporting file
+        //https://gis.stackexchange.com/questions/213785/saving-raster-as-tif-with-tfw-worldfile
+        //
+        //using GeoTiffProvider geoTiffProvider = new GeoTiffProvider(backgroundImagePath, null);
+
+        //land cover shows as 7 different colors (for grass, trees, pavement, water etc)
+        //TileLayer backgroundMBTile = CreateMbTilesLayer(Path.GetFullPath(Path.Combine("Resources\\Rasters", "LandCover14.mbtiles")), "regular");
+        TileLayer backgroundMBTile = CreateMbTilesLayer(Path.GetFullPath(Path.Combine("Resources\\Rasters", "Aerial2.mbtiles")), "regular");
+        RasterizingLayer layer = new RasterizingLayer(CreateRoadLayer(roadNetwork, "1st Layer", true, false));
+        RasterizingLayer layer2 = new RasterizingLayer(CreateRoadLayer(roadNetwork, "2nd Layer", false, true));
 
         MRect? panBounds = layer.Extent;
 
+        panBounds.Multiply(5.0f);
         //https://github.com/Mapsui/Mapsui/blob/main/Samples/Mapsui.Samples.Common/Maps/Navigation/KeepWithinExtentSample.cs
 
         if (panBounds != null)
         {
-            //Viewport viewport = new Viewport(extent.Centroid.X, extent.Centroid.Y, extent.Width, extent.Height);
-            MyMapControl.Map.Navigator.Limiter = new Mapsui.Limiting.ViewportLimiterKeepWithinExtent();
+            MyMapControl.Map.BackColor = Color.White;
 
+            MyMapControl.Map.Navigator.CenterOnAndZoomTo(new MPoint(layer.Extent.MinX + (layer.Extent.MaxX - layer.Extent.MinX) / 2,
+                layer.Extent.MinY + (layer.Extent.MaxY - layer.Extent.MinY) / 2), 15.0);
             MyMapControl.Map.Navigator.OverridePanBounds = panBounds;
-
-            MyMapControl.Map?.Layers.Add(layer);
+            MyMapControl.Map.Navigator.OverrideZoomBounds = new MMinMax(0.1, 50);
         }
+
+        MapRenderer.RegisterStyleRenderer(typeof(RoadStyle), new RoadStyleRenderer());
+
+        //https://mapsui.com/documentation/projections.html
+
+        //openStreetMapLayer.Opacity = 0.9f;
+        //MyMapControl.Map?.Layers.Add(openStreetMapLayer);
+        //MyMapControl.Map?.Layers.Add(CreateBackLayer(geoTiffProvider, "land cover"));
+        MyMapControl.Map?.Layers.Add(backgroundMBTile);
+        MyMapControl.Map?.Layers.Add(layer);
+        MyMapControl.Map?.Layers.Add(layer2);
     }
 
-    private static Layer CreateLayer(IProvider source)
+    //https://github.com/BruTile/BruTile
+    public static TileLayer CreateMbTilesLayer(string path, string name)
     {
-        Layer layer = new Layer();
-        layer.Name = "New Layer";
-        layer.DataSource = source;
+        var mbTilesTileSource = new MbTilesTileSource(new SQLiteConnectionString(path, true));
+        var mbTilesLayer = new TileLayer(mbTilesTileSource) { Name = name };
+        return mbTilesLayer;
+    }
+
+    //not currently used (for geotiff files)
+    private static ILayer CreateBackLayer(IProvider source, string name)
+    {
+        source.CRS = "EPSG:4326";
+
+        ProjectingProvider projectingProvider = new ProjectingProvider(source)
+        {
+            CRS = "EPSG:3857"
+        };
+
+        Layer layer = new Layer(name);
+        layer.DataSource = projectingProvider;
+        layer.Style = null;
+        return layer;
+    }
+
+    private static Layer CreateRoadLayer(IProvider source, string name, bool doOutline, bool showAADT)
+    {
+        source.CRS = "EPSG:4326";
+
+        ProjectingProvider projectingProvider = new ProjectingProvider(source)
+        {
+            CRS = "EPSG:3857"
+        };
+
+        Layer layer = new Layer(name);
+        layer.DataSource = projectingProvider;
 
         //https://github.com/Mapsui/Mapsui/blob/42b59e9dad1fd9512f0114f8c8a3fd3f5666d330/Samples/Mapsui.Samples.Common/Maps/CustomStyleSample.cs#L16-L51
 
-        VectorStyle style = new VectorStyle();
+        RoadStyle style = new RoadStyle();
+        if (style.Line != null)
+        {
+            style.Line.PenStrokeCap = PenStrokeCap.Square;
+            style.Line.StrokeJoin = StrokeJoin.Bevel;
+            style.Line.StrokeMiterLimit = 10.0f;
+        }
 
-        Pen pen = new Pen(Color.Black, 2);
-        style.Line = pen;
+        if (style.Outline != null)
+        {
+            style.Outline.PenStrokeCap = PenStrokeCap.Square;
+            style.Outline.StrokeJoin = StrokeJoin.Bevel;
+            style.Outline.StrokeMiterLimit = 10.0f;
+        }
+
+        style.UseOutline = doOutline;
+        style.ShowAADT = showAADT;
+
         style.Opacity = 1.0f;
+        style.Line = new Pen();
+        style.Line.Color = Color.LightGrey;
+        style.Outline = new Pen();
+        style.Outline.Color = Color.GhostWhite;
 
         layer.Style = style;
-
+        layer.Opacity = 1.0f;
         return layer;
     }
 }
