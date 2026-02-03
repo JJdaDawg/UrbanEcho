@@ -3,16 +3,23 @@
              x:Class="MyApp.App"
              xmlns:semi="https://irihi.tech/semi"
              xmlns:u-semi="https://irihi.tech/ursa/themes/semi"
+             xmlns:icon="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
              RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.Styles>
 
         <semi:SemiTheme/>
         <u-semi:SemiTheme/>
 
-        <Style Selector="MenuItem">
+        <!-- Global Font Size -->
+        <Style Selector=":is(TemplatedControl)">
             <Setter Property="FontSize" Value="11" />
+        </Style>
+
+        <!-- Global size for all icons -->
+        <Style Selector="icon|SymbolIcon">
+            <Setter Property="Width" Value="22"/>
+            <Setter Property="Height" Value="22"/>
         </Style>
 
     </Application.Styles>
