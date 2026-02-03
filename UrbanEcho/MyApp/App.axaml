@@ -7,7 +7,14 @@
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.Styles>
+
         <semi:SemiTheme/>
         <u-semi:SemiTheme/>
+
+        <Style Selector="MenuItem">
+            <Setter Property="FontSize" Value="11" />
+        </Style>
+
     </Application.Styles>
+
 </Application>
