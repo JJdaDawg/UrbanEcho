@@ -1,71 +1,69 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:ursa="clr-namespace:Ursa.Avalonia;assembly=Ursa.Avalonia"
-             x:Class="MyApp.MenuBar"
-             Height="32">
+             x:Class="MyApp.MenuBar">
+    <Border>
+        <DockPanel>
 
-    <DockPanel Background="#FF2D2D30">
+            <!-- Menu bar -->
+                <Menu DockPanel.Dock="Left"
+                      Background="Transparent"
+                      Foreground="White"
+                      HorizontalAlignment="Left">
 
-        <!-- Menu bar -->
-        <Menu DockPanel.Dock="Left"
-              Background="Transparent"
-              Foreground="White"
-              HorizontalAlignment="Left">
+                    <MenuItem Header="Project">
+                        <MenuItem Header="Open Project"/>
+                        <MenuItem Header="New Project"/>
+                        <Separator />
+                        <MenuItem Header="Save Project"/>
+                        <MenuItem Header="Save Project As..."/>
+                        <Separator />
+                        <MenuItem Header="Close Project"/>
+                        <MenuItem Header="Load Data Set..."/>
+                    </MenuItem>
 
-            <MenuItem Header="Project">
-                <MenuItem Header="Open Project"/>
-                <MenuItem Header="New Project"/>
-                <Separator />
-                <MenuItem Header="Save Project"/>
-                <MenuItem Header="Save Project As..."/>
-                <Separator />
-                <MenuItem Header="Close Project"/>
-                <MenuItem Header="Load Data Set..."/>
-            </MenuItem>
+                    <MenuItem Header="Simulation">
+                        <MenuItem Header="Start"/>
+                        <MenuItem Header="Stop"/>
+                        <MenuItem Header="Pause"/>
+                        <Separator />
+                        <MenuItem Header="Speed Up"/>
+                        <MenuItem Header="Speed Down"/>
+                        <Separator />
+                        <MenuItem Header="Use Real Time Data"/>
+                    </MenuItem>
 
-            <MenuItem Header="Simulation">
-                <MenuItem Header="Start"/>
-                <MenuItem Header="Stop"/>
-                <MenuItem Header="Pause"/>
-                <Separator />
-                <MenuItem Header="Speed Up"/>
-                <MenuItem Header="Speed Down"/>
-                <Separator />
-                <MenuItem Header="Use Real Time Data"/>
-            </MenuItem>
+                    <MenuItem Header="View">
+                        <MenuItem Header="Traffic Volume"/>
+                        <MenuItem Header="Traffic Speed Heatmap"/>
+                        <Separator />
+                        <MenuItem Header="Raster Background Image"/>
+                        <MenuItem Header="Road Names"/>
+                        <MenuItem Header="Intersection Details"/>
+                        <Separator />
+                        <MenuItem Header="Console Window"/>
+                        <MenuItem Header="Project Explorer"/>
+                        <MenuItem Header="Statistics Window"/>
+                        <MenuItem Header="Properties Window"/>
+                        <MenuItem Header="Real Time Data"/>
+                    </MenuItem>
 
-            <MenuItem Header="View">
-                <MenuItem Header="Traffic Volume"/>
-                <MenuItem Header="Traffic Speed Heatmap"/>
-                <Separator />
-                <MenuItem Header="Raster Background Image"/>
-                <MenuItem Header="Road Names"/>
-                <MenuItem Header="Intersection Details"/>
-                <Separator />
-                <MenuItem Header="Console Window"/>
-                <MenuItem Header="Project Explorer"/>
-                <MenuItem Header="Statistics Window"/>
-                <MenuItem Header="Properties Window"/>
-                <MenuItem Header="Real Time Data"/>
-            </MenuItem>
+                    <MenuItem Header="Reports">
+                        <MenuItem Header="Export Report..."/>
+                        <MenuItem Header="View Export"/>
+                        <MenuItem Header="Open Report"/>
+                        <MenuItem Header="Compare Reports..."/>
+                    </MenuItem>
 
-            <MenuItem Header="Reports">
-                <MenuItem Header="Export Report..."/>
-                <MenuItem Header="View Export"/>
-                <MenuItem Header="Open Report"/>
-                <MenuItem Header="Compare Reports..."/>
-            </MenuItem>
+                    <MenuItem Header="Tools">
+                        <MenuItem Header="Edit Mode"/>
+                        <Separator />
+                        <MenuItem Header="Create Roads"/>
+                        <MenuItem Header="Create Traffic Signalling"/>
+                        <MenuItem Header="Delete Roads"/>
+                        <MenuItem Header="Delete Traffic Signalling"/>
+                    </MenuItem>
+                </Menu>
 
-            <MenuItem Header="Tools">
-                <MenuItem Header="Edit Mode"/>
-                <Separator />
-                <MenuItem Header="Create Roads"/>
-                <MenuItem Header="Create Traffic Signalling"/>
-                <MenuItem Header="Delete Roads"/>
-                <MenuItem Header="Delete Traffic Signalling"/>
-            </MenuItem>
-
-        </Menu>
-
-    </DockPanel>
+        </DockPanel>
+    </Border>
 </UserControl>
