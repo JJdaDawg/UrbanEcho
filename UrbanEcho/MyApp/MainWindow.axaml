@@ -34,15 +34,15 @@
 
             <!-- Properties -->
             <Border Grid.Row="1" Margin="1">
-                <TextBlock Text="Properties" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <local:PropertiesPanel Grid.Row="1"/>
             </Border>
 
             <!-- Horizontal splitter -->
-            <GridSplitter Grid.Row="0" Height="4" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" ResizeDirection="Rows" Background="{DynamicResource ThemeBorderLowBrush}"/>
+            <GridSplitter Grid.Row="0" Height="4" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" ResizeDirection="Rows"/>
         </Grid>
 
         <!-- Vertical splitter -->
-        <GridSplitter Grid.Row="0" Grid.Column="0" Width="4" HorizontalAlignment="Right" VerticalAlignment="Stretch" ResizeDirection="Columns" Background="{DynamicResource ThemeBorderLowBrush}"/>
+        <GridSplitter Grid.Row="0" Grid.Column="0" Width="4" HorizontalAlignment="Right" VerticalAlignment="Stretch" ResizeDirection="Columns"/>
 
         <!-- Footer -->
         <local:FooterBar Grid.Row="1" Grid.ColumnSpan="2"/>
