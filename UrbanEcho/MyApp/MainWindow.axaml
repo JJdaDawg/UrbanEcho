@@ -2,12 +2,9 @@
     x:Class="MyApp.MainWindow"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:u="https://irihi.tech/ursa"
     xmlns:mapsui="clr-namespace:Mapsui.UI.Avalonia;assembly=Mapsui.UI.Avalonia"
     xmlns:local="clr-namespace:MyApp"
-    mc:Ignorable="d"
     Height="1080"
     Width="1920"
     Title="Urban Echo"
@@ -15,7 +12,6 @@
     ExtendClientAreaToDecorationsHint="True"
     ExtendClientAreaChromeHints="NoChrome"
     ExtendClientAreaTitleBarHeightHint="32"
-    Background="Transparent"
     TransparencyLevelHint="Mica">
 
     <!-- Title bar -->
@@ -23,15 +19,33 @@
         <local:MenuBar/>
     </u:UrsaWindow.TitleBarContent>
 
-    <Grid Margin="0,32,0,0">
-        <DockPanel>
-            <!-- Footer -->
-            <local:FooterBar DockPanel.Dock="Bottom"/>
+    <!-- Main area -->
+    <Grid Margin="0,32,0,0" RowDefinitions="*,Auto" ColumnDefinitions="*,300">
+        <!-- Map -->
+        <mapsui:MapControl x:Name="MyMapControl" Grid.Row="0" Grid.Column="0"/>
 
-            <!-- Map area -->
-            <mapsui:MapControl x:Name="MyMapControl"/>
-        </DockPanel>
+        <!-- Right panel -->
+        <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="*,*">
+
+            <!-- Project Explorer -->
+            <Border Grid.Row="0" Margin="1">
+                <TextBlock Text="Project Explorer" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+
+            <!-- Properties -->
+            <Border Grid.Row="1" Margin="1">
+                <TextBlock Text="Properties" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+
+            <!-- Horizontal splitter -->
+            <GridSplitter Grid.Row="0" Height="4" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" ResizeDirection="Rows" Background="{DynamicResource ThemeBorderLowBrush}"/>
+        </Grid>
+
+        <!-- Vertical splitter -->
+        <GridSplitter Grid.Row="0" Grid.Column="0" Width="4" HorizontalAlignment="Right" VerticalAlignment="Stretch" ResizeDirection="Columns" Background="{DynamicResource ThemeBorderLowBrush}"/>
+
+        <!-- Footer -->
+        <local:FooterBar Grid.Row="1" Grid.ColumnSpan="2"/>
     </Grid>
-
 
 </u:UrsaWindow>
