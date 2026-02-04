@@ -32,6 +32,9 @@ public partial class MainWindow : Window
         string roadNetworkPath = Path.Combine("Resources\\ShapeFiles\\Road_Network", "Road_Network.shp");
         ShapeFile roadNetwork = new ShapeFile(roadNetworkPath);
 
+        string intersectionsPath = Path.Combine("Resources\\ShapeFiles\\intersections_kitchener", "intersections_kitchener.shp");
+        ShapeFile intersections = new ShapeFile(intersectionsPath);
+
         //TileLayer openStreetMapLayer = Mapsui.Tiling.OpenStreetMap.CreateTileLayer();
 
         //for loading geotiff (too slow so using mbtiles)
@@ -46,8 +49,9 @@ public partial class MainWindow : Window
         //land cover shows as 7 different colors (for grass, trees, pavement, water etc)
         //TileLayer backgroundMBTile = CreateMbTilesLayer(Path.GetFullPath(Path.Combine("Resources\\Rasters", "LandCover19.mbtiles")), "regular");
         TileLayer backgroundMBTile = CreateMbTilesLayer(Path.GetFullPath(Path.Combine("Resources\\Rasters", "Aerial2.mbtiles")), "regular");
-        RasterizingLayer layer = new RasterizingLayer(CreateRoadLayer(roadNetwork, "1st Layer", true, false));
-        RasterizingLayer layer2 = new RasterizingLayer(CreateRoadLayer(roadNetwork, "2nd Layer", false, true));
+        RasterizingLayer layer = new RasterizingLayer(CreateRoadLayer(roadNetwork, "Road Outline", true, false));
+        RasterizingLayer layer2 = new RasterizingLayer(CreateRoadLayer(roadNetwork, "Roads", false, true));
+        RasterizingLayer layer3 = new RasterizingLayer(CreateIntersectionsLayer(intersections, "Intersections"));
 
         MRect? panBounds = layer.Extent;
 
@@ -74,6 +78,7 @@ public partial class MainWindow : Window
         MyMapControl.Map?.Layers.Add(backgroundMBTile);
         MyMapControl.Map?.Layers.Add(layer);
         MyMapControl.Map?.Layers.Add(layer2);
+        MyMapControl.Map?.Layers.Add(layer3);
     }
 
     //https://github.com/BruTile/BruTile
@@ -98,6 +103,29 @@ public partial class MainWindow : Window
         Layer layer = new Layer(name);
         layer.DataSource = projectingProvider;
         layer.Style = null;
+        return layer;
+    }
+
+    private static Layer CreateIntersectionsLayer(IProvider source, string name)
+    {
+        source.CRS = "EPSG:4326";
+
+        ProjectingProvider projectingProvider = new ProjectingProvider(source)
+        {
+            CRS = "EPSG:3857"
+        };
+
+        Layer layer = new Layer(name);
+
+        layer.Opacity = 1.0f;
+
+        if (layer.Style != null)
+        {
+            layer.Style.MaxVisible = 2;
+        }
+
+        layer.DataSource = projectingProvider;
+
         return layer;
     }
 
