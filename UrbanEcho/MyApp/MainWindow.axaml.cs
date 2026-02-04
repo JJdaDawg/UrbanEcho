@@ -44,7 +44,7 @@ public partial class MainWindow : Window
         //using GeoTiffProvider geoTiffProvider = new GeoTiffProvider(backgroundImagePath, null);
 
         //land cover shows as 7 different colors (for grass, trees, pavement, water etc)
-        //TileLayer backgroundMBTile = CreateMbTilesLayer(Path.GetFullPath(Path.Combine("Resources\\Rasters", "LandCover14.mbtiles")), "regular");
+        //TileLayer backgroundMBTile = CreateMbTilesLayer(Path.GetFullPath(Path.Combine("Resources\\Rasters", "LandCover19.mbtiles")), "regular");
         TileLayer backgroundMBTile = CreateMbTilesLayer(Path.GetFullPath(Path.Combine("Resources\\Rasters", "Aerial2.mbtiles")), "regular");
         RasterizingLayer layer = new RasterizingLayer(CreateRoadLayer(roadNetwork, "1st Layer", true, false));
         RasterizingLayer layer2 = new RasterizingLayer(CreateRoadLayer(roadNetwork, "2nd Layer", false, true));
@@ -79,8 +79,9 @@ public partial class MainWindow : Window
     //https://github.com/BruTile/BruTile
     public static TileLayer CreateMbTilesLayer(string path, string name)
     {
-        var mbTilesTileSource = new MbTilesTileSource(new SQLiteConnectionString(path, true));
-        var mbTilesLayer = new TileLayer(mbTilesTileSource) { Name = name };
+        MbTilesTileSource mbTilesTileSource = new MbTilesTileSource(new SQLiteConnectionString(path, true));
+        TileLayer mbTilesLayer = new TileLayer(mbTilesTileSource) { Name = name };
+
         return mbTilesLayer;
     }
 

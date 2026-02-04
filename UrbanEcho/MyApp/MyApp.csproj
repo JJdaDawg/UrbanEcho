@@ -37,10 +37,10 @@
     <None Update="Resources\Rasters\LandCover.tif">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\Rasters\LandCover14.mbtiles">
+    <None Update="Resources\Rasters\LandCover16.mbtiles">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\Rasters\LandCover16.mbtiles">
+    <None Update="Resources\Rasters\LandCover19.mbtiles">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Resources\Rasters\notes on landCover.txt">
