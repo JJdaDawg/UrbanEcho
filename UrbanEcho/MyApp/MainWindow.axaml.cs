@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using BruTile;
 using BruTile.MbTiles;
+using BruTile.Wms;
 using Mapsui;
 using Mapsui.Extensions.Provider;
 using Mapsui.Layers;
@@ -18,11 +19,16 @@ using SQLite;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using Layer = Mapsui.Layers.Layer;
 
 namespace MyApp;
 
 public partial class MainWindow : Window
 {
+    public List<IFeature> roadNetworklist = new List<IFeature>();
+
     public MainWindow()
     {
         InitializeComponent();
@@ -48,8 +54,8 @@ public partial class MainWindow : Window
         //using GeoTiffProvider geoTiffProvider = new GeoTiffProvider(backgroundImagePath, null);
 
         //land cover shows as 7 different colors (for grass, trees, pavement, water etc)
-        //TileLayer backgroundMBTile = CreateMbTilesLayer(Path.GetFullPath(Path.Combine("Resources\\Rasters", "LandCover19.mbtiles")), "regular");
-        TileLayer backgroundMBTile = CreateMbTilesLayer(Path.GetFullPath(Path.Combine("Resources\\Rasters", "Aerial2.mbtiles")), "regular");
+        TileLayer backgroundMBTile = CreateMbTilesLayer(Path.GetFullPath(Path.Combine("Resources\\Rasters", "LandCover19.mbtiles")), "regular");
+        //TileLayer backgroundMBTile = CreateMbTilesLayer(Path.GetFullPath(Path.Combine("Resources\\Rasters", "Aerial2.mbtiles")), "regular");
         RasterizingLayer layer = new RasterizingLayer(CreateRoadLayer(roadNetwork, "Road Outline", true, false));
         RasterizingLayer layer2 = new RasterizingLayer(CreateRoadLayer(roadNetwork, "Roads", false, true));
         Layer layer3 = CreateIntersectionsLayer(intersections, "Intersections");
@@ -80,6 +86,8 @@ public partial class MainWindow : Window
         MyMapControl.Map?.Layers.Add(layer);
         MyMapControl.Map?.Layers.Add(layer2);
         MyMapControl.Map?.Layers.Add(layer3);
+        roadNetworklist = GetFeatures(roadNetwork, MyMapControl.Map).ToList();
+        string test = roadNetworklist[0]["LANES"].ToString();
     }
 
     //https://github.com/BruTile/BruTile
@@ -129,6 +137,15 @@ public partial class MainWindow : Window
         layer.Style = intersectionsStyle.CreateThemeStyle();
 
         return layer;
+    }
+
+    private static IEnumerable<IFeature> GetFeatures(IProvider source, Map map)
+    {
+        MRect rect = new MRect(double.MinValue, double.MinValue, double.MaxValue, double.MaxValue);
+        FetchInfo fetch = new FetchInfo(new MSection(rect, 10000));
+
+        Task<IEnumerable<IFeature>> features = source.GetFeaturesAsync(fetch);
+        return features.Result;
     }
 
     private static Layer CreateRoadLayer(IProvider source, string name, bool doOutline, bool showAADT)
