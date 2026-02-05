@@ -6,6 +6,28 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
+  <ItemGroup>
+    <None Remove="Resources\Images\TrafficIcons\Flasher.png" />
+    <None Remove="Resources\Images\TrafficIcons\Pedestrian.png" />
+    <None Remove="Resources\Images\TrafficIcons\Pin.svg" />
+    <None Remove="Resources\Images\TrafficIcons\StopSign.png" />
+    <None Remove="Resources\Images\TrafficIcons\TrafficLight.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Images\TrafficIcons\Flasher.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\Images\TrafficIcons\Pedestrian.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\Images\TrafficIcons\Pin.svg" />
+    <EmbeddedResource Include="Resources\Images\TrafficIcons\StopSign.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\Images\TrafficIcons\TrafficLight.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.11" />

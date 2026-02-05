@@ -7,6 +7,7 @@ using Mapsui.Layers;
 using Mapsui.Nts.Providers.Shapefile;
 using Mapsui.Providers;
 using Mapsui.Rendering.Skia;
+using Mapsui.Rendering.Skia.SkiaStyles;
 using Mapsui.Styles;
 using Mapsui.Tiling;
 using Mapsui.Tiling.Layers;
@@ -14,7 +15,7 @@ using Mapsui.UI;
 using Mapsui.UI.Avalonia;
 using NetTopologySuite.Geometries;
 using SQLite;
-
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -51,7 +52,7 @@ public partial class MainWindow : Window
         TileLayer backgroundMBTile = CreateMbTilesLayer(Path.GetFullPath(Path.Combine("Resources\\Rasters", "Aerial2.mbtiles")), "regular");
         RasterizingLayer layer = new RasterizingLayer(CreateRoadLayer(roadNetwork, "Road Outline", true, false));
         RasterizingLayer layer2 = new RasterizingLayer(CreateRoadLayer(roadNetwork, "Roads", false, true));
-        RasterizingLayer layer3 = new RasterizingLayer(CreateIntersectionsLayer(intersections, "Intersections"));
+        Layer layer3 = CreateIntersectionsLayer(intersections, "Intersections");
 
         MRect? panBounds = layer.Extent;
 
@@ -102,7 +103,7 @@ public partial class MainWindow : Window
 
         Layer layer = new Layer(name);
         layer.DataSource = projectingProvider;
-        layer.Style = null;
+
         return layer;
     }
 
@@ -119,12 +120,13 @@ public partial class MainWindow : Window
 
         layer.Opacity = 1.0f;
 
-        if (layer.Style != null)
-        {
-            layer.Style.MaxVisible = 2;
-        }
+        layer.MaxVisible = 2;
 
         layer.DataSource = projectingProvider;
+
+        IntersectionStyles intersectionsStyle = new IntersectionStyles();
+
+        layer.Style = intersectionsStyle.CreateThemeStyle();
 
         return layer;
     }
