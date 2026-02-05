@@ -1,11 +1,12 @@
-<UserControl
-    xmlns="https://github.com/avaloniaui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    x:Class="MyApp.PropertiesPanel"
-    d:DesignHeight="500"
-    d:DesignWidth="300">
-
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="150"
+             d:DesignWidth="1620"
+             x:Class="MyApp.ConsolePanel">
+  
     <Border
         CornerRadius="3"
         BorderThickness="1"
@@ -21,7 +22,7 @@
 
             <!-- Title bar -->
             <Border CornerRadius="6,6,0,0" Padding="4">
-                <TextBlock Text="Properties"/>
+                <TextBlock Text="Console"/>
             </Border>
 
             <!-- Properties content -->
@@ -31,4 +32,5 @@
         </Grid>
 
     </Border>
+
 </UserControl>
