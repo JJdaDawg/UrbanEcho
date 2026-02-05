@@ -2,7 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="MyApp.FooterBar">
 
-    <Border Background="Transparent"
+    <Border Background="Black"
             Padding="10"
             Height="32">
 

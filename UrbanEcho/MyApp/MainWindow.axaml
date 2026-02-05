@@ -14,38 +14,81 @@
     ExtendClientAreaTitleBarHeightHint="32"
     TransparencyLevelHint="Mica">
 
-    <!-- Title bar -->
+    <!-- TITLE BAR -->
     <u:UrsaWindow.TitleBarContent>
         <local:MenuBar/>
     </u:UrsaWindow.TitleBarContent>
 
-    <!-- Main area -->
+    <!-- MAIN LAYOUT -->
     <Grid Margin="0,32,0,0" RowDefinitions="*,Auto" ColumnDefinitions="*,300">
-        <!-- Map -->
-        <mapsui:MapControl x:Name="MyMapControl" Grid.Row="0" Grid.Column="0"/>
 
-        <!-- Right panel -->
-        <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="*,*">
+        <!-- LEFT SIDE -->
+        <Grid Grid.Row="0" Grid.Column="0" RowDefinitions="*,auto,150">
+
+            <!-- Map -->
+            <mapsui:MapControl x:Name="MyMapControl" Grid.Row="0"/>
+
+            <!-- Splitter -->
+            <GridSplitter
+                Grid.Row="1"
+                Height="6"
+                Background="Transparent"
+                BorderBrush="Transparent"
+                BorderThickness="0"
+                HorizontalAlignment="Stretch"
+                ResizeDirection="Rows"
+                Cursor="SizeNorthSouth"/>
+
+            <!-- Console -->
+            <Border Grid.Row="2" Margin="1">
+                <TextBlock Text="Console" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+
+        </Grid>
+
+        <!-- RIGHT SIDE -->
+        <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="*,Auto,*">
 
             <!-- Project Explorer -->
             <Border Grid.Row="0" Margin="1">
                 <TextBlock Text="Project Explorer" HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
 
+            <!-- Splitter -->
+            <GridSplitter 
+                Grid.Row="1"
+                Height="6"
+                Background="Transparent"
+                BorderBrush="Transparent"
+                BorderThickness="0"
+                HorizontalAlignment="Stretch"
+                ResizeDirection="Rows"
+                Cursor="SizeNorthSouth"/>
+
+
             <!-- Properties -->
-            <Border Grid.Row="1" Margin="1">
-                <local:PropertiesPanel Grid.Row="1"/>
+            <Border Grid.Row="2" Margin="1">
+                <local:PropertiesPanel/>
             </Border>
 
-            <!-- Horizontal splitter -->
-            <GridSplitter Grid.Row="0" Height="4" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" ResizeDirection="Rows"/>
         </Grid>
 
-        <!-- Vertical splitter -->
-        <GridSplitter Grid.Row="0" Grid.Column="0" Width="4" HorizontalAlignment="Right" VerticalAlignment="Stretch" ResizeDirection="Columns"/>
+        <!-- Vertical splitter between left and right side -->
+        <GridSplitter
+            Grid.Row="0"
+            Grid.Column="0"
+            Width="6"
+            Background="Transparent"
+            BorderBrush="Transparent"
+            BorderThickness="0"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Stretch"
+            ResizeDirection="Columns"
+            Cursor="SizeWestEast"/>
 
-        <!-- Footer -->
+        <!-- FOOTER -->
         <local:FooterBar Grid.Row="1" Grid.ColumnSpan="2"/>
+
     </Grid>
 
 </u:UrsaWindow>
