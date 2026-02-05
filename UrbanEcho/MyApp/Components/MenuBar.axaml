@@ -10,7 +10,6 @@
             <!-- Menu bar -->
             <Menu DockPanel.Dock="Left"
                     Foreground="White"
-                    Background="{DynamicResource ThemeMicaBrush}"
                     HorizontalAlignment="Left"
                     Height="32">
 
