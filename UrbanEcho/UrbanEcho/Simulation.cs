@@ -41,20 +41,26 @@ namespace UrbanEcho
 
         private static bool haveGotFeatures = false;
 
+        private static ProjectFile? currentProjectFile = new ProjectFile();
+
+        private static bool mapControlSet = false;
+
         public static void SetMapControl(MapControl mapControl)
         {
             MyMapControl = mapControl;
+            if (MyMapControl != null)
+            {
+                mapControlSet = true;
+            }
         }
 
         public static void Run()
         {
-            MapControl? mapControl = MyMapControl;
+            //TODO: add a error for this, without this set we can't run task
+            if (mapControlSet == false) return;
 
-            if (mapControl is null)
-            {
-                //If map is not on UI close task
-                return;
-            }
+            //TODO: Remove this once we have UI for loading project
+            currentProjectFile = ProjectFile.Open("Resources/ProjectFiles/myFile.Json");
 
             while (Cts.IsCancellationRequested == false)
             {
@@ -64,33 +70,37 @@ namespace UrbanEcho
                 {
                     Dispatcher.UIThread.Post(() =>
                     {
-                        if (isZoomedToLayer == false)
+                        if (MyMapControl != null)
                         {
-                            ZoomToLayer(mapControl);
-                        }
+                            if (isZoomedToLayer == false)
+                            {
+                                ZoomToLayer(MyMapControl);
+                            }
 
-                        if (addLayer == true)
-                        {
-                            AddLayer(mapControl);
+                            if (addLayer == true)
+                            {
+                                AddLayer(MyMapControl);
+                            }
                         }
                     });
                 }
 
                 if (haveGotFeatures == false)
                 {
-                    GetFeatures(mapControl);
+                    GetRoadNetworkFeatures();
                 }
 
                 //So Computer doesn't use 100% CPU
+                //TODO: Add correct timing so we know how long to sleep given time spent and FPS we want
                 Thread.Sleep(100);
             }
         }
 
-        private static void GetFeatures(MapControl mapControl)
+        private static void GetRoadNetworkFeatures()
         {
             if (roadNetwork != null)
             {
-                roadNetworklist = Helper.GetFeatures(roadNetwork, mapControl.Map).ToList();
+                roadNetworklist = Helper.GetFeatures(roadNetwork).ToList();
             }
             if (roadNetworklist.Count > 0)
             {
@@ -109,34 +119,46 @@ namespace UrbanEcho
         private static bool IsLayerAdded()
         {
             bool addLayer = false;
-            if (loadedBackground == false)
+            if (currentProjectFile != null)
             {
-                //TileLayer backgroundMBTile = CreateMbTilesLayer(Path.GetFullPath(Path.Combine("Resources\\Rasters", "LandCover19.mbtiles")), "regular");
+                if (loadedBackground == false)
+                {
+                    //TileLayer backgroundMBTile = CreateMbTilesLayer(Path.GetFullPath(Path.Combine("Resources\\Rasters", "LandCover19.mbtiles")), "regular");
 
-                //backgroundMBTile = CreateLayers.CreateMbTilesLayer(Path.GetFullPath(Path.Combine("Resources\\Rasters", "LandCover19.mbtiles")), "background");
-                backgroundMBTile = CreateLayers.CreateMbTilesLayer(Path.GetFullPath(Path.Combine("Resources\\Rasters", "Aerial2.mbtiles")), "background");
+                    //backgroundMBTile = CreateLayers.CreateMbTilesLayer(Path.GetFullPath(Path.Combine("Resources\\Rasters", "LandCover19.mbtiles")), "background");
 
-                loadedBackground = true;
-                addLayer = true;
+                    //currentProjectFile.BackgroundLayerPath = Path.GetFullPath(Path.Combine("Resources\\Rasters", "Aerial2.mbtiles"));
+
+                    backgroundMBTile = CreateLayers.CreateMbTilesLayer(currentProjectFile.BackgroundLayerPath, "background"); ;
+
+                    loadedBackground = true;
+                    addLayer = true;
+                }
+                if (loadedRoad == false)
+                {
+                    //currentProjectFile.RoadLayerPath = Path.Combine("Resources\\ShapeFiles\\Road_Network", "Road_Network.shp");
+
+                    roadNetwork = new ShapeFile(currentProjectFile.RoadLayerPath);
+                    roadLayerFirstPass = new RasterizingLayer(CreateLayers.CreateRoadLayer(roadNetwork, "Road Outline", true, false));
+                    roadLayerSecondPass = new RasterizingLayer(CreateLayers.CreateRoadLayer(roadNetwork, "Roads", false, true));
+
+                    loadedRoad = true;
+                    addLayer = true;
+                }
+                if (loadedIntersection == false)
+                {
+                    //currentProjectFile.IntersectionLayerPath = Path.Combine("Resources\\ShapeFiles\\intersections_kitchener", "intersections_kitchener.shp");
+
+                    ShapeFile intersections = new ShapeFile(currentProjectFile.IntersectionLayerPath);
+                    intersectionLayer = CreateLayers.CreateIntersectionsLayer(intersections, "Intersections");
+
+                    loadedIntersection = true;
+                    addLayer = true;
+                }
             }
-            else if (loadedRoad == false)
+            else
             {
-                string roadNetworkPath = Path.Combine("Resources\\ShapeFiles\\Road_Network", "Road_Network.shp");
-                roadNetwork = new ShapeFile(roadNetworkPath);
-                roadLayerFirstPass = new RasterizingLayer(CreateLayers.CreateRoadLayer(roadNetwork, "Road Outline", true, false));
-                roadLayerSecondPass = new RasterizingLayer(CreateLayers.CreateRoadLayer(roadNetwork, "Roads", false, true));
-
-                loadedRoad = true;
-                addLayer = true;
-            }
-            else if (loadedIntersection == false)
-            {
-                string intersectionsPath = Path.Combine("Resources\\ShapeFiles\\intersections_kitchener", "intersections_kitchener.shp");
-                ShapeFile intersections = new ShapeFile(intersectionsPath);
-                intersectionLayer = CreateLayers.CreateIntersectionsLayer(intersections, "Intersections");
-
-                loadedIntersection = true;
-                addLayer = true;
+                //TODO: Add errors for null project
             }
 
             return addLayer;

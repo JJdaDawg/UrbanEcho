@@ -38,7 +38,7 @@ namespace UrbanEcho
             return result;
         }
 
-        public static IEnumerable<IFeature> GetFeatures(IProvider source, Map map)
+        public static IEnumerable<IFeature> GetFeatures(IProvider source)
         {
             MRect rect = new MRect(double.MinValue, double.MinValue, double.MaxValue, double.MaxValue);
             FetchInfo fetch = new FetchInfo(new MSection(rect, 10000));

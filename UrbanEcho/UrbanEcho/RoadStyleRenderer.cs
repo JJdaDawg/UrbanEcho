@@ -36,6 +36,7 @@ namespace UrbanEcho
                 {
                     Pen pen = new Pen();
                     Pen outlinePen = new Pen();
+                    //TODO: make pavement not hardcoded
                     if (gf.Fields.Contains("PAVEMENT_W"))
                     {
                         if (Double.TryParse(gf["PAVEMENT_W"]?.ToString(), out double pavementWidth))
@@ -78,7 +79,7 @@ namespace UrbanEcho
                             roadStyle.Outline.Width = outlinePen.Width;
                         }
                     }
-
+                    //TODO: make AADT not hardcoded
                     if (gf.Fields.Contains("AADT"))
                     {
                         if (Double.TryParse(gf["AADT"]?.ToString(), out double aadtValue))
@@ -223,8 +224,6 @@ namespace UrbanEcho
             {
                 lineWidth = valueTuple.width ?? (float)pen.Width;
                 lineColor = pen.Color;
-                //strokeCap = pen.PenStrokeCap;
-                //strokeJoin = pen.StrokeJoin;
 
                 strokeStyle = pen.PenStyle;
                 dashArray = pen.DashArray;
@@ -244,23 +243,6 @@ namespace UrbanEcho
                 ? strokeStyle.ToSkia(lineWidth, dashArray, dashOffset)
                 : null;
             return paint;
-        }
-
-        internal static List<SKPoint> WorldToScreen(Viewport viewport, IEnumerable<Coordinate>? points)
-        {
-            List<SKPoint> list = new List<SKPoint>();
-            if (points == null)
-            {
-                return list;
-            }
-
-            foreach (Coordinate point in points)
-            {
-                var (num, num2) = viewport.WorldToScreenXY(point.X, point.Y);
-                list.Add(new SKPoint((float)num, (float)num2));
-            }
-
-            return list;
         }
     }
 }

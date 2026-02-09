@@ -20,6 +20,7 @@ namespace UrbanEcho
         {
             MbTilesTileSource mbTilesTileSource = new MbTilesTileSource(new SQLiteConnectionString(path, true));
             TileLayer mbTilesLayer = new TileLayer(mbTilesTileSource) { Name = name };
+            //TODO: Figure out how to check if this failed and show error
 
             return mbTilesLayer;
         }
@@ -36,6 +37,7 @@ namespace UrbanEcho
 
             Layer layer = new Layer(name);
             layer.DataSource = projectingProvider;
+            //TODO: Figure out how to check if this failed and show error
 
             return layer;
         }
@@ -56,6 +58,7 @@ namespace UrbanEcho
             layer.MaxVisible = 2;
 
             layer.DataSource = projectingProvider;
+            //TODO: Figure out how to check if this failed and show error
 
             IntersectionStyles intersectionsStyle = new IntersectionStyles();
 
@@ -75,6 +78,7 @@ namespace UrbanEcho
 
             Layer layer = new Layer(name);
             layer.DataSource = projectingProvider;
+            //TODO: Figure out how to check if this failed and show error
 
             //https://github.com/Mapsui/Mapsui/blob/42b59e9dad1fd9512f0114f8c8a3fd3f5666d330/Samples/Mapsui.Samples.Common/Maps/CustomStyleSample.cs#L16-L51
 
@@ -104,6 +108,7 @@ namespace UrbanEcho
 
             layer.Style = style;
             layer.Opacity = 1.0f;
+
             return layer;
         }
     }

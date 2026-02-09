@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Resources;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,12 +22,27 @@ namespace UrbanEcho
         {
             Styles.Add("Default", new VectorStyle { Line = new Pen { Width = 0.25 } });
 
-            string projectName = "UrbanEcho";
+            //https://stackoverflow.com/questions/18316683/how-to-get-the-current-project-name-in-c-sharp-code
+            string? projectName = Assembly.GetCallingAssembly().GetName().Name;
 
-            Styles.Add("TrafficLight", CreateImageStyle(projectName, "TrafficLight.png"));
-            Styles.Add("StopSign", CreateImageStyle(projectName, "StopSign.png"));
-            Styles.Add("Flasher", CreateImageStyle(projectName, "Flasher.png"));
-            Styles.Add("Pedestrian", CreateImageStyle(projectName, "Pedestrian.png"));
+            if (projectName != null)
+            {
+                try
+                {
+                    Styles.Add("TrafficLight", CreateImageStyle(projectName, "TrafficLight.png"));
+                    Styles.Add("StopSign", CreateImageStyle(projectName, "StopSign.png"));
+                    Styles.Add("Flasher", CreateImageStyle(projectName, "Flasher.png"));
+                    Styles.Add("Pedestrian", CreateImageStyle(projectName, "Pedestrian.png"));
+                }
+                catch
+                {
+                    //TODO: Show Error if could not add styles
+                }
+            }
+            else
+            {
+                //TODO: Show Error if could not get project name
+            }
         }
 
         private ImageStyle CreateImageStyle(string projectName, string fileName)
@@ -58,6 +74,7 @@ namespace UrbanEcho
 
                     try
                     {
+                        //TODO: make Intersec_1 (intersection type) not hardcoded
                         switch (f["Intersec_1"]?.ToString())
                         {
                             case "Two Way Stop":
@@ -85,8 +102,7 @@ namespace UrbanEcho
                     }
                     catch
                     {
-                        //TO DO
-                        //add error here
+                        //TODO: intersection type attribute not in file show error
                     }
                 }
                 return null;

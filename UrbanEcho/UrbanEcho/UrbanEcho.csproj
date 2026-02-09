@@ -47,10 +47,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Resources\ProjectFiles\" />
     <Folder Include="Resources\ShapeFiles\intersections_kitchener\" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Resources\ProjectFiles\myFile.Json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Resources\Rasters\Aerial2.mbtiles">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
