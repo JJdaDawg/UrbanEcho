@@ -1,6 +1,9 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MyApp;
 
@@ -15,9 +18,27 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            desktop.Exit += OnExit;
             desktop.MainWindow = new MainWindow();
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    //https://stackoverflow.com/questions/75247536/call-method-on-application-exit-in-avalonia
+    private void OnStartup(object s, ControlledApplicationLifetimeStartupEventArgs e)
+
+    {
+    }
+
+    private void OnExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
+    {
+        Simulation.Cts.Cancel();
+
+        if (Simulation.SimTask != null)
+        {
+            Simulation.SimTask.Wait();
+        }
+        Simulation.Cts.Dispose();
     }
 }

@@ -1,5 +1,7 @@
 ﻿using Mapsui;
 using Mapsui.Extensions;
+using Mapsui.Layers;
+using Mapsui.Providers;
 using NetTopologySuite.Geometries;
 using SkiaSharp;
 using System;
@@ -34,6 +36,15 @@ namespace MyApp
             }
 
             return result;
+        }
+
+        public static IEnumerable<IFeature> GetFeatures(IProvider source, Map map)
+        {
+            MRect rect = new MRect(double.MinValue, double.MinValue, double.MaxValue, double.MaxValue);
+            FetchInfo fetch = new FetchInfo(new MSection(rect, 10000));
+
+            Task<IEnumerable<IFeature>> features = source.GetFeaturesAsync(fetch);
+            return features.Result;
         }
     }
 }
