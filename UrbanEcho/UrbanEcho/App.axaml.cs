@@ -5,7 +5,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MyApp;
+namespace UrbanEcho;
 
 public partial class App : Application
 {

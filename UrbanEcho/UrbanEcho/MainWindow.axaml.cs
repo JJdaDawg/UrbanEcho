@@ -24,7 +24,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Layer = Mapsui.Layers.Layer;
 
-namespace MyApp;
+namespace UrbanEcho;
 
 public partial class MainWindow : Window
 {

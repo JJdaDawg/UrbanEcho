@@ -11,7 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static Mapsui.Rendering.Skia.Functions.ClippingFunctions;
 
-namespace MyApp
+namespace UrbanEcho
 {
     public class IntersectionStyles
     {
@@ -21,7 +21,7 @@ namespace MyApp
         {
             Styles.Add("Default", new VectorStyle { Line = new Pen { Width = 0.25 } });
 
-            string projectName = "MyApp";
+            string projectName = "UrbanEcho";
 
             Styles.Add("TrafficLight", CreateImageStyle(projectName, "TrafficLight.png"));
             Styles.Add("StopSign", CreateImageStyle(projectName, "StopSign.png"));

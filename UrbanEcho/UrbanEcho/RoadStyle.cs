@@ -16,7 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace MyApp
+namespace UrbanEcho
 {
     public class RoadStyle : IStyle
     {

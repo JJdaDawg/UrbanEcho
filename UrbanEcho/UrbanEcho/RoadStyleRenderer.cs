@@ -22,7 +22,7 @@ using System.Threading.Tasks;
 //https://github.com/Mapsui/Mapsui/blob/main/Mapsui.Rendering.Skia/SkiaStyles/VectorStyleRenderer.cs
 
 //https://github.com/Mapsui/Mapsui/blob/01dcb06134a76b62d41e0b6d3a54151f9b57fc9e/Mapsui.Rendering.Skia/SkiaStyles/LineStringRenderer.cs
-namespace MyApp
+namespace UrbanEcho
 {
     public class RoadStyleRenderer : ISkiaStyleRenderer
     {

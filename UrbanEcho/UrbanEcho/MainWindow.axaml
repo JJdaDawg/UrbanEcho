@@ -4,7 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:mapsui="clr-namespace:Mapsui.UI.Avalonia;assembly=Mapsui.UI.Avalonia"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        x:Class="MyApp.MainWindow"
+        x:Class="UrbanEcho.MainWindow"
         Title="MyApp">
         <mapsui:MapControl x:Name="MyMapControl"/> 
     

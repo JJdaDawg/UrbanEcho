@@ -15,7 +15,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MyApp
+namespace UrbanEcho
 {
     public class SetupMap
     {
@@ -23,7 +23,8 @@ namespace MyApp
         {
             MyMapControl.Map.CRS = "EPSG:3857"; // The Map CRS needs to be set
 
-            //Load the styles to use
+            //Load the styles to use that are not default
+            //other styles that are default will already be registered
             MapRenderer.RegisterStyleRenderer(typeof(RoadStyle), new RoadStyleRenderer());
         }
     }

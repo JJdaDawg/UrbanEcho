@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 using static Mapsui.MapBuilder;
 using Layer = Mapsui.Layers.Layer;
 
-namespace MyApp
+namespace UrbanEcho
 {
     public static class Simulation
     {
