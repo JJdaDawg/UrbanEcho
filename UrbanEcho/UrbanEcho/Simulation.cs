@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using UrbanEcho.ViewModels;
 using static Mapsui.MapBuilder;
 using Layer = Mapsui.Layers.Layer;
 
@@ -43,30 +44,33 @@ namespace UrbanEcho
 
         private static ProjectFile? currentProjectFile = new ProjectFile();
 
-        private static bool mapControlSet = false;
+        private static MainViewModel? mainViewModel;
 
-        public static void SetMapControl(MapControl mapControl)
+        public static void SetMapControl(MapControl mapControl, MainViewModel setMainViewModel)
         {
             MyMapControl = mapControl;
-            if (MyMapControl != null)
-            {
-                mapControlSet = true;
-            }
+
+            mainViewModel = setMainViewModel;
         }
 
         public static void Run()
         {
-            //TODO: add a error for this, without this set we can't run task
-            if (mapControlSet == false) return;
+            Stopwatch stopwatch = Stopwatch.StartNew();
 
             //TODO: Remove this once we have UI for loading project
             currentProjectFile = ProjectFile.Open("Resources/ProjectFiles/myFile.Json");
 
+            bool addText = false;
+
+            double timeToSleep = 0;
+
+            Stopwatch fpsTimer = Stopwatch.StartNew();
+
             while (Cts.IsCancellationRequested == false)
             {
                 bool addLayer = IsLayerAdded();
-
-                if (isZoomedToLayer == false || addLayer == true)
+                string timeToSend = $"last sleep time {timeToSleep.ToString()}";
+                if (isZoomedToLayer == false || addLayer == true || addText == true)
                 {
                     Dispatcher.UIThread.Post(() =>
                     {
@@ -82,6 +86,12 @@ namespace UrbanEcho
                                 AddLayer(MyMapControl);
                             }
                         }
+
+                        if (addText == true)
+                        {
+                            mainViewModel?.UpdateConsoleText($"{timeToSend}");
+                            addText = false;
+                        }
                     });
                 }
 
@@ -90,9 +100,21 @@ namespace UrbanEcho
                     GetRoadNetworkFeatures();
                 }
 
-                //So Computer doesn't use 100% CPU
-                //TODO: Add correct timing so we know how long to sleep given time spent and FPS we want
-                Thread.Sleep(100);
+                if (stopwatch.ElapsedMilliseconds > 1000)
+                {
+                    addText = true;
+                    stopwatch.Restart();
+                }
+
+                //So Computer doesn't use 100% CPU and we update 60 times a second
+                //16.77ms is 1/(60Hz) so if time since last scan is less than that sleep for bit
+                timeToSleep = 16.6667f - (double)(fpsTimer.ElapsedTicks) * 1000 / Stopwatch.Frequency;
+
+                if (timeToSleep > 1)
+                {
+                    Thread.Sleep((int)timeToSleep);
+                }
+                fpsTimer.Restart();
             }
         }
 

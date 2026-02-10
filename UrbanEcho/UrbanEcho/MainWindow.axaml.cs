@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using UrbanEcho.ViewModels;
 using Layer = Mapsui.Layers.Layer;
 
 namespace UrbanEcho;
@@ -31,9 +32,10 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-
+        MainViewModel vm = new MainViewModel();
+        DataContext = vm;
         SetupMap.Init(MyMapControl);
-        Simulation.SetMapControl(MyMapControl);
+        Simulation.SetMapControl(MyMapControl, vm);
         Simulation.SimTask = Task.Factory.StartNew(new Action(Simulation.Run), Simulation.Cts.Token);
     }
 }
