@@ -57,7 +57,7 @@ namespace UrbanEcho.Styles
                     Source = sourceString,
                 };
 
-            style.SymbolScale = 1;
+            style.SymbolScale = 1.25f;
 
             return style;
         }
@@ -74,7 +74,8 @@ namespace UrbanEcho.Styles
 
                     try
                     {
-                        //TODO: make Intersec_1 (intersection type) not hardcoded
+                        //TODO: make Intersec_1 (intersection type) not hardcoded and each case can't be hardcoded
+                        //      maybe change to for loop so we can compare against a list of strings
                         switch (f["Intersec_1"]?.ToString())
                         {
                             case "Two Way Stop":
@@ -90,7 +91,10 @@ namespace UrbanEcho.Styles
                                 return Styles["TrafficLight"];
 
                             case "Intersection Pedestrian Signal":
-                                return Styles["Pedistrian"];
+                                return Styles["Pedestrian"];
+
+                            case "Pedestrian Crossover":
+                                return Styles["Pedestrian"];
 
                             case "Stop with LRT Signals":
                                 return Styles["TrafficLight"];

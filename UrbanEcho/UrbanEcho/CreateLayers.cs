@@ -74,7 +74,7 @@ namespace UrbanEcho
 
                 layer.Opacity = 1.0f;
 
-                layer.MaxVisible = 2;
+                layer.MaxVisible = 3.5f;
 
                 layer.DataSource = projectingProvider;
                 //TODO: Figure out how to check if this failed and show error
