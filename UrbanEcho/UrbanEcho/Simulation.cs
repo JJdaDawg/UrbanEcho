@@ -66,10 +66,15 @@ namespace UrbanEcho
 
             Stopwatch fpsTimer = Stopwatch.StartNew();
 
+            double targetMs = 16.6667f;
+            double actualMs = 0.0f;
+
+            int frames = 0;
+            string timeToSend = "";
             while (Cts.IsCancellationRequested == false)
             {
                 bool addLayer = IsLayerAdded();
-                string timeToSend = $"last sleep time {timeToSleep.ToString()}";
+
                 if (isZoomedToLayer == false || addLayer == true || addText == true)
                 {
                     Dispatcher.UIThread.Post(() =>
@@ -99,22 +104,27 @@ namespace UrbanEcho
                 {
                     GetRoadNetworkFeatures();
                 }
-
-                if (stopwatch.ElapsedMilliseconds > 1000)
+                frames++;
+                if (stopwatch.ElapsedMilliseconds >= 1000)
                 {
                     addText = true;
+                    timeToSend = $"last sleep time {timeToSleep.ToString()} and {frames} frames in last second";
+                    frames = 0;
                     stopwatch.Restart();
                 }
 
+                actualMs += (double)(fpsTimer.ElapsedTicks) * 1000.0 / (double)Stopwatch.Frequency;
+
+                targetMs += 16.6666667;
                 //So Computer doesn't use 100% CPU and we update 60 times a second
                 //16.77ms is 1/(60Hz) so if time since last scan is less than that sleep for bit
-                timeToSleep = 16.6667f - (double)(fpsTimer.ElapsedTicks) * 1000 / Stopwatch.Frequency;
+                timeToSleep = targetMs - actualMs;
+                fpsTimer.Restart();
 
                 if (timeToSleep > 1)
                 {
                     Thread.Sleep((int)timeToSleep);
                 }
-                fpsTimer.Restart();
             }
         }
 
