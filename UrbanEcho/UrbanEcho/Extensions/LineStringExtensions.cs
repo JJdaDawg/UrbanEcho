@@ -1,9 +1,10 @@
 ﻿using Mapsui.Rendering.Skia.Functions;
-using UrbanEcho;
 using NetTopologySuite.Geometries;
 using SkiaSharp;
+using Mapsui;
+using UrbanEcho.Helpers;
 
-namespace Mapsui.Rendering.Skia.Extensions;
+namespace UrbanEcho.Extensions;
 
 internal static class LineStringExtensions
 {

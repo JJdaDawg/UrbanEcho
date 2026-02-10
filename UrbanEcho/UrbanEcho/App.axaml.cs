@@ -33,12 +33,22 @@ public partial class App : Application
 
     private void OnExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
     {
-        Simulation.Cts.Cancel();
-
-        if (Simulation.SimTask != null)
+        try
         {
-            Simulation.SimTask.Wait();
+            Simulation.Cts.Cancel();
+
+            if (Simulation.SimTask != null)
+            {
+                Simulation.SimTask.Wait();
+            }
         }
-        Simulation.Cts.Dispose();
+        catch (Exception ex)
+        {
+            //TODO: Add errors for task had a exception
+        }
+        finally
+        {
+            Simulation.Cts.Dispose();
+        }
     }
 }

@@ -17,12 +17,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UrbanEcho.Extensions;
 
 //Modified VectorStyleRenderer for custom style
 //https://github.com/Mapsui/Mapsui/blob/main/Mapsui.Rendering.Skia/SkiaStyles/VectorStyleRenderer.cs
 
 //https://github.com/Mapsui/Mapsui/blob/01dcb06134a76b62d41e0b6d3a54151f9b57fc9e/Mapsui.Rendering.Skia/SkiaStyles/LineStringRenderer.cs
-namespace UrbanEcho
+namespace UrbanEcho.Styles
 {
     public class RoadStyleRenderer : ISkiaStyleRenderer
     {
@@ -39,7 +40,7 @@ namespace UrbanEcho
                     //TODO: make pavement not hardcoded
                     if (gf.Fields.Contains("PAVEMENT_W"))
                     {
-                        if (Double.TryParse(gf["PAVEMENT_W"]?.ToString(), out double pavementWidth))
+                        if (double.TryParse(gf["PAVEMENT_W"]?.ToString(), out double pavementWidth))
                         {
                             if (viewport.Resolution > 0.01f)
                             {
@@ -82,14 +83,14 @@ namespace UrbanEcho
                     //TODO: make AADT not hardcoded
                     if (gf.Fields.Contains("AADT"))
                     {
-                        if (Double.TryParse(gf["AADT"]?.ToString(), out double aadtValue))
+                        if (double.TryParse(gf["AADT"]?.ToString(), out double aadtValue))
                         {
                             ColorBlend cb = ColorBlend.TwoColors(Color.LimeGreen, Color.Red);
                             double minAADTValue = 0;
                             double maxAADTValue = 50000;
 
                             double normalizedValue = 0;
-                            if ((maxAADTValue - minAADTValue) > 0)
+                            if (maxAADTValue - minAADTValue > 0)
                             {
                                 normalizedValue = (minAADTValue + aadtValue) / (maxAADTValue - minAADTValue);
                             }
@@ -185,7 +186,7 @@ namespace UrbanEcho
                     if (outline.Width > 0.0)
                     {
                         double valueOrDefault = (roadStyle?.Outline?.Width + roadStyle?.Outline?.Width + roadStyle?.Line?.Width).GetValueOrDefault(1.0);
-                        using CacheTracker<SKPaint> paint = renderService.VectorCache.GetOrCreate((roadStyle?.Outline, (float?)(float)valueOrDefault, opacity), (Func<(Pen?, float?, float), SKPaint>)CreateSkPaint);
+                        using CacheTracker<SKPaint> paint = renderService.VectorCache.GetOrCreate((roadStyle?.Outline, (float)valueOrDefault, opacity), (Func<(Pen?, float?, float), SKPaint>)CreateSkPaint);
                         canvas.DrawPath(path, paint);
                     }
                 }

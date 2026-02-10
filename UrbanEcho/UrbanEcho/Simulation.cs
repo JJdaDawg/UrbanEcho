@@ -5,12 +5,14 @@ using Mapsui.Nts.Providers.Shapefile;
 using Mapsui.Styles;
 using Mapsui.Tiling.Layers;
 using Mapsui.UI.Avalonia;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using UrbanEcho.Helpers;
 using UrbanEcho.ViewModels;
 using static Mapsui.MapBuilder;
 using Layer = Mapsui.Layers.Layer;
@@ -36,9 +38,11 @@ namespace UrbanEcho
 
         private static ShapeFile? roadNetwork;
 
-        private static bool loadedBackground = false;
-        private static bool loadedRoad = false;
-        private static bool loadedIntersection = false;
+        private static bool triedCreatingBackgroundLayer = false;
+
+        private static bool triedCreatingRoadLayer = false;
+
+        private static bool triedCreatingIntersectionLayer = false;
 
         private static bool haveGotFeatures = false;
 
@@ -55,28 +59,21 @@ namespace UrbanEcho
 
         public static void Run()
         {
-            Stopwatch stopwatch = Stopwatch.StartNew();
-
             //TODO: Remove this once we have UI for loading project
             currentProjectFile = ProjectFile.Open("Resources/ProjectFiles/myFile.Json");
 
+            FrameTimer frameTimer = new FrameTimer(false);
+
             bool addText = false;
 
-            double timeToSleep = 0;
-
-            Stopwatch fpsTimer = Stopwatch.StartNew();
-
-            double targetMs = 16.6667f;
-            double actualMs = 0.0f;
-
-            int frames = 0;
-            string timeToSend = "";
             while (Cts.IsCancellationRequested == false)
             {
                 bool addLayer = IsLayerAdded();
 
                 if (isZoomedToLayer == false || addLayer == true || addText == true)
                 {
+                    bool localAddText = addText;
+                    string timeToShow = frameTimer.TimeToShow();
                     Dispatcher.UIThread.Post(() =>
                     {
                         if (MyMapControl != null)
@@ -92,10 +89,9 @@ namespace UrbanEcho
                             }
                         }
 
-                        if (addText == true)
+                        if (localAddText == true)
                         {
-                            mainViewModel?.UpdateConsoleText($"{timeToSend}");
-                            addText = false;
+                            mainViewModel?.UpdateConsoleText($"{timeToShow}");
                         }
                     });
                 }
@@ -104,26 +100,18 @@ namespace UrbanEcho
                 {
                     GetRoadNetworkFeatures();
                 }
-                frames++;
-                if (stopwatch.ElapsedMilliseconds >= 1000)
+
+                addText = frameTimer.ShouldShowText();
+                if (addText == true)
                 {
-                    addText = true;
-                    timeToSend = $"last sleep time {timeToSleep.ToString()} and {frames} frames in last second";
-                    frames = 0;
-                    stopwatch.Restart();
+                    frameTimer.ResetShowText();
                 }
 
-                actualMs += (double)(fpsTimer.ElapsedTicks) * 1000.0 / (double)Stopwatch.Frequency;
+                int timeToSleep = frameTimer.GetTimeToSleep();
 
-                targetMs += 16.6666667;
-                //So Computer doesn't use 100% CPU and we update 60 times a second
-                //16.77ms is 1/(60Hz) so if time since last scan is less than that sleep for bit
-                timeToSleep = targetMs - actualMs;
-                fpsTimer.Restart();
-
-                if (timeToSleep > 1)
+                if (timeToSleep > 0)
                 {
-                    Thread.Sleep((int)timeToSleep);
+                    Thread.Sleep(timeToSleep);
                 }
             }
         }
@@ -153,7 +141,7 @@ namespace UrbanEcho
             bool addLayer = false;
             if (currentProjectFile != null)
             {
-                if (loadedBackground == false)
+                if (triedCreatingBackgroundLayer == false)
                 {
                     //TileLayer backgroundMBTile = CreateMbTilesLayer(Path.GetFullPath(Path.Combine("Resources\\Rasters", "LandCover19.mbtiles")), "regular");
 
@@ -163,34 +151,55 @@ namespace UrbanEcho
 
                     backgroundMBTile = CreateLayers.CreateMbTilesLayer(currentProjectFile.BackgroundLayerPath, "background"); ;
 
-                    loadedBackground = true;
-                    addLayer = true;
+                    triedCreatingBackgroundLayer = true;
+                    if (backgroundMBTile != null)
+                    {
+                        addLayer = true;
+                    }
                 }
-                if (loadedRoad == false)
+                if (triedCreatingRoadLayer == false)
                 {
                     //currentProjectFile.RoadLayerPath = Path.Combine("Resources\\ShapeFiles\\Road_Network", "Road_Network.shp");
+                    try
+                    {
+                        roadNetwork = new ShapeFile(currentProjectFile.RoadLayerPath);
 
-                    roadNetwork = new ShapeFile(currentProjectFile.RoadLayerPath);
-                    roadLayerFirstPass = new RasterizingLayer(CreateLayers.CreateRoadLayer(roadNetwork, "Road Outline", true, false));
-                    roadLayerSecondPass = new RasterizingLayer(CreateLayers.CreateRoadLayer(roadNetwork, "Roads", false, true));
+                        roadLayerFirstPass = new RasterizingLayer(CreateLayers.CreateRoadLayer(roadNetwork, "Road Outline", true, false));
+                        roadLayerSecondPass = new RasterizingLayer(CreateLayers.CreateRoadLayer(roadNetwork, "Roads", false, true));
+                    }
+                    catch (Exception ex)
+                    {
+                        //TODO: Add error message
+                    }
+                    triedCreatingRoadLayer = true;
 
-                    loadedRoad = true;
-                    addLayer = true;
+                    if (roadLayerFirstPass != null && roadLayerSecondPass != null)
+                    {
+                        addLayer = true;
+                    }
                 }
-                if (loadedIntersection == false)
+                if (triedCreatingIntersectionLayer == false)
                 {
                     //currentProjectFile.IntersectionLayerPath = Path.Combine("Resources\\ShapeFiles\\intersections_kitchener", "intersections_kitchener.shp");
-
-                    ShapeFile intersections = new ShapeFile(currentProjectFile.IntersectionLayerPath);
-                    intersectionLayer = CreateLayers.CreateIntersectionsLayer(intersections, "Intersections");
-
-                    loadedIntersection = true;
-                    addLayer = true;
+                    try
+                    {
+                        ShapeFile intersections = new ShapeFile(currentProjectFile.IntersectionLayerPath);
+                        intersectionLayer = CreateLayers.CreateIntersectionsLayer(intersections, "Intersections");
+                    }
+                    catch (Exception ex)
+                    {
+                        //TODO: Add error message
+                    }
+                    triedCreatingIntersectionLayer = true;
+                    if (intersectionLayer != null)
+                    {
+                        addLayer = true;
+                    }
                 }
-            }
-            else
-            {
-                //TODO: Add errors for null project
+                else
+                {
+                    //TODO: Add errors for null project
+                }
             }
 
             return addLayer;

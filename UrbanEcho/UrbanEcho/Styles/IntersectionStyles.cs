@@ -12,11 +12,11 @@ using System.Text;
 using System.Threading.Tasks;
 using static Mapsui.Rendering.Skia.Functions.ClippingFunctions;
 
-namespace UrbanEcho
+namespace UrbanEcho.Styles
 {
     public class IntersectionStyles
     {
-        private Dictionary<String, IStyle> Styles = new Dictionary<String, IStyle>();
+        private Dictionary<string, IStyle> Styles = new Dictionary<string, IStyle>();
 
         public IntersectionStyles()
         {
@@ -52,7 +52,7 @@ namespace UrbanEcho
             ImageStyle style = new ImageStyle();
 
             style.Image =
-                new Mapsui.Styles.Image
+                new Image
                 {
                     Source = sourceString,
                 };
