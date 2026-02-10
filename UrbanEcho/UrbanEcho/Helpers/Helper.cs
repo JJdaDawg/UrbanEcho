@@ -46,5 +46,30 @@ namespace UrbanEcho.Helpers
             Task<IEnumerable<IFeature>> features = source.GetFeaturesAsync(fetch);
             return features.Result;
         }
+
+        public static List<IFeature> GetRoadNetworkFeatures(IProvider source)
+        {
+            List<IFeature> roadNetworklist = new List<IFeature>();
+
+            if (source != null)
+            {
+                roadNetworklist = Helper.GetFeatures(source).ToList();
+            }
+
+            /* Example of how to read from the list
+            if (roadNetworklist.Count > 0)
+            {
+                if (roadNetworklist[0] is BaseFeature f)
+                {
+                    object? o = f["LANES"];
+                    if (o != null)
+                    {
+                        string? test = o.ToString();
+                    }
+                }
+            }*/
+
+            return roadNetworklist;
+        }
     }
 }

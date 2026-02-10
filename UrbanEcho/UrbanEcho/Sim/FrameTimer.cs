@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace UrbanEcho
+namespace UrbanEcho.Sim
 {
     public class FrameTimer
     {
@@ -52,7 +52,7 @@ namespace UrbanEcho
                 stopwatch.Restart();
             }
 
-            actualMs += (double)(fpsTimer.ElapsedTicks) * second / (double)Stopwatch.Frequency;
+            actualMs += fpsTimer.ElapsedTicks * second / Stopwatch.Frequency;
 
             targetMs += targetFrameTime;
             //So Computer doesn't use 100% CPU and we update 60 times a second

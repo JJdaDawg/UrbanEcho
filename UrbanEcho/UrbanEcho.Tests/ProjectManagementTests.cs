@@ -1,4 +1,6 @@
-﻿namespace UrbanEcho.Tests;
+﻿using UrbanEcho.Sim;
+
+namespace UrbanEcho.Tests;
 
 public class Tests
 {

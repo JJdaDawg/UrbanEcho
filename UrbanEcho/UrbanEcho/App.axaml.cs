@@ -4,6 +4,7 @@ using Avalonia.Markup.Xaml;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using UrbanEcho.Sim;
 
 namespace UrbanEcho;
 

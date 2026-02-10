@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using UrbanEcho.Sim;
 using UrbanEcho.ViewModels;
 using Layer = Mapsui.Layers.Layer;
 
