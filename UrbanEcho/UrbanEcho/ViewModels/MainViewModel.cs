@@ -1,4 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using Mapsui;
+using Mapsui.UI.Avalonia;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +13,9 @@ namespace UrbanEcho.ViewModels
     {
         [ObservableProperty]
         private string consoleText = "";
+
+        [ObservableProperty]
+        private Map myMap = new Map();
 
         public void UpdateConsoleText(string message)
         {

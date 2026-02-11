@@ -27,27 +27,26 @@ namespace UrbanEcho.Sim
 
         public static Task? SimTask;
 
-        private static MapControl? MyMapControl;
+        private static Map? MyMap;
 
         private static MainViewModel? mainViewModel;
 
-        public static void SetMapControl(MapControl mapControl, MainViewModel setMainViewModel)
+        public static void SetMainViewModel(MainViewModel setMainViewModel)
         {
-            MyMapControl = mapControl;
-
             mainViewModel = setMainViewModel;
+
+            MyMap = setMainViewModel.MyMap;
         }
 
         public static void Run()
         {
+            if (mainViewModel == null)
+            {
+                return;
+            }
             //TODO: Remove this once we have UI for loading project
-            LoadFileEvent loadProjectEvent = new LoadFileEvent(SimEnumTypes.FileType.ProjectFile, "Resources/ProjectFiles/myFile.Json");
-            loadProjectEvent.Run();
-
-            bool addLayer = ProjectLayers.LayersNeedReAdd();
-
-            EventQueueForUI.Instance.Add(new AddLayersEvent(MyMapControl));
-            EventQueueForUI.Instance.Add(new ZoomEvent(MyMapControl));
+            LoadFileEvent loadProjectEvent = new LoadFileEvent(SimEnumTypes.FileType.ProjectFile, "Resources/ProjectFiles/myFile.Json", mainViewModel.MyMap);
+            EventQueueForSim.Instance.Add(loadProjectEvent); //will usually happen from UI
 
             FrameTimer frameTimer = new FrameTimer(true);
 
@@ -66,6 +65,7 @@ namespace UrbanEcho.Sim
                 }
 
                 simulationLoop();
+                readQueue();
 
                 if (frameTimer.ShouldShowText())
                 {
@@ -85,7 +85,15 @@ namespace UrbanEcho.Sim
         private static void simulationLoop()
         {
             //simulate doing stuff
-            Thread.SpinWait(1000000);
+            Thread.SpinWait(100000);
+        }
+
+        private static void readQueue()
+        {
+            while (!EventQueueForSim.Instance.IsEmpty())
+            {
+                EventQueueForSim.Instance.Read()?.Run();
+            }
         }
     }
 }

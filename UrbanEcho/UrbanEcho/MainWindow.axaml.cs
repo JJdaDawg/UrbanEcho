@@ -35,8 +35,8 @@ public partial class MainWindow : Window
         InitializeComponent();
         MainViewModel vm = new MainViewModel();
         DataContext = vm;
-        SetupMap.Init(MyMapControl);
-        Simulation.SetMapControl(MyMapControl, vm);
+        SetupMap.Init(vm.MyMap);
+        Simulation.SetMainViewModel(vm);
         Simulation.SimTask = Task.Factory.StartNew(new Action(Simulation.Run), Simulation.Cts.Token);
     }
 }

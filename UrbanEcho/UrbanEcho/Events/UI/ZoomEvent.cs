@@ -1,4 +1,5 @@
-﻿using Mapsui.UI;
+﻿using Mapsui;
+using Mapsui.UI;
 using Mapsui.UI.Avalonia;
 using System;
 using System.Collections.Generic;
@@ -12,16 +13,16 @@ namespace UrbanEcho.Events.UI
 {
     internal class ZoomEvent : IEventForUI
     {
-        private MapControl mapControl;
+        private Map map;
 
-        public ZoomEvent(MapControl mapControl)
+        public ZoomEvent(Map map)
         {
-            this.mapControl = mapControl;
+            this.map = map;
         }
 
         public void Run()
         {
-            ProjectLayers.ZoomToLayer(mapControl);
+            ProjectLayers.ZoomToLayer(map);
         }
 
         public string Message()

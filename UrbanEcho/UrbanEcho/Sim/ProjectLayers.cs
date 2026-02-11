@@ -272,9 +272,9 @@ namespace UrbanEcho.Sim
             return isZoomedToLayer;
         }
 
-        public static void ZoomToLayer(MapControl mapControl)
+        public static void ZoomToLayer(Map map)
         {
-            if (mapControl == null)
+            if (map == null)
             {
                 return;
             }
@@ -287,17 +287,18 @@ namespace UrbanEcho.Sim
                     MRect extent = layer.Extent;
                     MRect panBounds = extent;
 
-                    if (mapControl != null)
+                    if (map != null)
                     {
                         panBounds?.Multiply(5.0f);
                         //https://github.com/Mapsui/Mapsui/blob/main/Samples/Mapsui.Samples.Common/Maps/Navigation/KeepWithinExtentSample.cs
 
                         if (panBounds != null)
                         {
-                            mapControl.Map.Navigator.CenterOnAndZoomTo(new MPoint(extent.MinX + (extent.MaxX - extent.MinX) / 2,
+                            map.Navigator.OverridePanBounds = panBounds;
+                            map.Navigator.OverrideZoomBounds = new MMinMax(0.1, 50);
+
+                            map.Navigator.CenterOnAndZoomTo(new MPoint(extent.MinX + (extent.MaxX - extent.MinX) / 2,
                                 extent.MinY + (extent.MaxY - extent.MinY) / 2), 15.0);
-                            mapControl.Map.Navigator.OverridePanBounds = panBounds;
-                            mapControl.Map.Navigator.OverrideZoomBounds = new MMinMax(0.1, 50);
                         }
                     }
 
@@ -308,9 +309,9 @@ namespace UrbanEcho.Sim
 
         //Add a default zoom limit, otherwise there is a crash if trying if scrolling
         //with middle mouse if never zoomed to a layer
-        public static void SetDefaultZoomLimit(MapControl mapControl)
+        public static void SetDefaultZoomLimit(Map myMap)
         {
-            if (mapControl == null)
+            if (myMap == null)
             {
                 return;
             }
@@ -318,39 +319,43 @@ namespace UrbanEcho.Sim
             MRect extent = new MRect(0, 0, 500, 500);
             MRect panBounds = extent;
 
-            if (mapControl != null)
+            if (myMap != null)
             {
                 panBounds?.Multiply(5.0f);
                 //https://github.com/Mapsui/Mapsui/blob/main/Samples/Mapsui.Samples.Common/Maps/Navigation/KeepWithinExtentSample.cs
 
                 if (panBounds != null)
                 {
-                    mapControl.Map.BackColor = Color.White;
+                    myMap.BackColor = Color.White;
 
-                    mapControl.Map.Navigator.OverrideZoomBounds = new MMinMax(0.1, 50);
+                    myMap.Navigator.OverridePanBounds = panBounds;
+                    myMap.Navigator.OverrideZoomBounds = new MMinMax(0.1, 50);
+
+                    myMap.Navigator.CenterOnAndZoomTo(new MPoint(extent.MinX + (extent.MaxX - extent.MinX) / 2,
+                        extent.MinY + (extent.MaxY - extent.MinY) / 2), 15.0);
                 }
             }
         }
 
-        public static void AddLayers(MapControl mapControl)
+        public static void AddLayers(Map myMap)
         {
-            mapControl.Map.Layers.Clear();
+            myMap.Layers.Clear();
 
             if (backgroundMBTile != null)
             {
-                mapControl.Map?.Layers.Add(backgroundMBTile);
+                myMap?.Layers.Add(backgroundMBTile);
             }
             if (roadLayerFirstPass != null)
             {
-                mapControl.Map?.Layers.Add(roadLayerFirstPass);
+                myMap?.Layers.Add(roadLayerFirstPass);
             }
             if (roadLayerSecondPass != null)
             {
-                mapControl.Map?.Layers.Add(roadLayerSecondPass);
+                myMap?.Layers.Add(roadLayerSecondPass);
             }
             if (intersectionLayer != null)
             {
-                mapControl.Map?.Layers.Add(intersectionLayer);
+                myMap?.Layers.Add(intersectionLayer);
             }
         }
     }

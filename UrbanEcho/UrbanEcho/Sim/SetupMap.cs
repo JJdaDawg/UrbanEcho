@@ -20,16 +20,16 @@ namespace UrbanEcho.Sim
 {
     public class SetupMap
     {
-        public static void Init(MapControl MyMapControl)
+        public static void Init(Map MyMap)
         {
-            MyMapControl.Map.CRS = "EPSG:3857"; // The Map CRS needs to be set
+            MyMap.CRS = "EPSG:3857"; // The Map CRS needs to be set
 
             //Load the styles to use that are not default
             //other styles that are default will already be registered
             MapRenderer.RegisterStyleRenderer(typeof(RoadStyle), new RoadStyleRenderer());
 
             //Add default Zoom limit right away so no crashes if mouse wheel scrolling without layer loaded
-            ProjectLayers.SetDefaultZoomLimit(MyMapControl);
+            ProjectLayers.SetDefaultZoomLimit(MyMap);
         }
     }
 }

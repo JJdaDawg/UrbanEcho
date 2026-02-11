@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UrbanEcho.Events.UI;
 
 namespace UrbanEcho.Events.Sim
 {
@@ -53,6 +54,18 @@ namespace UrbanEcho.Events.Sim
         public void Add(IEventForSim theEvent)
         {
             cq.Enqueue(theEvent);
+        }
+
+        /// <summary>
+        /// Sim Reads a Event from the queue
+        /// </summary>
+        /// <returns>Returns the event at beginning of queue or nothing if empty</returns>
+        public IEventForSim? Read()
+        {
+            IEventForSim? itemInQueue;
+            cq.TryDequeue(out itemInQueue);
+
+            return itemInQueue;
         }
     }
 }
