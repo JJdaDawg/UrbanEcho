@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using UrbanEcho.Events.Sim;
 using UrbanEcho.Events.UI;
 using UrbanEcho.Helpers;
+using UrbanEcho.FileManagement;
 using UrbanEcho.ViewModels;
 using static Mapsui.MapBuilder;
 using Layer = Mapsui.Layers.Layer;
@@ -40,12 +41,15 @@ namespace UrbanEcho.Sim
 
         public static void Run()
         {
+            Stopwatch totalRunTime = new Stopwatch();
+            totalRunTime.Start();
+
             if (mainViewModel == null)
             {
                 return;
             }
             //TODO: Remove this once we have UI for loading project
-            LoadFileEvent loadProjectEvent = new LoadFileEvent(SimEnumTypes.FileType.ProjectFile, "Resources/ProjectFiles/myFile.Json", mainViewModel.MyMap);
+            LoadFileEvent loadProjectEvent = new LoadFileEvent(FileTypes.FileType.ProjectFile, "Resources/ProjectFiles/myFile.Json", mainViewModel.MyMap);
             EventQueueForSim.Instance.Add(loadProjectEvent); //will usually happen from UI
 
             FrameTimer frameTimer = new FrameTimer(true);

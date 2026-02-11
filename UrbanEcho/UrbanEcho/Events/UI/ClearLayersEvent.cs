@@ -10,18 +10,18 @@ using UrbanEcho.ViewModels;
 
 namespace UrbanEcho.Events.UI
 {
-    internal class AddLayersEvent : IEventForUI
+    internal class ClearLayersEvent : IEventForUI
     {
         private Map map;
 
-        public AddLayersEvent(Map map)
+        public ClearLayersEvent(Map map)
         {
             this.map = map;
         }
 
         public void Run()
         {
-            ProjectLayers.AddLayers(map);
+            ProjectLayers.ClearLayers(map);
         }
     }
 }

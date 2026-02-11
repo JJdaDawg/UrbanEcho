@@ -1,4 +1,4 @@
-﻿using UrbanEcho.Sim;
+﻿using UrbanEcho.FileManagement;
 
 namespace UrbanEcho.Tests;
 
@@ -53,7 +53,35 @@ public class Tests
 
         try
         {
-            ProjectFile.Save(projectFile, fileName);
+            ProjectFile.Save(projectFile);
+        }
+        catch (Exception ex)
+        {
+            Assert.Fail($"Project file didn't save with error {ex.ToString()}");
+            failed = true;
+        }
+
+        if (!failed)
+            Assert.Pass("saved file inspect to see if correct");
+    }
+
+    [Test]
+    public void TestSaveAsFile()
+    {
+        bool failed = false;
+        ProjectFile? projectFile = new ProjectFile();
+
+        string fileName = "ProjectTestFile.json";
+
+        projectFile.PathForThisFile = fileName;
+
+        projectFile.BackgroundLayerPath = "";
+        projectFile.RoadLayerPath = "";
+        projectFile.IntersectionLayerPath = "";
+
+        try
+        {
+            ProjectFile.SaveAs(projectFile, fileName);
         }
         catch (Exception ex)
         {

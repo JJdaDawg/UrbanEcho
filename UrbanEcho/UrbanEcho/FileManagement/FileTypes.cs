@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace UrbanEcho.Sim
+namespace UrbanEcho.FileManagement
 {
-    public class SimEnumTypes
+    public class FileTypes
     {
         public enum FileType
         {

@@ -1,4 +1,5 @@
 ﻿using BruTile.MbTiles;
+
 using Mapsui;
 using Mapsui.Layers;
 using Mapsui.Nts.Providers.Shapefile;
@@ -14,7 +15,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.Styles;
 
-namespace UrbanEcho.Sim
+namespace UrbanEcho.FileManagement
 {
     public static class ProjectLayers
     {
@@ -78,7 +79,7 @@ namespace UrbanEcho.Sim
 
         public static bool LayersNeedReAdd()
         {
-            return (backgroundRequiresLoading || roadRequiresLoading || intersectionRequiresLoading);
+            return backgroundRequiresLoading || roadRequiresLoading || intersectionRequiresLoading;
         }
 
         public static bool Load(ProjectFile currentProjectFile)
@@ -88,7 +89,7 @@ namespace UrbanEcho.Sim
             {
                 if (backgroundRequiresLoading == true)
                 {
-                    backgroundMBTile = ProjectLayers.CreateMbTilesLayer(currentProjectFile.BackgroundLayerPath, "background"); ;
+                    backgroundMBTile = CreateMbTilesLayer(currentProjectFile.BackgroundLayerPath, "background"); ;
 
                     if (backgroundMBTile != null)
                     {
@@ -100,8 +101,8 @@ namespace UrbanEcho.Sim
                     try
                     {
                         ShapeFile roadNetwork = new ShapeFile(currentProjectFile.RoadLayerPath);
-                        roadLayerFirstPass = new RasterizingLayer(ProjectLayers.CreateRoadLayer(roadNetwork, "Road Outline", true, false));
-                        roadLayerSecondPass = new RasterizingLayer(ProjectLayers.CreateRoadLayer(roadNetwork, "Roads", false, true));
+                        roadLayerFirstPass = new RasterizingLayer(CreateRoadLayer(roadNetwork, "Road Outline", true, false));
+                        roadLayerSecondPass = new RasterizingLayer(CreateRoadLayer(roadNetwork, "Roads", false, true));
                     }
                     catch (Exception ex)
                     {
@@ -118,7 +119,7 @@ namespace UrbanEcho.Sim
                     try
                     {
                         ShapeFile intersections = new ShapeFile(currentProjectFile.IntersectionLayerPath);
-                        intersectionLayer = ProjectLayers.CreateIntersectionsLayer(intersections, "Intersections");
+                        intersectionLayer = CreateIntersectionsLayer(intersections, "Intersections");
                     }
                     catch (Exception ex)
                     {
@@ -272,6 +273,7 @@ namespace UrbanEcho.Sim
             return isZoomedToLayer;
         }
 
+        //Only call from UI
         public static void ZoomToLayer(Map map)
         {
             if (map == null)
@@ -305,8 +307,13 @@ namespace UrbanEcho.Sim
                     isZoomedToLayer = true;
                 }
             }
+            else
+            {
+                SetDefaultZoomLimit(map);
+            }
         }
 
+        //Only call from UI
         //Add a default zoom limit, otherwise there is a crash if trying if scrolling
         //with middle mouse if never zoomed to a layer
         public static void SetDefaultZoomLimit(Map myMap)
@@ -337,6 +344,7 @@ namespace UrbanEcho.Sim
             }
         }
 
+        //Only call from UI
         public static void AddLayers(Map myMap)
         {
             myMap.Layers.Clear();
@@ -357,6 +365,17 @@ namespace UrbanEcho.Sim
             {
                 myMap?.Layers.Add(intersectionLayer);
             }
+        }
+
+        //Only call from UI
+        public static void ClearLayers(Map myMap)
+        {
+            myMap.Layers.Clear();
+        }
+
+        public static void NewProject()
+        {
+            currentProjectFile = new ProjectFile();
         }
     }
 }

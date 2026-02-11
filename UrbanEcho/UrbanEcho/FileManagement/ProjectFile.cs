@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace UrbanEcho.Sim
+namespace UrbanEcho.FileManagement
 {
     public class ProjectFile
     {
@@ -41,9 +41,33 @@ namespace UrbanEcho.Sim
             return projectFile;
         }
 
-        public static void Save(ProjectFile projectFile, string pathToSaveAt)
+        public static void Save(ProjectFile projectFile)
+        {
+            if (projectFile.PathForThisFile == "")
+            {
+                try
+                {
+                    using (StreamWriter writer = File.CreateText(projectFile.PathForThisFile))
+                    {
+                        string s = JsonConvert.SerializeObject(projectFile);
+                        writer.WriteLine(s);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    //TODO: Add error
+                }
+            }
+            else
+            {
+                //TODO: Add event so dialog pops up and user can pick path
+            }
+        }
+
+        public static void SaveAs(ProjectFile projectFile, string pathToSaveAt)
         {
             projectFile.PathForThisFile = pathToSaveAt;
+
             try
             {
                 using (StreamWriter writer = File.CreateText(pathToSaveAt))

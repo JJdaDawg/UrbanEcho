@@ -5,17 +5,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
-using UrbanEcho.Sim;
+using UrbanEcho.FileManagement;
 
 namespace UrbanEcho.Events.Sim
 {
     public class LoadFileEvent : IEventForSim
     {
-        private SimEnumTypes.FileType fileType;
+        private FileTypes.FileType fileType;
         private string path;
         private Map map;
 
-        public LoadFileEvent(SimEnumTypes.FileType fileType, string path, Map map)
+        public LoadFileEvent(FileTypes.FileType fileType, string path, Map map)
         {
             this.fileType = fileType;
             this.path = path;
@@ -24,7 +24,7 @@ namespace UrbanEcho.Events.Sim
 
         public void Run()
         {
-            if (fileType == SimEnumTypes.FileType.ProjectFile)
+            if (fileType == FileTypes.FileType.ProjectFile)
             {
                 ProjectLayers.LoadProject(path);
             }
@@ -39,7 +39,7 @@ namespace UrbanEcho.Events.Sim
             EventQueueForUI.Instance.Add(new ZoomEvent(map));
         }
 
-        public SimEnumTypes.FileType GetFileType()
+        public FileTypes.FileType GetFileType()
         {
             return fileType;
         }
