@@ -274,6 +274,11 @@ namespace UrbanEcho.Sim
 
         public static void ZoomToLayer(MapControl mapControl)
         {
+            if (mapControl == null)
+            {
+                return;
+            }
+
             if (backgroundMBTile != null)
             {
                 TileLayer layer = backgroundMBTile;
@@ -289,8 +294,6 @@ namespace UrbanEcho.Sim
 
                         if (panBounds != null)
                         {
-                            mapControl.Map.BackColor = Color.White;
-
                             mapControl.Map.Navigator.CenterOnAndZoomTo(new MPoint(extent.MinX + (extent.MaxX - extent.MinX) / 2,
                                 extent.MinY + (extent.MaxY - extent.MinY) / 2), 15.0);
                             mapControl.Map.Navigator.OverridePanBounds = panBounds;
@@ -299,6 +302,32 @@ namespace UrbanEcho.Sim
                     }
 
                     isZoomedToLayer = true;
+                }
+            }
+        }
+
+        //Add a default zoom limit, otherwise there is a crash if trying if scrolling
+        //with middle mouse if never zoomed to a layer
+        public static void SetDefaultZoomLimit(MapControl mapControl)
+        {
+            if (mapControl == null)
+            {
+                return;
+            }
+
+            MRect extent = new MRect(0, 0, 500, 500);
+            MRect panBounds = extent;
+
+            if (mapControl != null)
+            {
+                panBounds?.Multiply(5.0f);
+                //https://github.com/Mapsui/Mapsui/blob/main/Samples/Mapsui.Samples.Common/Maps/Navigation/KeepWithinExtentSample.cs
+
+                if (panBounds != null)
+                {
+                    mapControl.Map.BackColor = Color.White;
+
+                    mapControl.Map.Navigator.OverrideZoomBounds = new MMinMax(0.1, 50);
                 }
             }
         }

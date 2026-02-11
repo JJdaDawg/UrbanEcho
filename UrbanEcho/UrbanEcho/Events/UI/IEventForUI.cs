@@ -9,7 +9,5 @@ namespace UrbanEcho.Events.UI
     public interface IEventForUI
     {
         public void Run();
-
-        public string Message();
     }
 }

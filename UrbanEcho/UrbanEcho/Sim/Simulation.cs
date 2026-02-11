@@ -13,6 +13,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using UrbanEcho.Events.Sim;
+using UrbanEcho.Events.UI;
 using UrbanEcho.Helpers;
 using UrbanEcho.ViewModels;
 using static Mapsui.MapBuilder;
@@ -40,61 +41,38 @@ namespace UrbanEcho.Sim
         public static void Run()
         {
             //TODO: Remove this once we have UI for loading project
-            //currentProjectFile = ProjectFile.Open("Resources/ProjectFiles/myFile.Json");
             LoadFileEvent loadProjectEvent = new LoadFileEvent(SimEnumTypes.FileType.ProjectFile, "Resources/ProjectFiles/myFile.Json");
             loadProjectEvent.Run();
 
             bool addLayer = ProjectLayers.LayersNeedReAdd();
-            bool isZoomedToLayer = ProjectLayers.IsZoomedToLayer();
+
+            EventQueueForUI.Instance.Add(new AddLayersEvent(MyMapControl));
+            EventQueueForUI.Instance.Add(new ZoomEvent(MyMapControl));
 
             FrameTimer frameTimer = new FrameTimer(true);
 
-            bool addText = false;
-
             while (Cts.IsCancellationRequested == false)
             {
-                if ((isZoomedToLayer == false) || (addLayer == true) || (addText == true))
+                if (!EventQueueForUI.Instance.IsEmpty())
                 {
-                    string timeToShow = frameTimer.TimeToShow();
-                    bool localAddText = addText;
-                    bool localIsZoomedToLayer = isZoomedToLayer;
-                    bool localAddLayer = addLayer;
-
-                    Dispatcher.UIThread.Post(() =>
-                    {
-                        if (MyMapControl != null)
+                    if (!EventQueueForUI.Instance.IsEmpty())
+                        Dispatcher.UIThread.Post(() =>
                         {
-                            if (localIsZoomedToLayer == false)
+                            while (!EventQueueForUI.Instance.IsEmpty())
                             {
-                                ProjectLayers.ZoomToLayer(MyMapControl);
+                                EventQueueForUI.Instance.Read()?.Run();
                             }
-
-                            if (localAddLayer == true)
-                            {
-                                ProjectLayers.AddLayers(MyMapControl);
-                                ProjectLayers.ResetRequiresLoading();
-                            }
-                        }
-
-                        if (localAddText == true)
-                        {
-                            mainViewModel?.UpdateConsoleText($"{timeToShow}");
-                        }
-                    });
-
-                    if (isZoomedToLayer == false)
-                    {
-                        isZoomedToLayer = true;
-                    }
-
-                    if (addLayer == true)
-                    {
-                        addLayer = false;
-                    }
+                        });
                 }
 
-                addText = frameTimer.ShouldShowText();
-                frameTimer.ResetShowText();
+                simulationLoop();
+
+                if (frameTimer.ShouldShowText())
+                {
+                    EventQueueForUI.Instance.Add(new ShowMessageConsoleWindowEvent(mainViewModel, frameTimer.TimeToShow()));
+                    frameTimer.ResetShowText();
+                }
+
                 int timeToSleep = frameTimer.GetTimeToSleep();
 
                 if (timeToSleep > 0)
@@ -102,6 +80,12 @@ namespace UrbanEcho.Sim
                     Thread.Sleep(timeToSleep);
                 }
             }
+        }
+
+        private static void simulationLoop()
+        {
+            //simulate doing stuff
+            Thread.SpinWait(1000000);
         }
     }
 }

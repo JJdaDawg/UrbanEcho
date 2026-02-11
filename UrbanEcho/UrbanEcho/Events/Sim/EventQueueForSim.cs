@@ -35,5 +35,24 @@ namespace UrbanEcho.Events.Sim
         private EventQueueForSim()
         {
         }
+
+        /// <summary>
+        /// Returns status of the queue
+        /// </summary>
+        /// <returns>Returns true if queue is empty</returns>
+        public bool IsEmpty()
+        {
+            return cq.IsEmpty;
+        }
+
+        /// <summary>
+        /// Adds a Event to the queue for the simulation
+        /// </summary>
+        /// <param name="theEvent">The Event to add.</param>
+        /// <returns></returns>
+        public void Add(IEventForSim theEvent)
+        {
+            cq.Enqueue(theEvent);
+        }
     }
 }

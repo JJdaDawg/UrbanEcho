@@ -6,10 +6,8 @@ using System.Threading.Tasks;
 
 namespace UrbanEcho.Events.Sim
 {
-    internal interface IEventForSim
+    public interface IEventForSim
     {
         public void Run();
-
-        public string Message();
     }
 }

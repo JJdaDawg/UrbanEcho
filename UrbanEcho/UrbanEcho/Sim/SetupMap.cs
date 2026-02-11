@@ -27,6 +27,9 @@ namespace UrbanEcho.Sim
             //Load the styles to use that are not default
             //other styles that are default will already be registered
             MapRenderer.RegisterStyleRenderer(typeof(RoadStyle), new RoadStyleRenderer());
+
+            //Add default Zoom limit right away so no crashes if mouse wheel scrolling without layer loaded
+            ProjectLayers.SetDefaultZoomLimit(MyMapControl);
         }
     }
 }

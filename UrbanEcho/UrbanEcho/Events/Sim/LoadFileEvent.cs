@@ -30,10 +30,5 @@ namespace UrbanEcho.Events.Sim
         {
             return fileType;
         }
-
-        public string Message()
-        {
-            return "";
-        }
     }
 }
