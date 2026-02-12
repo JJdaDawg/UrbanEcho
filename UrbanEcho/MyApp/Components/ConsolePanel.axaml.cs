@@ -10,4 +10,8 @@ public partial class ConsolePanel : UserControl
     {
         InitializeComponent();
     }
+
+    private void ComboBox_ActualThemeVariantChanged(object? sender, System.EventArgs e)
+    {
+    }
 }

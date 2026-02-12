@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
              mc:Ignorable="d"
-             d:DesignHeight="150"
+             d:DesignHeight="200"
              d:DesignWidth="1620"
              x:Class="MyApp.ConsolePanel">
   
@@ -12,23 +12,42 @@
         CornerRadius="3"
         BorderThickness="1"
         BorderBrush="DimGray"
-        Padding="4">
+        ClipToBounds="True">
 
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="28"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
+        <Grid RowDefinitions="32, Auto, *">
 
-            <!-- Title bar -->
-            <Border CornerRadius="6,6,0,0" Padding="4">
-                <TextBlock Text="Console"/>
+            <Border Grid.Row="0" 
+                    Background="{DynamicResource SystemChromeLowColor}" 
+                    Padding="10,0">
+                <TextBlock Text="Console" VerticalAlignment="Center"/>
             </Border>
 
-            <!-- Properties content -->
-            <StackPanel Grid.Row="1" Margin="4">
+            <Border Grid.Row="1" 
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" 
+                    BorderThickness="0,0,0,1"
+                    Padding="10,0">
+                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <TextBlock Text="Output Source:" 
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                    <ComboBox Width="150" 
+                              PlaceholderText="Select Source..."
+                              VerticalAlignment="Center"
+                              Height="24" 
+                              MinHeight="24">
+                        <ComboBoxItem Content="System Debug"/>
+                        <ComboBoxItem Content="Map Engine"/>
+                    </ComboBox>
+                </StackPanel>
+            </Border>
 
-            </StackPanel>
+            <Grid Grid.Row="2" Background="{DynamicResource SolidBackgroundFillColorBaseBrush}">
+                <ScrollViewer Margin="10 5 0 0">
+                    <TextBlock Text="> Initializing Urban Echo System..." 
+                               FontFamily="Cascadia Code,Consolas,Monospace"
+                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                </ScrollViewer>
+            </Grid>
         </Grid>
 
     </Border>
