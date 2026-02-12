@@ -9,7 +9,6 @@
 
             <!-- Menu bar -->
             <Menu DockPanel.Dock="Left"
-                    Foreground="White"
                     HorizontalAlignment="Left"
                     Height="32">
 

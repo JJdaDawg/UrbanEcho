@@ -10,7 +10,6 @@
         CornerRadius="3"
         BorderThickness="1"
         BorderBrush="DimGray"
-        Background="#252526"
         Padding="4">
 
         <Grid>

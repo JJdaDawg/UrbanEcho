@@ -5,31 +5,41 @@
              xmlns:icon="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
              mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="32"
              x:Class="MyApp.QuickToolbar">
-  
-    <Border
-        Height="28"
-        Padding="10"
+
+    <ExperimentalAcrylicBorder 
+        Height="32"
         Margin="5"
-        CornerRadius="3"
-        Background="#252526">
+        CornerRadius="4">
+        <ExperimentalAcrylicBorder.Material>
+            <ExperimentalAcrylicMaterial
+                BackgroundSource="Digger"
+                TintColor="{DynamicResource SystemAltHighColor}"
+                TintOpacity="0.6"
+                MaterialOpacity="0.4" />
+        </ExperimentalAcrylicBorder.Material>
 
-        <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
-            <icon:SymbolIcon Symbol="FolderOpen" Foreground="White"/>
-			<icon:SymbolIcon Symbol="FolderAdd" Foreground="White"/>
-            <icon:SymbolIcon Symbol="Save" Foreground="LightSkyBlue"/>
-            <icon:SymbolIcon Symbol="SaveEdit" Foreground="LightSkyBlue"/>
-            <Separator />
-            <icon:SymbolIcon Symbol="Play" Foreground="LightGreen" IconVariant="Filled"/>
-            <icon:SymbolIcon Symbol="Stop" Foreground="IndianRed" IconVariant="Filled"/>
-            <icon:SymbolIcon Symbol="Pause" Foreground="White" IconVariant="Filled"/>
-            <Separator/>
-            <icon:SymbolIcon Symbol="LocationLive" Foreground="White" IconVariant="Filled"/>
-            <Separator/>
-            <icon:SymbolIcon Symbol="DesktopEdit" Foreground="White" IconVariant="Filled"/>
-            <Separator/>
+        <Border
+            Padding="10,0"
+            BorderBrush="{DynamicResource SystemControlElevationBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="4">
 
-        </StackPanel>
-		
-    </Border>
+            <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                <icon:SymbolIcon Symbol="FolderOpen" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                <icon:SymbolIcon Symbol="FolderAdd" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                <icon:SymbolIcon Symbol="Save" Foreground="LightSkyBlue"/>
+                <icon:SymbolIcon Symbol="SaveEdit" Foreground="LightSkyBlue"/>
+                <Separator />
+                <icon:SymbolIcon Symbol="Play" Foreground="LightGreen" IconVariant="Filled"/>
+                <icon:SymbolIcon Symbol="Stop" Foreground="IndianRed" IconVariant="Filled"/>
+                <icon:SymbolIcon Symbol="Pause" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" IconVariant="Filled"/>
+                <Separator/>
+                <icon:SymbolIcon Symbol="LocationLive" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" IconVariant="Filled"/>
+                <Separator/>
+                <icon:SymbolIcon Symbol="DesktopEdit" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" IconVariant="Filled"/>
+                <Separator/>
+            </StackPanel>
+        </Border>
+    </ExperimentalAcrylicBorder>
 
 </UserControl>
