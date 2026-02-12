@@ -17,6 +17,7 @@
     <!-- TITLE BAR -->
     <u:UrsaWindow.TitleBarContent>
         <local:MenuBar/>
+        
     </u:UrsaWindow.TitleBarContent>
 
     <!-- MAIN LAYOUT -->

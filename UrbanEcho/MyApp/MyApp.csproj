@@ -18,7 +18,6 @@
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
     <PackageReference Include="FluentIcons.Avalonia" Version="2.0.317" />
-    <PackageReference Include="Irihi.Ursa" Version="1.14.1" />
     <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="1.14.1" />
     <PackageReference Include="Mapsui.Avalonia" Version="5.0.2" />
     <PackageReference Include="Semi.Avalonia" Version="11.3.7.2" />
