@@ -1,31 +1,94 @@
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:compilerservices="using:System.Runtime.CompilerServices"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:local="using:UrbanEcho"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:viewmodel="using:UrbanEcho.ViewModel"
-        xmlns:vm="using:UrbanEcho.ViewModels"
-        xmlns:mapsui="clr-namespace:Mapsui.UI.Avalonia;assembly=Mapsui.UI.Avalonia"
-        
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        x:Class="UrbanEcho.MainWindow"
-        Title="MyApp">
+<Window
+    x:Class="UrbanEcho.MainWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:local="using:UrbanEcho"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:u="https://irihi.tech/ursa"
+    xmlns:mapsui="clr-namespace:Mapsui.UI.Avalonia;assembly=Mapsui.UI.Avalonia"
+    Height="1080"
+    Width="1920"
+    Title="Urban Echo"
+    WindowState="Maximized"
+    ExtendClientAreaToDecorationsHint="True"
+    ExtendClientAreaChromeHints="NoChrome"
+    ExtendClientAreaTitleBarHeightHint="32"
+    TransparencyLevelHint="Mica">
 
-        <Grid >
-            <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <RowDefinition Height="200" />
-                </Grid.RowDefinitions>
-        <mapsui:MapControl Map="{Binding MyMap}" Grid.Row="0" x:DataType="vm:MainViewModel"/> 
+    <!-- TITLE BAR -->
+    
 
-            <TextBox
-                 TextWrapping="NoWrap"
-                 AcceptsReturn="True"
-                 ScrollViewer.VerticalScrollBarVisibility="Visible"
-                 ScrollViewer.HorizontalScrollBarVisibility="Visible"        
-                 Text="{Binding ConsoleText}" Name="ConsoleLog" Grid.Row="1" x:DataType="vm:MainViewModel"                   
-             /> 
+    <!-- MAIN LAYOUT -->
+    <Grid Margin="0,32,0,0" RowDefinitions="*,Auto" ColumnDefinitions="*,300">
+
+        <!-- LEFT SIDE -->
+        <Grid Grid.Row="0" Grid.Column="0" RowDefinitions="*,auto,200">
+
+            <!-- Map -->
+			<mapsui:MapControl x:Name="MyMapControl" Grid.Row="0"/>
+
+            <!-- Quick Toolbar -->
+            <local:QuickToolbar HorizontalAlignment="Left" VerticalAlignment="Top"/>
+			
+            <!-- Splitter -->
+            <GridSplitter
+                Grid.Row="1"
+                Background="Transparent"
+                BorderBrush="Transparent"
+                BorderThickness="0"
+                HorizontalAlignment="Stretch"
+                ResizeDirection="Rows"
+                Cursor="SizeNorthSouth"/>
+
+            <!-- Console -->
+            <Border Grid.Row="2" Margin="5 0 0 5">
+                <local:ConsolePanel/>
+            </Border>
 
         </Grid>
-</Window>
+
+        <!-- RIGHT SIDE -->
+        <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="*,Auto,*">
+
+            <!-- Project Explorer -->
+            <Border Grid.Row="0" Margin="5 0 5 0">
+                <local:ProjectExplorerPanel/>
+            </Border>
+
+            <!-- Splitter -->
+            <GridSplitter 
+                Grid.Row="1"
+                Height="6"
+                Background="Transparent"
+                BorderBrush="Transparent"
+                BorderThickness="0"
+                HorizontalAlignment="Stretch"
+                ResizeDirection="Rows"
+                Cursor="SizeNorthSouth"/>
+
+
+            <!-- Properties -->
+            <Border Grid.Row="2" Margin="5 0 5 5">
+                <local:PropertiesPanel/>
+            </Border>
+
+        </Grid>
+
+        <!-- Vertical splitter between left and right side -->
+        <GridSplitter
+            Grid.Row="0"
+            Grid.Column="0"
+            Width="6"
+            Background="Transparent"
+            BorderBrush="Transparent"
+            BorderThickness="0"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Stretch"
+            ResizeDirection="Columns"
+            Cursor="SizeWestEast"/>
+
+        <!-- FOOTER -->
+        <local:FooterBar Grid.Row="1" Grid.ColumnSpan="2"/>
+
+    </Grid>
+
+</u:UrsaWindow>
