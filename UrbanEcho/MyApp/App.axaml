@@ -20,6 +20,7 @@
         <Style Selector="icon|SymbolIcon">
             <Setter Property="Width" Value="24"/>
             <Setter Property="Height" Value="24"/>
+            <Setter Property="FontSize" Value="15"/>
         </Style>
 
     </Application.Styles>

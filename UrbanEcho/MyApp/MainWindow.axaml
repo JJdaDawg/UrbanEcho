@@ -12,7 +12,7 @@
     ExtendClientAreaToDecorationsHint="True"
     ExtendClientAreaChromeHints="NoChrome"
     ExtendClientAreaTitleBarHeightHint="32"
-    TransparencyLevelHint="AcrylicBlur">
+    TransparencyLevelHint="Mica">
 
     <!-- TITLE BAR -->
     <u:UrsaWindow.TitleBarContent>
@@ -26,7 +26,10 @@
         <Grid Grid.Row="0" Grid.Column="0" RowDefinitions="*,auto,150">
 
             <!-- Map -->
-			<mapsui:MapControl x:Name="MyMapControl" Grid.Row="0" BorderThickness="5" Margin="5 0 0 0"/>
+			<mapsui:MapControl x:Name="MyMapControl" Grid.Row="0"/>
+
+            <!-- Quick Toolbar -->
+            <local:QuickToolbar HorizontalAlignment="Left" VerticalAlignment="Top"/>
 			
             <!-- Splitter -->
             <GridSplitter
