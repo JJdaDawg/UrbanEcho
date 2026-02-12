@@ -1,0 +1,6 @@
+{
+  "PathForThisFile": "myFile.Json",
+  "BackgroundLayerPath": "Resources\\Rasters\\Aerial2.mbtiles",
+  "RoadLayerPath": "Resources\\ShapeFiles\\Road_Network\\Road_Network.shp",
+  "IntersectionLayerPath": "Resources\\ShapeFiles\\intersections_kitchener\\intersections_kitchener.shp"
+}
