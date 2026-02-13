@@ -17,20 +17,29 @@ namespace UrbanEcho.ViewModels
         private void Start()
         {
             IsRunning = true;
+            StopCommand.NotifyCanExecuteChanged();
+            PauseCommand.NotifyCanExecuteChanged();
+            StartCommand.NotifyCanExecuteChanged();
         }
 
-        private bool CanStart() => !IsRunning;
-
-        [RelayCommand]
+        [RelayCommand(CanExecute = nameof(CanStop))]
         private void Stop()
         {
             IsRunning = false;
+            StopCommand.NotifyCanExecuteChanged();
+            PauseCommand.NotifyCanExecuteChanged();
+            StartCommand.NotifyCanExecuteChanged();
         }
 
-        [RelayCommand]
+        [RelayCommand(CanExecute = nameof(CanPause))]
         private void Pause()
         {
             // Pause logic here
         }
+
+        private bool CanStart() => !IsRunning;
+        private bool CanStop() => IsRunning;
+        private bool CanPause() => IsRunning;
     }
+
 }
