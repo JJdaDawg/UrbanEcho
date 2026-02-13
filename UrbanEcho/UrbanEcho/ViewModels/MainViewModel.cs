@@ -1,5 +1,6 @@
 ﻿using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Mapsui;
 using Mapsui.UI.Avalonia;
 using System;
@@ -11,20 +12,11 @@ using System.Threading.Tasks;
 
 namespace UrbanEcho.ViewModels
 {
+    public enum LogSource { System, Map }
+
     public partial class MainViewModel : ObservableObject
     {
-        [ObservableProperty]
-        private ObservableCollection<string> _logItems = new();
-
-        [ObservableProperty]
-        private Map myMap = new Map();
-
-        public void UpdateConsoleText(string message)
-        {
-            LogItems.Add(message);
-
-            // Keep the logs from growing too large
-            if (LogItems.Count > 500) LogItems.RemoveAt(0);
-        }
+        public ConsoleViewModel Console { get; } = new();
+        public MapViewModel Map { get; } = new();
     }
 }
