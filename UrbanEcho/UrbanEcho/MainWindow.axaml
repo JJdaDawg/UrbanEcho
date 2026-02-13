@@ -9,19 +9,20 @@
         Title="Urban Echo"
         WindowState="Maximized"
         TransparencyLevelHint="Mica"
-        Background="Transparent">
+        Background="Transparent"
+        x:DataType="vm:MainViewModel">
 
     <Grid RowDefinitions="Auto,*">
         
         <Grid Grid.Row="0" Height="32" Background="Transparent">
-            <local:MenuBar VerticalAlignment="Center"/>
+            <local:MenuBar DataContext="{Binding}" VerticalAlignment="Center"/>
         </Grid>
 
-        <Grid Grid.Row="1" RowDefinitions="*,Auto" ColumnDefinitions="*,300" x:DataType="vm:MainViewModel">
+        <Grid Grid.Row="1" RowDefinitions="*,Auto" ColumnDefinitions="*,300">
 
             <Grid Grid.Row="0" Grid.Column="0" RowDefinitions="*,Auto,200">
                 <mapsui:MapControl x:Name="MyMapControl" Grid.Row="0"/>
-                <local:QuickToolbar HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                <local:QuickToolbar DataContext="{Binding}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                 
                 <GridSplitter Grid.Row="1" Background="Transparent" ResizeDirection="Rows" Height="5"/>
 

@@ -18,5 +18,6 @@ namespace UrbanEcho.ViewModels
     {
         public ConsoleViewModel Console { get; } = new();
         public MapViewModel Map { get; } = new();
+        public SimulationViewModel Simulation { get; } = new();
     }
 }
