@@ -46,7 +46,7 @@
             <GridSplitter Grid.Row="0" Grid.Column="0" Width="6" Background="Transparent" 
                           HorizontalAlignment="Right" ResizeDirection="Columns"/>
 
-            <local:FooterBar Grid.Row="1" Grid.ColumnSpan="2"/>
+            <local:FooterBar Grid.Row="1" Grid.ColumnSpan="2" DataContext="{Binding}"/>
         </Grid>
     </Grid>
 </Window>
