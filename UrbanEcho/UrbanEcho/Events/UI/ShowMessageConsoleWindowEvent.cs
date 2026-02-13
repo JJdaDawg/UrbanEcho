@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.Sim;
 using UrbanEcho.ViewModels;
+using UrbanEcho.Models;
 
 namespace UrbanEcho.Events.UI
 {

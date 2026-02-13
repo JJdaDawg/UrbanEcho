@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using UrbanEcho.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -12,8 +12,6 @@ using System.Threading.Tasks;
 
 namespace UrbanEcho.ViewModels
 {
-    public enum LogSource { System, Map }
-
     public partial class MainViewModel : ObservableObject
     {
         public ConsoleViewModel Console { get; } = new();
