@@ -45,9 +45,10 @@
                           Height="22"
                           MinHeight="22"
                           Padding="5,0"
-                          PlaceholderText="Select Source..."
                           VerticalAlignment="Center"
-                          VerticalContentAlignment="Center">
+                          VerticalContentAlignment="Center"
+                          SelectedIndex="{Binding SelectedSource}"
+                          x:DataType="vm:MainViewModel">
                         <ComboBoxItem Content="System Debug"/>
                         <ComboBoxItem Content="Map Engine"/>
                     </ComboBox>
@@ -67,7 +68,7 @@
 
             <Grid Grid.Row="2">
                 <ListBox Grid.Row="2" 
-                     ItemsSource="{Binding LogItems}"
+                     ItemsSource="{Binding CurrentLogs}"
                      x:DataType="vm:MainViewModel"
                      Background="Transparent"
                      BorderThickness="0"

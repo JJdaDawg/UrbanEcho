@@ -22,8 +22,8 @@ public partial class ConsolePanel : UserControl
 
         if (DataContext is MainViewModel vm)
         {
-            vm.LogItems.CollectionChanged -= LogItems_CollectionChanged;
-            vm.LogItems.CollectionChanged += LogItems_CollectionChanged;
+            vm.CurrentLogs.CollectionChanged -= LogItems_CollectionChanged;
+            vm.CurrentLogs.CollectionChanged += LogItems_CollectionChanged;
         }
     }
 

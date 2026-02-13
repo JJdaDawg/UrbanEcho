@@ -12,10 +12,17 @@ using System.Threading.Tasks;
 
 namespace UrbanEcho.ViewModels
 {
+    public enum LogSource { System, Map }
+
     public partial class MainViewModel : ObservableObject
     {
+        private ObservableCollection<string> _mapLogs = new();
+        private readonly ObservableCollection<string> _systemLogs = new();
+
         [ObservableProperty]
-        private ObservableCollection<string> _logItems = new();
+        private LogSource _selectedSource = LogSource.Map; // Default option
+
+        public ObservableCollection<string> CurrentLogs => SelectedSource == LogSource.Map ? _mapLogs : _systemLogs;
 
         [ObservableProperty]
         private Map myMap = new Map();
@@ -29,18 +36,27 @@ namespace UrbanEcho.ViewModels
             IsConsoleVisible = !IsConsoleVisible;
         }
 
-        [RelayCommand]
-        public void ClearConsole()
+        partial void OnSelectedSourceChanged(LogSource value)
         {
-            LogItems.Clear();
+            // When the console output ComboBox changes, tell the ListBox to refresh
+            OnPropertyChanged(nameof(CurrentLogs));
         }
 
-        public void UpdateConsoleText(string message)
-        {
-            LogItems.Add(message);
+        [RelayCommand]
+        public void ClearConsole() => CurrentLogs.Clear();
 
-            // Keep the logs from growing too large
-            if (LogItems.Count > 500) LogItems.RemoveAt(0);
+        public void UpdateConsoleText(string message, LogSource source = LogSource.Map)
+        {
+            if (source == LogSource.Map)
+            {
+                _mapLogs.Add($"[Map] {message}");
+            }
+            else
+            {
+                _systemLogs.Add($"[Sys] {message}");
+            }
+
+            OnPropertyChanged(nameof(CurrentLogs));
         }
     }
 }
