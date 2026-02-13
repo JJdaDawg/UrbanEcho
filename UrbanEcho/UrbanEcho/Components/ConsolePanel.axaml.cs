@@ -20,11 +20,24 @@ public partial class ConsolePanel : UserControl
     {
         base.OnDataContextChanged(e);
 
-        if (DataContext is MainViewModel vm)
+        if (DataContext is ConsoleViewModel cvm)
         {
-            vm.CurrentLogs.CollectionChanged -= LogItems_CollectionChanged;
-            vm.CurrentLogs.CollectionChanged += LogItems_CollectionChanged;
+            cvm.PropertyChanged += (s, args) =>
+            {
+                if (args.PropertyName == nameof(ConsoleViewModel.CurrentLogs))
+                {
+                    SubscribeToCollection(cvm.CurrentLogs);
+                }
+            };
+
+            SubscribeToCollection(cvm.CurrentLogs);
         }
+    }
+
+    private void SubscribeToCollection(INotifyCollectionChanged collection)
+    {
+        collection.CollectionChanged -= LogItems_CollectionChanged;
+        collection.CollectionChanged += LogItems_CollectionChanged;
     }
 
     private void LogItems_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -33,7 +46,6 @@ public partial class ConsolePanel : UserControl
         {
             Dispatcher.UIThread.Post(() =>
             {
-                // Scroll to end when new console log item is received
                 var scrollViewer = ConsoleListBox.FindDescendantOfType<ScrollViewer>();
                 scrollViewer?.ScrollToEnd();
             });

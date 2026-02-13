@@ -16,47 +16,7 @@ namespace UrbanEcho.ViewModels
 
     public partial class MainViewModel : ObservableObject
     {
-        private ObservableCollection<string> _mapLogs = new();
-        private readonly ObservableCollection<string> _systemLogs = new();
-
-        [ObservableProperty]
-        private LogSource _selectedSource = LogSource.Map; // Default option
-
-        public ObservableCollection<string> CurrentLogs => SelectedSource == LogSource.Map ? _mapLogs : _systemLogs;
-
-        [ObservableProperty]
-        private Map myMap = new Map();
-
-        [ObservableProperty]
-        private bool _isConsoleVisible = true;
-
-        [RelayCommand]
-        public void ToggleConsole()
-        {
-            IsConsoleVisible = !IsConsoleVisible;
-        }
-
-        partial void OnSelectedSourceChanged(LogSource value)
-        {
-            // When the console output ComboBox changes, tell the ListBox to refresh
-            OnPropertyChanged(nameof(CurrentLogs));
-        }
-
-        [RelayCommand]
-        public void ClearConsole() => CurrentLogs.Clear();
-
-        public void UpdateConsoleText(string message, LogSource source = LogSource.Map)
-        {
-            if (source == LogSource.Map)
-            {
-                _mapLogs.Add($"[Map] {message}");
-            }
-            else
-            {
-                _systemLogs.Add($"[Sys] {message}");
-            }
-
-            OnPropertyChanged(nameof(CurrentLogs));
-        }
+        public ConsoleViewModel Console { get; } = new();
+        public MapViewModel Map { get; } = new();
     }
 }

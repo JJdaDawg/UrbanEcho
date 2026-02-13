@@ -22,7 +22,7 @@ namespace UrbanEcho.Events.UI
 
         public void Run()
         {
-            mainViewModel?.UpdateConsoleText(message);
+            mainViewModel?.Console.AddLog(message, LogSource.Map);
         }
     }
 }

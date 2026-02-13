@@ -40,7 +40,7 @@ public partial class MainWindow : AppWindow
         TitleBar.TitleBarHitTestType = TitleBarHitTestType.Complex;
         MainViewModel vm = new MainViewModel();
         DataContext = vm;
-        SetupMap.Init(vm.MyMap);
+        SetupMap.Init(vm.Map.MyMap);
         Simulation.SetMainViewModel(vm);
         Simulation.SimTask = Task.Factory.StartNew(new Action(Simulation.Run), Simulation.Cts.Token);
     }

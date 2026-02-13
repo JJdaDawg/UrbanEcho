@@ -36,7 +36,7 @@ namespace UrbanEcho.Sim
         {
             mainViewModel = setMainViewModel;
 
-            MyMap = setMainViewModel.MyMap;
+            MyMap = setMainViewModel.Map.MyMap;
         }
 
         public static void Run()
@@ -49,7 +49,7 @@ namespace UrbanEcho.Sim
                 return;
             }
             //TODO: Remove this once we have UI for loading project
-            LoadFileEvent loadProjectEvent = new LoadFileEvent(FileTypes.FileType.ProjectFile, "Resources/ProjectFiles/myFile.Json", mainViewModel.MyMap);
+            LoadFileEvent loadProjectEvent = new LoadFileEvent(FileTypes.FileType.ProjectFile, "Resources/ProjectFiles/myFile.Json", mainViewModel.Map.MyMap);
             EventQueueForSim.Instance.Add(loadProjectEvent); //will usually happen from UI
 
             FrameTimer frameTimer = new FrameTimer(true);
