@@ -1,5 +1,6 @@
 ﻿using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Mapsui;
 using Mapsui.UI.Avalonia;
 using System;
@@ -18,6 +19,21 @@ namespace UrbanEcho.ViewModels
 
         [ObservableProperty]
         private Map myMap = new Map();
+
+        [ObservableProperty]
+        private bool _isConsoleVisible = true;
+
+        [RelayCommand]
+        public void ToggleConsole()
+        {
+            IsConsoleVisible = !IsConsoleVisible;
+        }
+
+        [RelayCommand]
+        public void ClearConsole()
+        {
+            LogItems.Clear();
+        }
 
         public void UpdateConsoleText(string message)
         {

@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:UrbanEcho"
         xmlns:mapsui="clr-namespace:Mapsui.UI.Avalonia;assembly=Mapsui.UI.Avalonia"
+        xmlns:vm="using:UrbanEcho.ViewModels"
         Width="1920"
         Height="1080"
         Title="Urban Echo"
@@ -25,7 +26,7 @@
                 <GridSplitter Grid.Row="1" Background="Transparent" ResizeDirection="Rows" Height="5"/>
 
                 <Border Grid.Row="2" Margin="5 0 0 5">
-                    <local:ConsolePanel/>
+                    <local:ConsolePanel IsVisible="{Binding IsConsoleVisible}" x:DataType="vm:MainViewModel"/>
                 </Border>
             </Grid>
 
