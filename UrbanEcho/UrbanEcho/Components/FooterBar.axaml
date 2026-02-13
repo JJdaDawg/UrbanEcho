@@ -1,14 +1,26 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="UrbanEcho.FooterBar">
+             x:Class="UrbanEcho.FooterBar"
+             x:DataType="vm:MainViewModel"
+             xmlns:vm="clr-namespace:UrbanEcho.ViewModels">
 
-    <Border Background="Black"
+    <Border x:Name="FooterBorder"
             Padding="10"
-            Height="32">
+            Height="32"
+            Background="Black">
 
-        <TextBlock Text="Ready"
-                   VerticalAlignment="Center"
-                   Foreground="White"/>
+        <Grid ColumnDefinitions="*, Auto">
 
+            <TextBlock Text="Ready"
+                       Grid.Column="0"
+                       VerticalAlignment="Center"
+                       Foreground="White"/>
+
+            <TextBlock Text="Project Name Here"
+                       Grid.Column="1"
+                       VerticalAlignment="Center"
+                       Foreground="White"/>
+        
+        </Grid>
     </Border>
 </UserControl>

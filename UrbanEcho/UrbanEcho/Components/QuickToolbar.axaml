@@ -4,17 +4,37 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:icon="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
              mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="32"
-             x:Class="UrbanEcho.QuickToolbar">
+             x:Class="UrbanEcho.QuickToolbar"
+             x:DataType="vm:MainViewModel"
+             xmlns:vm="clr-namespace:UrbanEcho.ViewModels">
 
     <UserControl.Styles>
         <Style Selector="icon|SymbolIcon">
             <Setter Property="FontSize" Value="14" />
         </Style>
+        <Style Selector="Button.ToolbarButton">
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+
+        <Style Selector="Button.ToolbarButton:pointerover">
+            <Setter Property="Background" Value="#30FFFFFF"/>
+        </Style>
+
+        <Style Selector="Button.ToolbarButton:pressed">
+            <Setter Property="Background" Value="#50FFFFFF"/>
+        </Style>
     </UserControl.Styles>
 
     <ExperimentalAcrylicBorder 
         Height="32"
-        Margin="5"
+        Margin="10 5 0 0"
         CornerRadius="4">
         <ExperimentalAcrylicBorder.Material>
             <ExperimentalAcrylicMaterial
@@ -30,20 +50,44 @@
             BorderThickness="1"
             CornerRadius="4">
 
-            <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
-                <icon:SymbolIcon Symbol="FolderOpen" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
-                <icon:SymbolIcon Symbol="FolderAdd" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
-                <icon:SymbolIcon Symbol="Save" Foreground="LightSkyBlue"/>
-                <icon:SymbolIcon Symbol="SaveEdit" Foreground="LightSkyBlue"/>
+            <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+				<Button Classes="ToolbarButton">
+                    <icon:SymbolIcon Symbol="FolderOpen" IconVariant="Regular"/>
+                </Button>
+                <Button Classes="ToolbarButton">
+                    <icon:SymbolIcon Symbol="FolderAdd" IconVariant="Regular"/>
+                </Button>
+                <Button Classes="ToolbarButton">
+                    <icon:SymbolIcon Symbol="Save" Foreground="LightSkyBlue"/>
+                </Button>
+                <Button Classes="ToolbarButton">
+                    <icon:SymbolIcon Symbol="SaveEdit" Foreground="LightSkyBlue"/>
+                </Button>
                 <Rectangle Width="1" Height="16" Fill="DimGray" Margin="5,0"/>
-                <icon:SymbolIcon Symbol="Play" Foreground="LightGreen" IconVariant="Filled"/>
-                <icon:SymbolIcon Symbol="Stop" Foreground="IndianRed" IconVariant="Filled"/>
-                <icon:SymbolIcon Symbol="Pause" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" IconVariant="Filled"/>
+                <Button Classes="ToolbarButton" Command="{Binding Simulation.StartCommand}" IsVisible="{Binding !Simulation.IsRunning}">
+                    <icon:SymbolIcon Symbol="Play" Foreground="LightGreen" IconVariant="Filled"/>
+                </Button>
+                <Button Classes="ToolbarButton" Command="{Binding Simulation.StopCommand}" IsVisible="{Binding Simulation.IsRunning}">
+                    <icon:SymbolIcon Symbol="Stop" Foreground="IndianRed" IconVariant="Filled"/>
+                </Button>
+                <Button Classes="ToolbarButton" Command="{Binding Simulation.PauseCommand}" IsVisible="{Binding Simulation.IsRunning}">
+                    <icon:SymbolIcon Symbol="Pause" IconVariant="Filled"/>
+                </Button>
                 <Rectangle Width="1" Height="16" Fill="DimGray" Margin="5,0"/>
-                <icon:SymbolIcon Symbol="LocationLive" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" IconVariant="Filled"/>
+                <Button Classes="ToolbarButton">
+                    <icon:SymbolIcon Symbol="LocationLive" IconVariant="Regular"/>
+                </Button>
                 <Rectangle Width="1" Height="16" Fill="DimGray" Margin="5,0"/>
-                <icon:SymbolIcon Symbol="DesktopEdit" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" IconVariant="Filled"/>
-                <Rectangle Width="1" Height="16" Fill="DimGray" Margin="5,0"/>
+                <Button Classes="ToolbarButton">
+                    <icon:SymbolIcon Symbol="Edit" IconVariant="Regular"/>
+                </Button>
+                <Rectangle Width="1" Height="16" Fill="DimGray" Margin="5,0" IsVisible="{Binding Simulation.IsRunning}"/>
+                <Button Classes="ToolbarButton" IsVisible="{Binding Simulation.IsRunning}">
+                    <icon:SymbolIcon Symbol="Previous" IconVariant="Regular"/>
+                </Button>
+                <Button Classes="ToolbarButton" IsVisible="{Binding Simulation.IsRunning}">
+                    <icon:SymbolIcon Symbol="Next" IconVariant="Regular"/>
+                </Button>
             </StackPanel>
         </Border>
     </ExperimentalAcrylicBorder>

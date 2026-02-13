@@ -12,11 +12,15 @@ using System.Threading.Tasks;
 
 namespace UrbanEcho.ViewModels
 {
-    public enum LogSource { System, Map }
-
     public partial class MainViewModel : ObservableObject
     {
         public ConsoleViewModel Console { get; } = new();
         public MapViewModel Map { get; } = new();
+        public SimulationViewModel Simulation { get; }
+
+        public MainViewModel() 
+        {
+            Simulation = new(Console);
+        }
     }
 }
