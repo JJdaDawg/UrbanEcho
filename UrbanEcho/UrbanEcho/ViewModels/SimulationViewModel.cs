@@ -10,6 +10,13 @@ namespace UrbanEcho.ViewModels
 {
     public partial class SimulationViewModel : ObservableObject
     {
+        private readonly ConsoleViewModel _console;
+
+        public SimulationViewModel(ConsoleViewModel console)
+        {
+            _console = console;
+        }
+
         [ObservableProperty]
         private bool _isRunning;
 
@@ -20,6 +27,7 @@ namespace UrbanEcho.ViewModels
             StopCommand.NotifyCanExecuteChanged();
             PauseCommand.NotifyCanExecuteChanged();
             StartCommand.NotifyCanExecuteChanged();
+            _console.AddLog("Simulation started", LogSource.System);
         }
 
         [RelayCommand(CanExecute = nameof(CanStop))]
@@ -29,12 +37,14 @@ namespace UrbanEcho.ViewModels
             StopCommand.NotifyCanExecuteChanged();
             PauseCommand.NotifyCanExecuteChanged();
             StartCommand.NotifyCanExecuteChanged();
+            _console.AddLog("Simulation stopped", LogSource.System);
         }
 
         [RelayCommand(CanExecute = nameof(CanPause))]
         private void Pause()
         {
             // Pause logic here
+            _console.AddLog("Simulation paused", LogSource.System);
         }
 
         private bool CanStart() => !IsRunning;
