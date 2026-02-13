@@ -48,9 +48,29 @@ namespace UrbanEcho.ViewModels
             _console.AddLog("Simulation paused", LogSource.System);
         }
 
+        [RelayCommand(CanExecute = nameof(CanSpeedUp))]
+        private void SpeedUp()
+        {
+
+        }
+
+        [RelayCommand(CanExecute = nameof(CanSpeedDown))]
+        private void SpeedDown()
+        {
+
+        }
+
+        [RelayCommand]
+        private void RealTime()
+        {
+
+        }
+
         private bool CanStart() => !IsRunning;
         private bool CanStop() => IsRunning;
         private bool CanPause() => IsRunning;
+        private bool CanSpeedUp() => IsRunning;
+        private bool CanSpeedDown() => IsRunning;
     }
 
 }

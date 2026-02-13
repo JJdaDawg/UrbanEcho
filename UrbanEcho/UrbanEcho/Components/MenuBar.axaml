@@ -59,18 +59,18 @@
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator />
-                    <MenuItem Header="Speed Up">
+                    <MenuItem Header="Speed Up" Command="{Binding Simulation.SpeedUpCommand}">
                         <MenuItem.Icon>
 							<icon:SymbolIcon Symbol="Next"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="Speed Down">
+                    <MenuItem Header="Speed Down" Command="{Binding Simulation.SpeedDownCommand}">
                         <MenuItem.Icon>
 							<icon:SymbolIcon Symbol="Previous"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator />
-                    <MenuItem Header="Use Real Time Data">
+                    <MenuItem Header="Use Real Time Data" Command="{Binding Simulation.RealTimeCommand}">
                         <MenuItem.Icon>
 							<icon:SymbolIcon Symbol="LocationLive"/>
                         </MenuItem.Icon>
