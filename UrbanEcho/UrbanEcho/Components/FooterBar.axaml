@@ -9,9 +9,18 @@
             Height="32"
             Background="Black">
 
-        <TextBlock Text="Ready"
-                   VerticalAlignment="Center"
-                   Foreground="White"/>
+        <Grid ColumnDefinitions="*, Auto">
 
+            <TextBlock Text="Ready"
+                       Grid.Column="0"
+                       VerticalAlignment="Center"
+                       Foreground="White"/>
+
+            <TextBlock Text="Project Name Here"
+                       Grid.Column="1"
+                       VerticalAlignment="Center"
+                       Foreground="White"/>
+        
+        </Grid>
     </Border>
 </UserControl>
