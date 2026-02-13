@@ -1,0 +1,52 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             mc:Ignorable="d"
+             d:DesignHeight="200"
+             d:DesignWidth="1620"
+             x:Class="UrbanEcho.ConsolePanel">
+  
+    <Border
+        CornerRadius="3"
+        BorderThickness="1"
+        BorderBrush="DimGray"
+        ClipToBounds="True">
+
+        <Grid RowDefinitions="32, Auto, *">
+
+            <Border Grid.Row="0" Padding="10,0">
+                <TextBlock Text="Console" VerticalAlignment="Center"/>
+            </Border>
+
+            <Border Grid.Row="1" 
+                    BorderThickness="1"
+                    Padding="10,0">
+                <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                    <TextBlock Text="Output Source:" 
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                    <ComboBox Width="150" 
+                          Height="22"
+                          MinHeight="22"
+                          Padding="5,0"
+                          PlaceholderText="Select Source..."
+                          VerticalAlignment="Center"
+                          VerticalContentAlignment="Center">
+                        <ComboBoxItem Content="System Debug"/>
+                        <ComboBoxItem Content="Map Engine"/>
+                    </ComboBox>
+                </StackPanel>
+            </Border>
+
+            <Grid Grid.Row="2">
+                <ScrollViewer Margin="10 5 0 0">
+                    <TextBlock Text="" FontFamily="Cascadia Code,Consolas,Monospace"/>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+
+    </Border>
+
+</UserControl>

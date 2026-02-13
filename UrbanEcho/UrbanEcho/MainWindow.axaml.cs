@@ -1,8 +1,10 @@
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Controls.Chrome;
 using BruTile;
 using BruTile.MbTiles;
 using BruTile.Wms;
+using FluentAvalonia.UI.Windowing;
 using Mapsui;
 using Mapsui.Extensions.Provider;
 using Mapsui.Layers;
@@ -28,11 +30,14 @@ using Layer = Mapsui.Layers.Layer;
 
 namespace UrbanEcho;
 
-public partial class MainWindow : Window
+public partial class MainWindow : AppWindow
 {
     public MainWindow()
     {
         InitializeComponent();
+
+        TitleBar.ExtendsContentIntoTitleBar = true;
+        TitleBar.TitleBarHitTestType = TitleBarHitTestType.Complex;
         MainViewModel vm = new MainViewModel();
         DataContext = vm;
         SetupMap.Init(vm.MyMap);

@@ -1,0 +1,33 @@
+<UserControl
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    x:Class="UrbanEcho.PropertiesPanel"
+    d:DesignHeight="500"
+    d:DesignWidth="300">
+
+    <Border
+        CornerRadius="3"
+        BorderThickness="1"
+        BorderBrush="DimGray"
+        Padding="4">
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="28"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Title bar -->
+            <Border CornerRadius="6,6,0,0" Padding="4">
+                <TextBlock Text="Properties"/>
+            </Border>
+
+            <!-- Properties content -->
+            <StackPanel Grid.Row="1" Margin="4">
+
+            </StackPanel>
+        </Grid>
+
+    </Border>
+</UserControl>
