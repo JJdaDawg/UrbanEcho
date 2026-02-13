@@ -27,7 +27,7 @@
 
                     <Button Grid.Column="1"
                         Classes="CloseButtonStyle"
-                        Command="{Binding ToggleConsole}" />
+                        Command="{Binding CloseCommand}" />
                  </Grid>
             </Border>
 
@@ -51,7 +51,7 @@
                     <Rectangle Width="1" Height="16" Fill="DimGray" Margin="5,0,0,0"/>
                     <Button Grid.Column="1" 
                             Classes="ClearConsoleButton"
-                            Command="{Binding ClearConsole}"
+                            Command="{Binding ClearConsoleCommand}"
                             VerticalAlignment="Center"
                             Background="Transparent"
                             BorderThickness="0"

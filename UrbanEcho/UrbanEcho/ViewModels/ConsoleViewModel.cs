@@ -19,8 +19,8 @@ namespace UrbanEcho.ViewModels
 
         public ObservableCollection<string> CurrentLogs => SelectedSource == LogSource.Map ? _mapLogs : _systemLogs;
 
-        [RelayCommand] public void ClearConsole() => CurrentLogs.Clear();
-        [RelayCommand] public void ToggleConsole() => IsVisible = !IsVisible;
+        [RelayCommand] private void ClearConsole() => CurrentLogs.Clear();
+        [RelayCommand] private void Close() => IsVisible = !IsVisible;
 
         public void AddLog(string message, LogSource source)
         {
