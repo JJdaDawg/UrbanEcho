@@ -34,7 +34,7 @@
 
     <ExperimentalAcrylicBorder 
         Height="32"
-        Margin="5"
+        Margin="10 5 0 0"
         CornerRadius="4">
         <ExperimentalAcrylicBorder.Material>
             <ExperimentalAcrylicMaterial
