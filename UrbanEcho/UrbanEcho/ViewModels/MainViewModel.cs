@@ -15,12 +15,13 @@ namespace UrbanEcho.ViewModels
     public partial class MainViewModel : ObservableObject
     {
         public ConsoleViewModel Console { get; } = new();
-        public MapViewModel Map { get; } = new();
+        public MapViewModel Map { get; }
         public SimulationViewModel Simulation { get; }
 
         public MainViewModel() 
         {
             Simulation = new(Console);
+            Map = new(Console);
         }
     }
 }

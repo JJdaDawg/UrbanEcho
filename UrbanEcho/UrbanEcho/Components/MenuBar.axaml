@@ -90,8 +90,8 @@
                     </MenuItem>
                     <Separator />
                     <MenuItem Header="Raster Background Image"
-                              ToggleType="CheckBox"
                               IsChecked="{Binding Map.IsRasterVisible}"
+                              ToggleType="CheckBox"
                               Command="{Binding Map.ToggleRasterCommand}">
                         <MenuItem.Icon>
 							<icon:SymbolIcon Symbol="Image"/>
