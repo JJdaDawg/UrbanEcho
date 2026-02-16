@@ -22,8 +22,7 @@
 
             <Grid Grid.Row="0" Grid.Column="0" RowDefinitions="*,Auto,200">
                 <Border Background="Black"
-                        BorderBrush="White"
-                        BorderThickness="5,0,0,0"  
+                        BorderBrush="White" 
                         Margin="5 0 0 0">
                     <mapsui:MapControl Map="{Binding Map.MyMap}" x:Name="MyMapControl"/>
                 </Border>
