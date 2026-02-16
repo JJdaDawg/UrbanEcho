@@ -9,6 +9,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UrbanEcho.Models;
 
 namespace UrbanEcho.ViewModels
 {
@@ -23,5 +24,8 @@ namespace UrbanEcho.ViewModels
             Simulation = new(Console);
             Map = new(Console);
         }
+
+        [ObservableProperty]
+        private SelectedPanel selectedPanel = SelectedPanel.None;
     }
 }

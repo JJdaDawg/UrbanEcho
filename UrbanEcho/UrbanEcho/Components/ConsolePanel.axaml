@@ -11,77 +11,71 @@
              x:DataType="vm:ConsoleViewModel"
              IsVisible="{Binding IsVisible}">
   
-    <Border
-        CornerRadius="3"
-        BorderThickness="1"
-        BorderBrush="DimGray"
-        ClipToBounds="True">
 
-        <Grid RowDefinitions="32, Auto, *">
 
-            <Border Grid.Row="0"> 
-                <Grid ColumnDefinitions="*, Auto">
-                    <TextBlock Text="Console" 
-                               Grid.Column="0"
-                               VerticalAlignment="Center" 
-                               Margin="10,0,0,0"/>
+    <Grid RowDefinitions="32, Auto, *">
 
-                    <Button Grid.Column="1"
-                        Classes="CloseButtonStyle"
-                        Command="{Binding CloseCommand}" />
-                 </Grid>
-            </Border>
+        <Border Grid.Row="0"> 
+            <Grid ColumnDefinitions="*, Auto">
+                <TextBlock Text="Console" 
+                            Grid.Column="0"
+                            VerticalAlignment="Center" 
+                            Margin="10,0,0,0"/>
 
-            <Border Grid.Row="1" 
-                    BorderThickness="1"
-                    Padding="10,0,0,5">
-                <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
-                    <TextBlock Text="Output Source:" 
-                               VerticalAlignment="Center"
-                               Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
-                    <ComboBox Width="150" 
-                          Height="22"
-                          MinHeight="22"
-                          Padding="5,0"
-                          VerticalAlignment="Center"
-                          VerticalContentAlignment="Center"
-                          SelectedIndex="{Binding SelectedSource}">
-                        <ComboBoxItem Content="System Debug"/>
-                        <ComboBoxItem Content="Map Engine"/>
-                    </ComboBox>
-                    <Rectangle Width="1" Height="16" Fill="DimGray" Margin="5,0,0,0"/>
-                    <Button Grid.Column="1" 
-                            Classes="ClearConsoleButton"
-                            Command="{Binding ClearConsoleCommand}"
+                <Button Grid.Column="1"
+                    Classes="CloseButtonStyle"
+                    Command="{Binding CloseCommand}" />
+                </Grid>
+        </Border>
+
+        <Border Grid.Row="1" 
+                BorderThickness="1"
+                Padding="10,0,0,5">
+            <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                <TextBlock Text="Output Source:" 
                             VerticalAlignment="Center"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Padding="1">
-                        <icon:SymbolIcon Symbol="TextCollapse" FontSize="14"/>
-                    </Button>
-                </StackPanel>
-            </Border>
+                            Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                <ComboBox Width="150" 
+                        Height="22"
+                        MinHeight="22"
+                        Padding="5,0"
+                        VerticalAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        SelectedIndex="{Binding SelectedSource}">
+                    <ComboBoxItem Content="System Debug"/>
+                    <ComboBoxItem Content="Map Engine"/>
+                </ComboBox>
+                <Rectangle Width="1" Height="16" Fill="DimGray" Margin="5,0,0,0"/>
+                <Button Grid.Column="1" 
+                        Classes="ClearConsoleButton"
+                        Command="{Binding ClearConsoleCommand}"
+                        VerticalAlignment="Center"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Padding="1">
+                    <icon:SymbolIcon Symbol="TextCollapse" FontSize="14"/>
+                </Button>
+            </StackPanel>
+        </Border>
 
-            <Grid Grid.Row="2">
-                <ListBox Grid.Row="2" 
-                     ItemsSource="{Binding CurrentLogs}"
-                     Background="Transparent"
-                     BorderThickness="0"
-                     Padding="10,5"
-                     Name="ConsoleListBox"
-                     AutoScrollToSelectedItem="True">
-                    <ListBox.Styles>
-                        <Style Selector="ListBoxItem">
-                            <Setter Property="Padding" Value="2,1"/>
-                            <Setter Property="FontSize" Value="12"/>
-                            <Setter Property="FontFamily" Value="Cascadia Code,Consolas,Monospace"/>
-                            <Setter Property="MinHeight" Value="0"/>
-                        </Style>
-                    </ListBox.Styles>
-                </ListBox>
-            </Grid>
+        <Grid Grid.Row="2">
+            <ListBox Grid.Row="2" 
+                    ItemsSource="{Binding CurrentLogs}"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Padding="10,5"
+                    Name="ConsoleListBox"
+                    AutoScrollToSelectedItem="True">
+                <ListBox.Styles>
+                    <Style Selector="ListBoxItem">
+                        <Setter Property="Padding" Value="2,1"/>
+                        <Setter Property="FontSize" Value="12"/>
+                        <Setter Property="FontFamily" Value="Cascadia Code,Consolas,Monospace"/>
+                        <Setter Property="MinHeight" Value="0"/>
+                    </Style>
+                </ListBox.Styles>
+            </ListBox>
         </Grid>
-
-    </Border>
+    </Grid>
 
 </UserControl>
