@@ -29,7 +29,7 @@
                 </Border>
 
                 
-                <local:QuickToolbar DataContext="{Binding}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                <local:QuickToolbar Margin="10,5,0,0" DataContext="{Binding}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                 
                 <GridSplitter Grid.Row="1" Background="Transparent" ResizeDirection="Rows" Height="5"/>
 
