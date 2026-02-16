@@ -24,8 +24,5 @@ namespace UrbanEcho.ViewModels
             Simulation = new(Console);
             Map = new(Console);
         }
-
-        [ObservableProperty]
-        private SelectedPanel selectedPanel = SelectedPanel.None;
     }
 }

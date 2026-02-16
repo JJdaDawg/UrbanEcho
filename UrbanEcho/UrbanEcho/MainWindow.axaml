@@ -32,7 +32,7 @@
                 
                 <GridSplitter Grid.Row="1" Background="Transparent" ResizeDirection="Rows" Height="5"/>
 
-                <Border Grid.Row="2" Margin="5 0 0 5" Classes="focus-indicator">
+                <Border Grid.Row="2" Margin="5 0 0 5" Classes="focus-indicator" Focusable="True" BorderThickness="1">
                     <local:ConsolePanel DataContext="{Binding Console}"/>
                 </Border>
             </Grid>

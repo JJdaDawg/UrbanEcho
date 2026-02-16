@@ -44,14 +44,7 @@
 
         <!-- Global styling for highlightable border -->
         <Style Selector="Border.focus-indicator">
-            <Setter Property="Focusable" Value="True"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="BorderBrush" Value="DimGray"/>
-    
-            <Setter Property="CornerRadius" Value="3"/>
-            <Setter Property="ClipToBounds" Value="True"/>
-
             <Setter Property="Transitions">
                 <Transitions>
                     <BrushTransition Property="BorderBrush" Duration="0:0:0.1"/>
@@ -59,7 +52,7 @@
             </Setter>
         </Style>
 
-        <!-- Sets the highlight colour for selected borders -->
+        <!-- Highlight when this border or contents it is focused -->
         <Style Selector="Border.focus-indicator:focus-within">
             <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColor}"/>
         </Style>
