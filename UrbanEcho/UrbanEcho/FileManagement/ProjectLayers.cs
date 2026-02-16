@@ -33,6 +33,8 @@ namespace UrbanEcho.FileManagement
 
         private static ProjectFile? currentProjectFile = new ProjectFile();
 
+        public static bool IsRasterVisible { get; set; } = true;
+
         public static void LoadProject(string path)
         {
             ProjectFile? openProject = ProjectFile.Open(path);
@@ -349,7 +351,7 @@ namespace UrbanEcho.FileManagement
         {
             myMap.Layers.Clear();
 
-            if (backgroundMBTile != null)
+            if (IsRasterVisible && backgroundMBTile != null)
             {
                 myMap?.Layers.Add(backgroundMBTile);
             }

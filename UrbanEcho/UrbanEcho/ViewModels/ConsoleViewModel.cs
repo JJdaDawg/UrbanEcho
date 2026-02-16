@@ -15,7 +15,7 @@ namespace UrbanEcho.ViewModels
         private readonly ObservableCollection<string> _mapLogs = new();
         private readonly ObservableCollection<string> _systemLogs = new();
 
-        [ObservableProperty] private LogSource _selectedSource = LogSource.Map;
+        [ObservableProperty] private LogSource _selectedSource = LogSource.System;
         [ObservableProperty] private bool _isVisible = true;
 
         public ObservableCollection<string> CurrentLogs => SelectedSource == LogSource.Map ? _mapLogs : _systemLogs;
