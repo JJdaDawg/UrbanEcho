@@ -1,10 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Mapsui;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Input;
+using UrbanEcho.FileManagement;
 
 namespace UrbanEcho.ViewModels
 {
@@ -12,5 +15,20 @@ namespace UrbanEcho.ViewModels
     {
         [ObservableProperty]
         private Map myMap = new Map();
+
+        [ObservableProperty]
+        private bool isRasterVisible = true;
+
+        partial void OnIsRasterVisibleChanged(bool value)
+        {
+            ProjectLayers.IsRasterVisible = value;
+            ProjectLayers.AddLayers(MyMap);
+        }
+
+        [RelayCommand]
+        private void ToggleRaster()
+        {
+            IsRasterVisible = !IsRasterVisible;
+        }
     }
 }
