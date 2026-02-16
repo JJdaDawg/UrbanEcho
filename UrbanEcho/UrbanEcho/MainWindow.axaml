@@ -25,7 +25,7 @@
                         BorderBrush="White"
                         BorderThickness="5,0,0,0"  
                         Margin="5 0 0 0">
-                    <mapsui:MapControl x:Name="MyMapControl"/>
+                    <mapsui:MapControl Map="{Binding Map.MyMap}" x:Name="MyMapControl"/>
                 </Border>
 
                 
