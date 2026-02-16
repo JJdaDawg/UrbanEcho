@@ -10,8 +10,6 @@
              x:Class="UrbanEcho.ConsolePanel"
              x:DataType="vm:ConsoleViewModel"
              IsVisible="{Binding IsVisible}">
-  
-
 
         <Grid RowDefinitions="32, Auto, *">
 

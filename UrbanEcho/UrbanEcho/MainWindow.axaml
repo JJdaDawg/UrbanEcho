@@ -32,19 +32,19 @@
                 
                 <GridSplitter Grid.Row="1" Background="Transparent" ResizeDirection="Rows" Height="5"/>
 
-                <Border Grid.Row="2" Margin="5 0 0 5" Classes="focus-indicator" Focusable="True" BorderThickness="1">
+                <Border Grid.Row="2" Margin="5 0 0 5" Classes="focus-indicator" Focusable="True">
                     <local:ConsolePanel DataContext="{Binding Console}"/>
                 </Border>
             </Grid>
 
             <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="*,Auto,*">
-                <Border Grid.Row="0" Margin="5 0 5 0">
+                <Border Grid.Row="0" Margin="5 0 5 0" Classes="focus-indicator" Focusable="True">
                     <local:ProjectExplorerPanel/>
                 </Border>
 
                 <GridSplitter Grid.Row="1" Height="6" Background="Transparent" ResizeDirection="Rows"/>
 
-                <Border Grid.Row="2" Margin="5 0 5 5">
+                <Border Grid.Row="2" Margin="5 0 5 5" Classes="focus-indicator" Focusable="True">
                     <local:PropertiesPanel/>
                 </Border>
             </Grid>

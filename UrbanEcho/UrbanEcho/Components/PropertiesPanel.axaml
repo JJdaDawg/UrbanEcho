@@ -6,20 +6,12 @@
     d:DesignHeight="500"
     d:DesignWidth="300">
 
-    <Border
-        CornerRadius="3"
-        BorderThickness="1"
-        BorderBrush="DimGray"
-        Padding="4">
-
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="28"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
+        <Grid RowDefinitions="32,*">
 
             <!-- Title bar -->
-            <Border CornerRadius="6,6,0,0" Padding="4">
+            <Border CornerRadius="6,6,0,0"
+                    Margin="10,0,0,0"
+                    VerticalAlignment="Center">
                 <TextBlock Text="Properties"/>
             </Border>
 
@@ -29,5 +21,4 @@
             </StackPanel>
         </Grid>
 
-    </Border>
 </UserControl>

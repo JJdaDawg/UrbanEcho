@@ -45,6 +45,8 @@
         <!-- Global styling for highlightable border -->
         <Style Selector="Border.focus-indicator">
             <Setter Property="BorderBrush" Value="DimGray"/>
+            <Setter Property="CornerRadius" Value="3"/>
+            <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Transitions">
                 <Transitions>
                     <BrushTransition Property="BorderBrush" Duration="0:0:0.1"/>
