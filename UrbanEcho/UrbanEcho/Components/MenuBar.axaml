@@ -94,11 +94,14 @@
 							<icon:SymbolIcon Symbol="Layer"/>
                         </MenuItem.Icon>
 						<MenuItem Header="Raster Background Image"
-                              IsChecked="{Binding Map.IsRasterVisible}"
-                              ToggleType="CheckBox"
-                              Command="{Binding Map.ToggleRasterCommand}"/>
+                                  IsChecked="{Binding Map.IsRasterVisible}"
+                                  ToggleType="CheckBox"
+                                  Command="{Binding Map.ToggleRasterCommand}"/>
                         <MenuItem Header="Road Names"/>
-                        <MenuItem Header="Intersection Details"/>
+                        <MenuItem Header="Intersection Details"
+                                  IsChecked="{Binding Map.IsIntersectionsVisible}"
+                                  ToggleType="CheckBox"
+                                  Command="{Binding Map.ToggleIntersectionDetailsCommand}"/>
                     </MenuItem>
                     <Separator />
                     <MenuItem Header="Console Window">

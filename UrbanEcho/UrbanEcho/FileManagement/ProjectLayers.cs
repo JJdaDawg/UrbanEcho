@@ -34,6 +34,7 @@ namespace UrbanEcho.FileManagement
         private static ProjectFile? currentProjectFile = new ProjectFile();
 
         public static bool IsRasterVisible { get; set; } = true;
+        public static bool IsIntersectionsVisible { get; set; } = true;
 
         public static void LoadProject(string path)
         {
@@ -363,7 +364,7 @@ namespace UrbanEcho.FileManagement
             {
                 myMap?.Layers.Add(roadLayerSecondPass);
             }
-            if (intersectionLayer != null)
+            if (IsIntersectionsVisible && intersectionLayer != null)
             {
                 myMap?.Layers.Add(intersectionLayer);
             }
