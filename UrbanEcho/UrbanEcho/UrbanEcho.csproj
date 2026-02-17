@@ -53,6 +53,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Graph\" />
     <Folder Include="Resources\ProjectFiles\" />
     <Folder Include="Resources\ShapeFiles\intersections_kitchener\" />
   </ItemGroup>
