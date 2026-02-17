@@ -19,10 +19,11 @@ using UrbanEcho.FileManagement;
 using UrbanEcho.ViewModels;
 using static Mapsui.MapBuilder;
 using Layer = Mapsui.Layers.Layer;
+using Box2dNet.Interop;
 
 namespace UrbanEcho.Sim
 {
-    public static class Simulation
+    public static class Sim
     {
         public static CancellationTokenSource Cts = new CancellationTokenSource();
 
@@ -31,6 +32,9 @@ namespace UrbanEcho.Sim
         private static Map? MyMap;
 
         private static MainViewModel? mainViewModel;
+
+        public static List<Vehicle> vehicles = new List<Vehicle>();
+        public static float SimTime = 0;
 
         public static void SetMainViewModel(MainViewModel setMainViewModel)
         {

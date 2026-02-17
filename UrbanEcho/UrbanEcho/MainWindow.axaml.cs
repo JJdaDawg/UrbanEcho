@@ -44,8 +44,8 @@ public partial class MainWindow : AppWindow
         MainViewModel vm = new MainViewModel();
         DataContext = vm;
         SetupMap.Init(vm.Map.MyMap);
-        Simulation.SetMainViewModel(vm);
-        Simulation.SimTask = Task.Factory.StartNew(new Action(Simulation.Run), Simulation.Cts.Token);
+        Sim.Sim.SetMainViewModel(vm);
+        Sim.Sim.SimTask = Task.Factory.StartNew(new Action(Sim.Sim.Run), Sim.Sim.Cts.Token);
         LoggingWidget.ShowLoggingInMap = ActiveMode.No;
         try
         {

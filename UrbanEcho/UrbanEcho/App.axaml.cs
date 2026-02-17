@@ -36,11 +36,11 @@ public partial class App : Application
     {
         try
         {
-            Simulation.Cts.Cancel();
+            Sim.Sim.Cts.Cancel();
 
-            if (Simulation.SimTask != null)
+            if (Sim.Sim.SimTask != null)
             {
-                Simulation.SimTask.Wait();
+                Sim.Sim.SimTask.Wait();
             }
         }
         catch
@@ -49,7 +49,7 @@ public partial class App : Application
         }
         finally
         {
-            Simulation.Cts.Dispose();
+            Sim.Sim.Cts.Dispose();
         }
     }
 }

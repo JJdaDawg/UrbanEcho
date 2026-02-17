@@ -136,13 +136,13 @@ namespace UrbanEcho.FileManagement
                     try
                     {
                         ShapeFile roadNetwork = new ShapeFile(currentProjectFile.RoadLayerPath);
-                        EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Load Road Shape File"));
+                        EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Load Road Shape File"));
                         roadLayerFirstPass = new RasterizingLayer(CreateRoadLayer(roadNetwork, "Road Outline", true, false));
                         roadLayerSecondPass = new RasterizingLayer(CreateRoadLayer(roadNetwork, "Roads", false, true));
                     }
                     catch (Exception ex)
                     {
-                        EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Failed to load Road Layer {ex.ToString()}"));
+                        EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to load Road Layer {ex.ToString()}"));
                     }
 
                     if (roadLayerFirstPass != null && roadLayerSecondPass != null)
@@ -157,12 +157,12 @@ namespace UrbanEcho.FileManagement
                     try
                     {
                         ShapeFile intersections = new ShapeFile(currentProjectFile.IntersectionLayerPath);
-                        EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Loaded Intersections Shape File"));
+                        EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Loaded Intersections Shape File"));
                         intersectionLayer = CreateIntersectionsLayer(intersections, "Intersections");
                     }
                     catch (Exception ex)
                     {
-                        EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Failed to load Intersection Layer {ex.ToString()}"));
+                        EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to load Intersection Layer {ex.ToString()}"));
                     }
 
                     if (intersectionLayer != null)
@@ -180,7 +180,7 @@ namespace UrbanEcho.FileManagement
             }
             else
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Failed To add layers no project"));
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed To add layers no project"));
             }
 
             return addLayer;
@@ -194,11 +194,11 @@ namespace UrbanEcho.FileManagement
             {
                 MbTilesTileSource mbTilesTileSource = new MbTilesTileSource(new SQLiteConnectionString(path, true));
                 mbTilesLayer = new TileLayer(mbTilesTileSource) { Name = name };
-                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Loaded MBTiles Background File"));
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Loaded MBTiles Background File"));
             }
             catch (Exception ex)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Failed to create tile layer {ex.ToString()}"));
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to create tile layer {ex.ToString()}"));
             }
 
             return mbTilesLayer;
@@ -219,11 +219,11 @@ namespace UrbanEcho.FileManagement
 
                 layer = new Layer(name);
                 layer.DataSource = projectingProvider;
-                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Created Background Layer"));
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Created Background Layer"));
             }
             catch (Exception ex)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Failed to load Background Layer {ex.ToString()}"));
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to load Background Layer {ex.ToString()}"));
             }
 
             return layer;
@@ -252,11 +252,11 @@ namespace UrbanEcho.FileManagement
                 IntersectionStyles intersectionsStyle = new IntersectionStyles();
 
                 layer.Style = intersectionsStyle.CreateThemeStyle();
-                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Created Intersections Layer"));
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Created Intersections Layer"));
             }
             catch (Exception ex)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Unable to create Intersections Layer {ex.ToString()}"));
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Unable to create Intersections Layer {ex.ToString()}"));
             }
 
             return layer;
@@ -305,13 +305,13 @@ namespace UrbanEcho.FileManagement
 
                 layer.Style = style;
                 layer.Opacity = 1.0f;
-                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Created Road Layer"));
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Created Road Layer"));
 
                 RoadFeatures = Helpers.Helper.GetRoadNetworkFeatures(layer.DataSource);
             }
             catch (Exception ex)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Failed to create road layer {ex.ToString()}"));
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to create road layer {ex.ToString()}"));
             }
             return layer;
         }
@@ -353,11 +353,11 @@ namespace UrbanEcho.FileManagement
 
                 layer.Style = vehiclesStyle.CreateThemeStyle();
 
-                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Created Vehicles Layer"));
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Created Vehicles Layer"));
             }
             catch (Exception ex)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Failed to create Vehicle Layer {ex.ToString()}"));
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to create Vehicle Layer {ex.ToString()}"));
             }
 
             return layer;
