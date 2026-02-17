@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Box2dNet.Interop;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -36,20 +37,21 @@ public partial class App : Application
     {
         try
         {
-            Simulation.Cts.Cancel();
+            Sim.Sim.Cts.Cancel();
 
-            if (Simulation.SimTask != null)
+            if (Sim.Sim.SimTask != null)
             {
-                Simulation.SimTask.Wait();
+                Sim.Sim.SimTask.Wait();
+                B2Api.b2DestroyWorld(World.WorldId);//Destroy world
             }
         }
-        catch (Exception ex)
+        catch
         {
-            //TODO: Add errors for task had a exception
+            //TODO: maybe log to file, can't show error since window is closing
         }
         finally
         {
-            Simulation.Cts.Dispose();
+            Sim.Sim.Cts.Dispose();
         }
     }
 }

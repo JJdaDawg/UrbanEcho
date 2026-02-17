@@ -19,10 +19,11 @@ using UrbanEcho.FileManagement;
 using UrbanEcho.ViewModels;
 using static Mapsui.MapBuilder;
 using Layer = Mapsui.Layers.Layer;
+using Box2dNet.Interop;
 
 namespace UrbanEcho.Sim
 {
-    public static class Simulation
+    public static class Sim
     {
         public static CancellationTokenSource Cts = new CancellationTokenSource();
 
@@ -32,11 +33,19 @@ namespace UrbanEcho.Sim
 
         private static MainViewModel? mainViewModel;
 
+        public static List<Vehicle> Vehicles = new List<Vehicle>();
+        public static float SimTime = 0;
+
         public static void SetMainViewModel(MainViewModel setMainViewModel)
         {
             mainViewModel = setMainViewModel;
 
             MyMap = setMainViewModel.Map.MyMap;
+        }
+
+        public static MainViewModel? GetMainViewModel()
+        {
+            return mainViewModel;
         }
 
         public static void Run()
@@ -52,7 +61,7 @@ namespace UrbanEcho.Sim
             LoadFileEvent loadProjectEvent = new LoadFileEvent(FileTypes.FileType.ProjectFile, "Resources/ProjectFiles/myFile.Json", mainViewModel.Map.MyMap);
             EventQueueForSim.Instance.Add(loadProjectEvent); //will usually happen from UI
 
-            FrameTimer frameTimer = new FrameTimer(true);
+            FrameTimer frameTimer = new FrameTimer(false);
 
             while (Cts.IsCancellationRequested == false)
             {
@@ -73,7 +82,7 @@ namespace UrbanEcho.Sim
 
                 if (frameTimer.ShouldShowText())
                 {
-                    EventQueueForUI.Instance.Add(new ShowMessageConsoleWindowEvent(mainViewModel, frameTimer.TimeToShow()));
+                    EventQueueForUI.Instance.Add(new LogToConsole(mainViewModel, frameTimer.TimeToShow()));
                     frameTimer.ResetShowText();
                 }
 
@@ -89,7 +98,20 @@ namespace UrbanEcho.Sim
         private static void simulationLoop()
         {
             //simulate doing stuff
-            Thread.SpinWait(100000);
+            //Thread.SpinWait(100000);
+            if (World.Created)
+            {
+                B2Api.b2World_Step(World.WorldId, 1 / 60f, 4);
+
+                Sim.SimTime += 1 / 60f;
+
+                foreach (Vehicle v in Vehicles)
+                {
+                    v.Update();
+                }
+
+                ProjectLayers.SetVehicleLayerDataChanged();
+            }
         }
 
         private static void readQueue()
