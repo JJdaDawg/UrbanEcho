@@ -1,10 +1,13 @@
-﻿using Newtonsoft.Json;
+﻿using Avalonia.Controls.Shapes;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UrbanEcho.Events.UI;
+using UrbanEcho.Sim;
 
 namespace UrbanEcho.FileManagement
 {
@@ -31,11 +34,12 @@ namespace UrbanEcho.FileManagement
                 {
                     string textRead = reader.ReadToEnd();
                     projectFile = JsonConvert.DeserializeObject<ProjectFile>(textRead);
+                    EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Opened Project File {path}"));
                 }
             }
             catch (Exception ex)
             {
-                //TODO: Add error
+                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Failed to open Project File {ex.ToString()}"));
             }
 
             return projectFile;
@@ -51,11 +55,12 @@ namespace UrbanEcho.FileManagement
                     {
                         string s = JsonConvert.SerializeObject(projectFile);
                         writer.WriteLine(s);
+                        EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Saved Project File {projectFile.PathForThisFile}"));
                     }
                 }
                 catch (Exception ex)
                 {
-                    //TODO: Add error
+                    EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Failed to load Project File {ex.ToString()}"));
                 }
             }
             else
@@ -74,11 +79,12 @@ namespace UrbanEcho.FileManagement
                 {
                     string s = JsonConvert.SerializeObject(projectFile);
                     writer.WriteLine(s);
+                    EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Saved Project File As {projectFile.PathForThisFile}"));
                 }
             }
             catch (Exception ex)
             {
-                //TODO: Add error
+                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Failed to save as project file {ex.ToString()}"));
             }
         }
     }

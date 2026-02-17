@@ -43,9 +43,9 @@ public partial class App : Application
                 Simulation.SimTask.Wait();
             }
         }
-        catch (Exception ex)
+        catch
         {
-            //TODO: Add errors for task had a exception
+            //TODO: maybe log to file, can't show error since window is closing
         }
         finally
         {

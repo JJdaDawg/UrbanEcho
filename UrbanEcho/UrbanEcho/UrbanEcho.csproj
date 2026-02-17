@@ -12,6 +12,7 @@
     <None Remove="Resources\Images\TrafficIcons\Pin.svg" />
     <None Remove="Resources\Images\TrafficIcons\StopSign.png" />
     <None Remove="Resources\Images\TrafficIcons\TrafficLight.png" />
+    <None Remove="Resources\Images\VehicleIcons\RedCar.png" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\Images\TrafficIcons\Flasher.png">
@@ -27,6 +28,7 @@
     <EmbeddedResource Include="Resources\Images\TrafficIcons\TrafficLight.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
+    <EmbeddedResource Include="Resources\Images\VehicleIcons\RedCar.png" />
   </ItemGroup>
 
   <ItemGroup>

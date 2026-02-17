@@ -1,19 +1,27 @@
-﻿using BruTile.MbTiles;
+﻿using Avalonia.Media;
+using BruTile.MbTiles;
 
 using Mapsui;
 using Mapsui.Layers;
+using Mapsui.Nts;
 using Mapsui.Nts.Providers.Shapefile;
 using Mapsui.Providers;
 using Mapsui.Styles;
 using Mapsui.Tiling.Layers;
 using Mapsui.UI.Avalonia;
+using NetTopologySuite.Geometries;
 using SQLite;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UrbanEcho.Events.UI;
+using UrbanEcho.Sim;
 using UrbanEcho.Styles;
+using UrbanEcho.ViewModels;
+using Color = Mapsui.Styles.Color;
+using Pen = Mapsui.Styles.Pen;
 
 namespace UrbanEcho.FileManagement
 {
@@ -24,16 +32,27 @@ namespace UrbanEcho.FileManagement
         private static RasterizingLayer? roadLayerFirstPass;
         private static RasterizingLayer? roadLayerSecondPass;
         private static Layer? intersectionLayer;
+        private static MemoryLayer? vehicleLayer;
 
         private static bool backgroundRequiresLoading = false;
         private static bool roadRequiresLoading = false;
         private static bool intersectionRequiresLoading = false;
+        private static bool vehicleRequiresLoading = false;
+
+        private static bool backgroundLoaded = false;
+        private static bool roadLoaded = false;
+        private static bool intersectionLoaded = false;
+        private static bool vehicleLoaded = false;
 
         private static bool isZoomedToLayer = false;
 
         private static ProjectFile? currentProjectFile = new ProjectFile();
 
         public static bool IsRasterVisible { get; set; } = true;
+
+        private static List<IFeature> RoadFeatures = new List<IFeature>();
+
+        public static List<IFeature> Vehiclefeatures = new List<IFeature>();
 
         public static void LoadProject(string path)
         {
@@ -45,6 +64,13 @@ namespace UrbanEcho.FileManagement
                 backgroundRequiresLoading = true;
                 roadRequiresLoading = true;
                 intersectionRequiresLoading = true;
+                vehicleRequiresLoading = true;
+
+                backgroundLoaded = false;
+                roadLoaded = false;
+                intersectionLoaded = false;
+                vehicleLoaded = false;
+
                 Load(currentProjectFile);
             }
         }
@@ -55,6 +81,7 @@ namespace UrbanEcho.FileManagement
             {
                 currentProjectFile.BackgroundLayerPath = path;
                 backgroundRequiresLoading = true;
+                backgroundLoaded = false;
                 Load(currentProjectFile);
             }
         }
@@ -65,6 +92,8 @@ namespace UrbanEcho.FileManagement
             {
                 currentProjectFile.RoadLayerPath = path;
                 roadRequiresLoading = true;
+                roadLoaded = false;
+                vehicleRequiresLoading = true;
                 Load(currentProjectFile);
             }
         }
@@ -75,6 +104,8 @@ namespace UrbanEcho.FileManagement
             {
                 currentProjectFile.IntersectionLayerPath = path;
                 intersectionRequiresLoading = true;
+                intersectionLoaded = false;
+                vehicleRequiresLoading = true;
                 Load(currentProjectFile);
             }
         }
@@ -96,6 +127,8 @@ namespace UrbanEcho.FileManagement
                     if (backgroundMBTile != null)
                     {
                         addLayer = true;
+                        backgroundLoaded = true;
+                        backgroundRequiresLoading = false;
                     }
                 }
                 if (roadRequiresLoading == true)
@@ -103,17 +136,20 @@ namespace UrbanEcho.FileManagement
                     try
                     {
                         ShapeFile roadNetwork = new ShapeFile(currentProjectFile.RoadLayerPath);
+                        EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Load Road Shape File"));
                         roadLayerFirstPass = new RasterizingLayer(CreateRoadLayer(roadNetwork, "Road Outline", true, false));
                         roadLayerSecondPass = new RasterizingLayer(CreateRoadLayer(roadNetwork, "Roads", false, true));
                     }
                     catch (Exception ex)
                     {
-                        //TODO: Add error message
+                        EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Failed to load Road Layer {ex.ToString()}"));
                     }
 
                     if (roadLayerFirstPass != null && roadLayerSecondPass != null)
                     {
                         addLayer = true;
+                        roadLoaded = true;
+                        roadRequiresLoading = false;
                     }
                 }
                 if (intersectionRequiresLoading == true)
@@ -121,32 +157,33 @@ namespace UrbanEcho.FileManagement
                     try
                     {
                         ShapeFile intersections = new ShapeFile(currentProjectFile.IntersectionLayerPath);
+                        EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Loaded Intersections Shape File"));
                         intersectionLayer = CreateIntersectionsLayer(intersections, "Intersections");
                     }
                     catch (Exception ex)
                     {
-                        //TODO: Add error message
+                        EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Failed to load Intersection Layer {ex.ToString()}"));
                     }
 
                     if (intersectionLayer != null)
                     {
                         addLayer = true;
+                        intersectionLoaded = true;
+                        intersectionRequiresLoading = false;
                     }
                 }
-                else
+
+                if (vehicleRequiresLoading && intersectionLoaded && roadLoaded)
                 {
-                    //TODO: Add errors for null project
+                    vehicleLayer = CreateVehicleLayer();
                 }
+            }
+            else
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Failed To add layers no project"));
             }
 
             return addLayer;
-        }
-
-        public static void ResetRequiresLoading()
-        {
-            backgroundRequiresLoading = false;
-            roadRequiresLoading = false;
-            intersectionRequiresLoading = false;
         }
 
         //https://github.com/BruTile/BruTile
@@ -157,12 +194,12 @@ namespace UrbanEcho.FileManagement
             {
                 MbTilesTileSource mbTilesTileSource = new MbTilesTileSource(new SQLiteConnectionString(path, true));
                 mbTilesLayer = new TileLayer(mbTilesTileSource) { Name = name };
+                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Loaded MBTiles Background File"));
             }
             catch (Exception ex)
             {
+                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Failed to create tile layer {ex.ToString()}"));
             }
-
-            //TODO: Figure out how to check if this failed and show error
 
             return mbTilesLayer;
         }
@@ -182,11 +219,12 @@ namespace UrbanEcho.FileManagement
 
                 layer = new Layer(name);
                 layer.DataSource = projectingProvider;
+                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Created Background Layer"));
             }
             catch (Exception ex)
             {
+                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Failed to load Background Layer {ex.ToString()}"));
             }
-            //TODO: Figure out how to check if this failed and show error
 
             return layer;
         }
@@ -210,13 +248,16 @@ namespace UrbanEcho.FileManagement
                 layer.MaxVisible = 3.5f;
 
                 layer.DataSource = projectingProvider;
-                //TODO: Figure out how to check if this failed and show error
 
                 IntersectionStyles intersectionsStyle = new IntersectionStyles();
 
                 layer.Style = intersectionsStyle.CreateThemeStyle();
+                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Created Intersections Layer"));
             }
-            catch (Exception ex) { }
+            catch (Exception ex)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Unable to create Intersections Layer {ex.ToString()}"));
+            }
 
             return layer;
         }
@@ -235,7 +276,6 @@ namespace UrbanEcho.FileManagement
 
                 layer = new Layer(name);
                 layer.DataSource = projectingProvider;
-                //TODO: Figure out how to check if this failed and show error
 
                 //https://github.com/Mapsui/Mapsui/blob/42b59e9dad1fd9512f0114f8c8a3fd3f5666d330/Samples/Mapsui.Samples.Common/Maps/CustomStyleSample.cs#L16-L51
 
@@ -265,8 +305,61 @@ namespace UrbanEcho.FileManagement
 
                 layer.Style = style;
                 layer.Opacity = 1.0f;
+                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Created Road Layer"));
+
+                RoadFeatures = Helpers.Helper.GetRoadNetworkFeatures(layer.DataSource);
             }
-            catch (Exception ex) { }
+            catch (Exception ex)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Failed to create road layer {ex.ToString()}"));
+            }
+            return layer;
+        }
+
+        public static MemoryLayer? CreateVehicleLayer()
+        {
+            MemoryLayer? layer = null;
+
+            try
+            {
+                layer = new MemoryLayer("Vehicles");
+
+                for (int i = 0; RoadFeatures.Count > i; i++)
+                {
+                    if (RoadFeatures[i] is GeometryFeature gf)
+                    {
+                        if (gf.Geometry is NetTopologySuite.Geometries.LineString l)
+                        {
+                            if (l.Coordinates.Length > 0)
+                            {
+                                MPoint mPoint = new MPoint(l.Coordinates[0].X, l.Coordinates[0].Y);
+                                PointFeature pf = new PointFeature(mPoint);
+                                pf["VehicleNumber"] = i;
+                                pf["VehicleType"] = "RedCar";
+                                pf["Hidden"] = "true";
+                                Vehiclefeatures.Add(pf);
+                            }
+                        }
+                    }
+                }
+
+                layer.Features = Vehiclefeatures;
+
+                layer.Opacity = 1.0f;
+
+                layer.MaxVisible = 3.5f;
+
+                VehicleStyles vehiclesStyle = new VehicleStyles();
+
+                layer.Style = vehiclesStyle.CreateThemeStyle();
+
+                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Created Vehicles Layer"));
+            }
+            catch (Exception ex)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Failed to create Vehicle Layer {ex.ToString()}"));
+            }
+
             return layer;
         }
 
@@ -367,6 +460,17 @@ namespace UrbanEcho.FileManagement
             {
                 myMap?.Layers.Add(intersectionLayer);
             }
+
+            if (vehicleLayer != null)
+            {
+                myMap?.Layers.Add(vehicleLayer);
+            }
+        }
+
+        public static void SetVehicleLayerDataChanged()
+        {
+            if (vehicleLayer != null)
+                vehicleLayer.DataHasChanged();
         }
 
         //Only call from UI

@@ -17,6 +17,9 @@ using Mapsui.Tiling;
 using Mapsui.Tiling.Layers;
 using Mapsui.UI;
 using Mapsui.UI.Avalonia;
+using Mapsui.Utilities;
+using Mapsui.Widgets;
+using Mapsui.Widgets.InfoWidgets;
 using NetTopologySuite.Geometries;
 using SQLite;
 using System;
@@ -43,5 +46,17 @@ public partial class MainWindow : AppWindow
         SetupMap.Init(vm.Map.MyMap);
         Simulation.SetMainViewModel(vm);
         Simulation.SimTask = Task.Factory.StartNew(new Action(Simulation.Run), Simulation.Cts.Token);
+        LoggingWidget.ShowLoggingInMap = ActiveMode.No;
+        try
+        {
+            PerformanceWidget? performanceWidget = MyMapControl.Map.Widgets.OfType<PerformanceWidget>().FirstOrDefault();
+            if (performanceWidget != null)
+            {
+                performanceWidget.Enabled = false;
+            }
+        }
+        finally
+        {
+        }
     }
 }

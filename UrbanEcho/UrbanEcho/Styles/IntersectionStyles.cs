@@ -10,6 +10,8 @@ using System.Reflection;
 using System.Resources;
 using System.Text;
 using System.Threading.Tasks;
+using UrbanEcho.Events.UI;
+using UrbanEcho.Sim;
 using static Mapsui.Rendering.Skia.Functions.ClippingFunctions;
 
 namespace UrbanEcho.Styles
@@ -34,14 +36,14 @@ namespace UrbanEcho.Styles
                     Styles.Add("Flasher", CreateImageStyle(projectName, "Flasher.png"));
                     Styles.Add("Pedestrian", CreateImageStyle(projectName, "Pedestrian.png"));
                 }
-                catch
+                catch (Exception ex)
                 {
-                    //TODO: Show Error if could not add styles
+                    EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Unable to add intersection styles {ex.ToString()}"));
                 }
             }
             else
             {
-                //TODO: Show Error if could not get project name
+                EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Unable to get project assembly name while trying to load embedded images"));
             }
         }
 
@@ -106,7 +108,7 @@ namespace UrbanEcho.Styles
                     }
                     catch
                     {
-                        //TODO: intersection type attribute not in file show error
+                        EventQueueForUI.Instance.Add(new LogToConsole(Simulation.GetMainViewModel(), $"Tried to show intersection style that does not exist"));
                     }
                 }
                 return null;

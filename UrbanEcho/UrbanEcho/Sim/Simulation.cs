@@ -39,6 +39,11 @@ namespace UrbanEcho.Sim
             MyMap = setMainViewModel.Map.MyMap;
         }
 
+        public static MainViewModel? GetMainViewModel()
+        {
+            return mainViewModel;
+        }
+
         public static void Run()
         {
             Stopwatch totalRunTime = new Stopwatch();
@@ -52,7 +57,7 @@ namespace UrbanEcho.Sim
             LoadFileEvent loadProjectEvent = new LoadFileEvent(FileTypes.FileType.ProjectFile, "Resources/ProjectFiles/myFile.Json", mainViewModel.Map.MyMap);
             EventQueueForSim.Instance.Add(loadProjectEvent); //will usually happen from UI
 
-            FrameTimer frameTimer = new FrameTimer(true);
+            FrameTimer frameTimer = new FrameTimer(false);
 
             while (Cts.IsCancellationRequested == false)
             {
@@ -73,7 +78,7 @@ namespace UrbanEcho.Sim
 
                 if (frameTimer.ShouldShowText())
                 {
-                    EventQueueForUI.Instance.Add(new ShowMessageConsoleWindowEvent(mainViewModel, frameTimer.TimeToShow()));
+                    EventQueueForUI.Instance.Add(new LogToConsole(mainViewModel, frameTimer.TimeToShow()));
                     frameTimer.ResetShowText();
                 }
 
@@ -90,6 +95,8 @@ namespace UrbanEcho.Sim
         {
             //simulate doing stuff
             Thread.SpinWait(100000);
+
+            ProjectLayers.SetVehicleLayerDataChanged();
         }
 
         private static void readQueue()

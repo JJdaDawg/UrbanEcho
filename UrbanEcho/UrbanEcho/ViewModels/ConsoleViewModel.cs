@@ -15,12 +15,16 @@ namespace UrbanEcho.ViewModels
         private readonly ObservableCollection<string> _mapLogs = new();
         private readonly ObservableCollection<string> _systemLogs = new();
 
-        [ObservableProperty] private LogSource _selectedSource = LogSource.System;
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CurrentLogs))]
+        private LogSource _selectedSource = LogSource.System;
+
         [ObservableProperty] private bool _isVisible = true;
 
         public ObservableCollection<string> CurrentLogs => SelectedSource == LogSource.Map ? _mapLogs : _systemLogs;
 
         [RelayCommand] private void ClearConsole() => CurrentLogs.Clear();
+
         [RelayCommand] private void Close() => IsVisible = !IsVisible;
 
         public void AddLog(string message, LogSource source)
