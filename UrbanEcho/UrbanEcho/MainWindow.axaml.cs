@@ -27,6 +27,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using UrbanEcho.Events.UI;
 using UrbanEcho.Sim;
 using UrbanEcho.ViewModels;
 using Layer = Mapsui.Layers.Layer;
@@ -46,17 +47,5 @@ public partial class MainWindow : AppWindow
         SetupMap.Init(vm.Map.MyMap);
         Sim.Sim.SetMainViewModel(vm);
         Sim.Sim.SimTask = Task.Factory.StartNew(new Action(Sim.Sim.Run), Sim.Sim.Cts.Token);
-        LoggingWidget.ShowLoggingInMap = ActiveMode.No;
-        try
-        {
-            PerformanceWidget? performanceWidget = MyMapControl.Map.Widgets.OfType<PerformanceWidget>().FirstOrDefault();
-            if (performanceWidget != null)
-            {
-                performanceWidget.Enabled = false;
-            }
-        }
-        finally
-        {
-        }
     }
 }

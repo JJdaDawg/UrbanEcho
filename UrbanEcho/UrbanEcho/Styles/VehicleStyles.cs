@@ -11,6 +11,7 @@ using System.Resources;
 using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
+using UrbanEcho.Helpers;
 using UrbanEcho.Sim;
 using static Mapsui.Rendering.Skia.Functions.ClippingFunctions;
 
@@ -80,7 +81,7 @@ namespace UrbanEcho.Styles
                 {
                     try
                     {
-                        if (f["Hidden"]?.ToString() == "true")
+                        if ((bool)f["Hidden"] == true)
                         {
                             return Styles["Hidden"];
                         }
@@ -91,7 +92,9 @@ namespace UrbanEcho.Styles
                                 case "RedCar":
 
                                     ImageStyle style = CopyStyle((ImageStyle)Styles["RedCar"]);
-                                    style.SymbolRotation = random.NextDouble() * 360.0f;
+
+                                    float angle = -(float)f["Angle"];
+                                    style.SymbolRotation = angle;
                                     return style;
 
                                 default:

@@ -33,7 +33,7 @@ namespace UrbanEcho.Sim
 
         private static MainViewModel? mainViewModel;
 
-        public static List<Vehicle> vehicles = new List<Vehicle>();
+        public static List<Vehicle> Vehicles = new List<Vehicle>();
         public static float SimTime = 0;
 
         public static void SetMainViewModel(MainViewModel setMainViewModel)
@@ -98,9 +98,20 @@ namespace UrbanEcho.Sim
         private static void simulationLoop()
         {
             //simulate doing stuff
-            Thread.SpinWait(100000);
+            //Thread.SpinWait(100000);
+            if (World.Created)
+            {
+                B2Api.b2World_Step(World.WorldId, 1 / 60f, 4);
 
-            ProjectLayers.SetVehicleLayerDataChanged();
+                Sim.SimTime += 1 / 60f;
+
+                foreach (Vehicle v in Vehicles)
+                {
+                    v.Update();
+                }
+
+                ProjectLayers.SetVehicleLayerDataChanged();
+            }
         }
 
         private static void readQueue()

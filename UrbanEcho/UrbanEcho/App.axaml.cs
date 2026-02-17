@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Box2dNet.Interop;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -41,6 +42,7 @@ public partial class App : Application
             if (Sim.Sim.SimTask != null)
             {
                 Sim.Sim.SimTask.Wait();
+                B2Api.b2DestroyWorld(World.WorldId);//Destroy world
             }
         }
         catch

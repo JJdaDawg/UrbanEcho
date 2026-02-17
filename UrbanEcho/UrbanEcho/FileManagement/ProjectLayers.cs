@@ -1,4 +1,5 @@
 ﻿using Avalonia.Media;
+using BruTile;
 using BruTile.MbTiles;
 
 using Mapsui;
@@ -37,7 +38,7 @@ namespace UrbanEcho.FileManagement
         private static bool backgroundRequiresLoading = false;
         private static bool roadRequiresLoading = false;
         private static bool intersectionRequiresLoading = false;
-        private static bool vehicleRequiresLoading = false;
+        private static bool vehicleRequiresLoading = true;
 
         private static bool backgroundLoaded = false;
         private static bool roadLoaded = false;
@@ -52,7 +53,9 @@ namespace UrbanEcho.FileManagement
 
         private static List<IFeature> RoadFeatures = new List<IFeature>();
 
-        public static List<IFeature> Vehiclefeatures = new List<IFeature>();
+        public static List<IFeature> VehicleFeatures = new List<IFeature>();
+
+        public static MPoint CenterOfMap = new MPoint();
 
         public static void LoadProject(string path)
         {
@@ -64,7 +67,6 @@ namespace UrbanEcho.FileManagement
                 backgroundRequiresLoading = true;
                 roadRequiresLoading = true;
                 intersectionRequiresLoading = true;
-                vehicleRequiresLoading = true;
 
                 backgroundLoaded = false;
                 roadLoaded = false;
@@ -93,7 +95,7 @@ namespace UrbanEcho.FileManagement
                 currentProjectFile.RoadLayerPath = path;
                 roadRequiresLoading = true;
                 roadLoaded = false;
-                vehicleRequiresLoading = true;
+
                 Load(currentProjectFile);
             }
         }
@@ -105,7 +107,7 @@ namespace UrbanEcho.FileManagement
                 currentProjectFile.IntersectionLayerPath = path;
                 intersectionRequiresLoading = true;
                 intersectionLoaded = false;
-                vehicleRequiresLoading = true;
+
                 Load(currentProjectFile);
             }
         }
@@ -122,7 +124,7 @@ namespace UrbanEcho.FileManagement
             {
                 if (backgroundRequiresLoading == true)
                 {
-                    backgroundMBTile = CreateMbTilesLayer(currentProjectFile.BackgroundLayerPath, "background"); ;
+                    backgroundMBTile = CreateMbTilesLayer(currentProjectFile.BackgroundLayerPath, "background");
 
                     if (backgroundMBTile != null)
                     {
@@ -175,7 +177,17 @@ namespace UrbanEcho.FileManagement
 
                 if (vehicleRequiresLoading && intersectionLoaded && roadLoaded)
                 {
+                    MRect? extent = roadLayerFirstPass?.Extent;
+                    if (extent != null)
+                    {
+                        CenterOfMap = new MPoint(extent.MinX + (extent.MaxX - extent.MinX) / 2,
+                                    extent.MinY + (extent.MaxY - extent.MinY) / 2);
+                    }
                     vehicleLayer = CreateVehicleLayer();
+                    vehicleRequiresLoading = false;
+                    //TODO: if we are going to load new road network we should probably destroy box
+                    ///2d world and dispose any handles created in the
+                    ///IntersectionBody file. Then create a new world and make new shapes again
                 }
             }
             else
@@ -320,6 +332,11 @@ namespace UrbanEcho.FileManagement
         {
             MemoryLayer? layer = null;
 
+            if (World.Created == false)
+            {
+                World.Init(CenterOfMap.X, CenterOfMap.Y);
+            }
+
             try
             {
                 layer = new MemoryLayer("Vehicles");
@@ -336,14 +353,17 @@ namespace UrbanEcho.FileManagement
                                 PointFeature pf = new PointFeature(mPoint);
                                 pf["VehicleNumber"] = i;
                                 pf["VehicleType"] = "RedCar";
-                                pf["Hidden"] = "true";
-                                Vehiclefeatures.Add(pf);
+                                pf["Hidden"] = false;
+                                pf["Angle"] = 0;
+                                VehicleFeatures.Add(pf);
+
+                                UrbanEcho.Sim.Sim.Vehicles.Add(new Vehicle(pf));
                             }
                         }
                     }
                 }
 
-                layer.Features = Vehiclefeatures;
+                layer.Features = VehicleFeatures;
 
                 layer.Opacity = 1.0f;
 

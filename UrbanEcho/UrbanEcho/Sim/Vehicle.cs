@@ -1,6 +1,7 @@
 ﻿using Box2dNet;
 using Box2dNet.Interop;
-
+using Mapsui;
+using Mapsui.Layers;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -9,6 +10,7 @@ using System.Numerics;
 using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
+using UrbanEcho.Events.UI;
 using UrbanEcho.Helpers;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -44,7 +46,7 @@ namespace UrbanEcho.Sim
         private VehicleBody body;
 
         private Vector2 startPos = new Vector2(350, 100);
-        private Vector2 endPos = new Vector2(600, 100);
+        private float distanceToTravel = 100.0f;
 
         private b2QueryFilter queryFilter = B2Api.b2DefaultQueryFilter();
 
@@ -67,11 +69,19 @@ namespace UrbanEcho.Sim
 
         private VehicleStates state = VehicleStates.Stopped;
 
-        private float textOffsetPos;
+        private PointFeature feature;//The feature this vehicle is connected to
 
-        public Vehicle(float textOffsetPos)
+        private float startingAngle = 0;
+
+        public Vehicle(PointFeature feature)
         {
-            this.textOffsetPos = textOffsetPos;
+            Random random = new Random();
+            startingAngle = random.Next() * Helper.Deg2Rad(360.0f);
+
+            this.feature = feature;
+            double startX = feature.Point.X - World.Offset.X;
+            double startY = feature.Point.Y - World.Offset.Y;
+            startPos = new Vector2((float)startX, (float)startY);
 
             FRect rect = new FRect(startPos.X - carLength / 2, startPos.Y - carWidth / 2, carLength, carWidth);
 
@@ -81,6 +91,9 @@ namespace UrbanEcho.Sim
             queryFilter.maskBits = 0xFFFF;
 
             body = new VehicleBody(rect);
+
+            b2Rot rot = b2Rot.FromAngle(startingAngle);
+            B2Api.b2Body_SetTransform(body.BodyId, startPos, rot);
         }
 
         public void SetIntersectionLastAt(b2ShapeId shapeId)
@@ -123,14 +136,28 @@ namespace UrbanEcho.Sim
         {
             Pos = B2Api.b2Body_GetPosition(body.BodyId);
 
-            if (Pos.X > endPos.X)
+            if (Vector2.Distance(startPos, Pos) >= distanceToTravel)
             {
-                b2Rot rot = b2Rot.FromAngle(0);
+                b2Rot rot = b2Rot.FromAngle(startingAngle);
                 B2Api.b2Body_SetTransform(body.BodyId, startPos, rot);
+                Pos = B2Api.b2Body_GetPosition(body.BodyId);
             }
+
+            feature.Point.X = (double)Pos.X + World.Offset.X;
+            feature.Point.Y = (double)Pos.Y + World.Offset.Y;
 
             B2Api.b2Body_SetAngularVelocity(body.BodyId, 0);
             angle = B2Api.b2Body_GetRotation(body.BodyId);
+
+            try
+            {
+                feature["Angle"] = Helper.Rad2Deg(angle.GetAngle());
+            }
+            catch (Exception ex)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Vehicle missing angle feature + {ex.ToString()}"));
+            }
+            feature.Modified();
 
             if (isWaiting)
             {
