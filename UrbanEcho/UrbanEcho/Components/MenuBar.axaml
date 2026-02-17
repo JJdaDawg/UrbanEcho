@@ -89,23 +89,16 @@
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator />
-                    <MenuItem Header="Raster Background Image"
+                    <MenuItem Header="Layers">
+                        <MenuItem.Icon>
+							<icon:SymbolIcon Symbol="Layer"/>
+                        </MenuItem.Icon>
+						<MenuItem Header="Raster Background Image"
                               IsChecked="{Binding Map.IsRasterVisible}"
                               ToggleType="CheckBox"
-                              Command="{Binding Map.ToggleRasterCommand}">
-                        <MenuItem.Icon>
-							<icon:SymbolIcon Symbol="Image"/>
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <MenuItem Header="Road Names">
-                        <MenuItem.Icon>
-							<icon:SymbolIcon Symbol="Road"/>
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <MenuItem Header="Intersection Details">
-                        <MenuItem.Icon>
-							<icon:SymbolIcon Symbol="Info"/>
-                        </MenuItem.Icon>
+                              Command="{Binding Map.ToggleRasterCommand}"/>
+                        <MenuItem Header="Road Names"/>
+                        <MenuItem Header="Intersection Details"/>
                     </MenuItem>
                     <Separator />
                     <MenuItem Header="Console Window">
