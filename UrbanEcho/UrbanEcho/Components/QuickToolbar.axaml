@@ -3,18 +3,18 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:icon="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
-             mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="32"
+             mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="28"
              x:Class="UrbanEcho.QuickToolbar"
              x:DataType="vm:MainViewModel"
              xmlns:vm="clr-namespace:UrbanEcho.ViewModels">
 
     <UserControl.Styles>
         <Style Selector="icon|SymbolIcon">
-            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontSize" Value="13" />
         </Style>
         <Style Selector="Button.ToolbarButton">
-            <Setter Property="Width" Value="28"/>
-            <Setter Property="Height" Value="28"/>
+            <Setter Property="Width" Value="24"/>
+            <Setter Property="Height" Value="24"/>
             <Setter Property="Padding" Value="0"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -33,13 +33,13 @@
     </UserControl.Styles>
 
     <ExperimentalAcrylicBorder 
-        Height="32"
+        Height="28"
         CornerRadius="4">
         <ExperimentalAcrylicBorder.Material>
             <ExperimentalAcrylicMaterial
                 BackgroundSource="Digger"
-                TintColor="{DynamicResource SystemAltHighColor}"
-                TintOpacity="0.6"
+                TintColor="{DynamicResource SystemAltLowColor}"
+                TintOpacity="0.8"
                 MaterialOpacity="0.4" />
         </ExperimentalAcrylicBorder.Material>
 
