@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ExCSS;
 using Mapsui;
+using Mapsui.Nts.Editing;
 using Mapsui.UI.Avalonia;
 using System;
 using System.Collections.Generic;
@@ -22,14 +23,17 @@ namespace UrbanEcho.ViewModels
         public SimulationViewModel Simulation { get; }
         public PropertiesViewModel Properties { get; }
         public ProjectExplorerViewModel ProjectExplorer { get; }
+        public EditModeViewModel EditMode { get; }
+        public bool IsEditMode => EditMode.IsEditMode;
 
         public MainViewModel(IPanelService panelService)
         {
             Console = new ConsoleViewModel(panelService);
             Properties = new PropertiesViewModel(panelService);
             ProjectExplorer = new ProjectExplorerViewModel(panelService);
-            Simulation = new(Console);
-            Map = new(Console);
+            Simulation = new SimulationViewModel(Console);
+            Map = new MapViewModel(Console);
+            EditMode = new EditModeViewModel();
         }
     }
 }

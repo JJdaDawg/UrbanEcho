@@ -34,14 +34,14 @@ namespace UrbanEcho.ViewModels
         {
             ProjectLayers.IsRasterVisible = value;
             ProjectLayers.AddLayers(MyMap);
-            _console.AddLog("Raster background image toggled.", LogSource.System);
+            _console.AddLog("Raster background image toggled", LogSource.Map);
         }
 
         partial void OnIsIntersectionsVisibleChanged(bool value)
         {
             ProjectLayers.IsIntersectionsVisible = value;
             ProjectLayers.AddLayers(MyMap);
-            _console.AddLog("Intersection details toggled.", LogSource.System);
+            _console.AddLog("Intersection details toggled", LogSource.Map);
         }
 
         [RelayCommand]
