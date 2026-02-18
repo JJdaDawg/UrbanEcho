@@ -3,24 +3,25 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     x:Class="UrbanEcho.PropertiesPanel"
+    xmlns:vm="using:UrbanEcho.ViewModels"
+    x:DataType="vm:PropertiesViewModel"
     d:DesignHeight="500"
     d:DesignWidth="300">
 
-    <Border
-        CornerRadius="3"
-        BorderThickness="1"
-        BorderBrush="DimGray"
-        Padding="4">
-
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="28"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
+    <Border Classes="focus-indicator" Focusable="True" Padding="0">
+        <Grid RowDefinitions="32,*">
 
             <!-- Title bar -->
-            <Border CornerRadius="6,6,0,0" Padding="4">
-                <TextBlock Text="Properties"/>
+            <Border Grid.Row="0">
+                <Grid ColumnDefinitions="*, Auto">
+                    <TextBlock Text="Properties" 
+                               Grid.Column="0"
+                               VerticalAlignment="Center" 
+                               Margin="10,0,0,0"/>
+                    <Button Grid.Column="1"
+                        Classes="CloseButtonStyle"
+                        Command="{Binding ToggleCommand}" />
+                </Grid>
             </Border>
 
             <!-- Properties content -->
@@ -28,6 +29,6 @@
 
             </StackPanel>
         </Grid>
-
     </Border>
+
 </UserControl>

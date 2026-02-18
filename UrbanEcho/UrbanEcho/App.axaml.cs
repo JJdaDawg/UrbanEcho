@@ -2,10 +2,13 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Box2dNet.Interop;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using UrbanEcho.Events.UI;
 using UrbanEcho.Sim;
+using UrbanEcho.ViewModels;
 
 namespace UrbanEcho;
 
@@ -16,12 +19,22 @@ public partial class App : Application
         AvaloniaXamlLoader.Load(this);
     }
 
+    public static IServiceProvider Services { get; private set; } = null!;
+
     public override void OnFrameworkInitializationCompleted()
     {
+        var services = new ServiceCollection();
+
+        var mainWindow = new MainWindow();
+        services.AddSingleton<IPanelService>(mainWindow);
+        services.AddSingleton<MainViewModel>();
+
+        Services = services.BuildServiceProvider();
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             desktop.Exit += OnExit;
-            desktop.MainWindow = new MainWindow();
+            desktop.MainWindow = mainWindow;
         }
 
         base.OnFrameworkInitializationCompleted();

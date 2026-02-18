@@ -20,6 +20,9 @@ namespace UrbanEcho.ViewModels
         [ObservableProperty]
         private bool isRasterVisible = true;
 
+        [ObservableProperty]
+        private bool isIntersectionsVisible = true;
+
         private readonly ConsoleViewModel _console;
 
         public MapViewModel(ConsoleViewModel console)
@@ -34,10 +37,23 @@ namespace UrbanEcho.ViewModels
             _console.AddLog("Raster background image toggled.", LogSource.System);
         }
 
+        partial void OnIsIntersectionsVisibleChanged(bool value)
+        {
+            ProjectLayers.IsIntersectionsVisible = value;
+            ProjectLayers.AddLayers(MyMap);
+            _console.AddLog("Intersection details toggled.", LogSource.System);
+        }
+
         [RelayCommand]
         private void ToggleRaster()
         {
             IsRasterVisible = !IsRasterVisible;
+        }
+
+        [RelayCommand]
+        private void ToggleIntersectionDetails()
+        {
+            IsIntersectionsVisible = !IsIntersectionsVisible;
         }
     }
 }

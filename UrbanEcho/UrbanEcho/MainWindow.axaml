@@ -4,55 +4,84 @@
         xmlns:local="clr-namespace:UrbanEcho"
         xmlns:mapsui="clr-namespace:Mapsui.UI.Avalonia;assembly=Mapsui.UI.Avalonia"
         xmlns:vm="using:UrbanEcho.ViewModels"
-        Width="1920"
-        Height="1080"
+        Width="1920" Height="1080"
         Title="Urban Echo"
         WindowState="Maximized"
         TransparencyLevelHint="Mica"
         Background="Transparent"
         x:DataType="vm:MainViewModel">
 
-    <Grid RowDefinitions="Auto,*">
-        
-        <Grid Grid.Row="0" Height="32" Background="Transparent">
-            <local:MenuBar DataContext="{Binding}" VerticalAlignment="Center"/>
-        </Grid>
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
 
-        <Grid Grid.Row="1" RowDefinitions="*,Auto" ColumnDefinitions="*,300">
+        <!-- MenuBar -->
+        <local:MenuBar Grid.Row="0" Height="32" DataContext="{Binding}"/>
 
-            <Grid Grid.Row="0" Grid.Column="0" RowDefinitions="*,Auto,200">
-                <Border Background="Black"
-                        BorderBrush="White" 
-                        Margin="5 0 0 0">
+        <!-- QuickToolbar -->
+        <local:QuickToolbar Grid.Row="1"
+                            Margin="5,0,5,0"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Top"
+                            DataContext="{Binding}"
+                            Focusable="False"/>
+
+        <!-- Main Content Area -->
+        <Grid Grid.Row="2" x:Name="MainContentGrid"
+              ColumnDefinitions="*,4,300"
+              Margin="5,5,5,5">
+
+            <!-- LEFT: Map (top) and Console (bottom) -->
+            <Grid Grid.Column="0" x:Name="LeftGrid"
+                  RowDefinitions="*,5,180">
+
+                <!-- Map -->
+                <Border Grid.Row="0" Classes="focus-indicator" Focusable="True">
                     <mapsui:MapControl Map="{Binding Map.MyMap}" x:Name="MyMapControl"/>
                 </Border>
 
-                
-                <local:QuickToolbar Margin="10,5,0,0" DataContext="{Binding}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                
-                <GridSplitter Grid.Row="1" Background="Transparent" ResizeDirection="Rows" Height="5"/>
+                <!-- Splitter between Map and Console -->
+                <GridSplitter Grid.Row="1"
+                              x:Name="ConsoleSplitter"
+                              ResizeDirection="Rows"
+                              HorizontalAlignment="Stretch"
+                              Height="4"
+                              Background="Transparent"/>
 
-                <Border Grid.Row="2" Margin="5 0 0 5">
+                <!-- Console -->
+                <Border Grid.Row="2" x:Name="ConsoleBorder">
                     <local:ConsolePanel DataContext="{Binding Console}"/>
                 </Border>
             </Grid>
 
-            <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="*,Auto,*">
-                <Border Grid.Row="0" Margin="5 0 5 0">
-                    <local:ProjectExplorerPanel/>
-                </Border>
+            <!-- Splitter between Left and Right columns -->
+            <GridSplitter Grid.Column="1"
+                          x:Name="RightPanelSplitter"
+                          ResizeDirection="Columns"
+                          VerticalAlignment="Stretch"
+                          Width="4"
+                          Background="Transparent"/>
 
-                <GridSplitter Grid.Row="1" Height="6" Background="Transparent" ResizeDirection="Rows"/>
+            <!-- RIGHT: Project Explorer (top) and Properties (bottom) -->
+            <Grid Grid.Column="2" x:Name="RightGrid"
+                  RowDefinitions="*,4,*">
 
-                <Border Grid.Row="2" Margin="5 0 5 5">
-                    <local:PropertiesPanel/>
-                </Border>
+                <!-- Project Explorer -->
+                <local:ProjectExplorerPanel Grid.Row="0" DataContext="{Binding ProjectExplorer}"/>
+
+                <!-- Splitter between Project Explorer and Properties -->
+                <GridSplitter Grid.Row="1"
+                              x:Name="PropertiesSplitter"
+                              ResizeDirection="Rows"
+                              HorizontalAlignment="Stretch"
+                              Height="4"
+                              Background="Transparent"/>
+
+                <!-- Properties -->
+                <local:PropertiesPanel Grid.Row="2" DataContext="{Binding Properties}"/>
             </Grid>
-
-            <GridSplitter Grid.Row="0" Grid.Column="0" Width="6" Background="Transparent" 
-                          HorizontalAlignment="Right" ResizeDirection="Columns"/>
-
-            <local:FooterBar Grid.Row="1" Grid.ColumnSpan="2" DataContext="{Binding}"/>
         </Grid>
+
+        <!-- Footer -->
+        <local:FooterBar Grid.Row="3" DataContext="{Binding}"/>
+
     </Grid>
 </Window>

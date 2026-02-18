@@ -10,28 +10,24 @@
              x:Class="UrbanEcho.ConsolePanel"
              x:DataType="vm:ConsoleViewModel"
              IsVisible="{Binding IsVisible}">
-  
-    <Border
-        CornerRadius="3"
-        BorderThickness="1"
-        BorderBrush="DimGray"
-        ClipToBounds="True">
 
+    <Border Classes="focus-indicator" Focusable="True" Padding="0">
         <Grid RowDefinitions="32, Auto, *">
 
-            <Border Grid.Row="0"> 
+            <!-- Header -->
+            <Border Grid.Row="0">
                 <Grid ColumnDefinitions="*, Auto">
                     <TextBlock Text="Console" 
                                Grid.Column="0"
                                VerticalAlignment="Center" 
                                Margin="10,0,0,0"/>
-
                     <Button Grid.Column="1"
                         Classes="CloseButtonStyle"
-                        Command="{Binding CloseCommand}" />
-                 </Grid>
+                        Command="{Binding ToggleCommand}" />
+                </Grid>
             </Border>
 
+            <!-- Toolbar -->
             <Border Grid.Row="1" 
                     BorderThickness="1"
                     Padding="10,0,0,5">
@@ -40,18 +36,17 @@
                                VerticalAlignment="Center"
                                Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
                     <ComboBox Width="150" 
-                          Height="22"
-                          MinHeight="22"
-                          Padding="5,0"
-                          VerticalAlignment="Center"
-                          VerticalContentAlignment="Center"
-                          SelectedIndex="{Binding SelectedSource}">
+                              Height="22"
+                              MinHeight="22"
+                              Padding="5,0"
+                              VerticalAlignment="Center"
+                              VerticalContentAlignment="Center"
+                              SelectedIndex="{Binding SelectedSource}">
                         <ComboBoxItem Content="System Debug"/>
                         <ComboBoxItem Content="Map Engine"/>
                     </ComboBox>
                     <Rectangle Width="1" Height="16" Fill="DimGray" Margin="5,0,0,0"/>
-                    <Button Grid.Column="1" 
-                            Classes="ClearConsoleButton"
+                    <Button Classes="ClearConsoleButton"
                             Command="{Binding ClearConsoleCommand}"
                             VerticalAlignment="Center"
                             Background="Transparent"
@@ -62,14 +57,14 @@
                 </StackPanel>
             </Border>
 
+            <!-- Log List -->
             <Grid Grid.Row="2">
-                <ListBox Grid.Row="2" 
-                     ItemsSource="{Binding CurrentLogs}"
-                     Background="Transparent"
-                     BorderThickness="0"
-                     Padding="10,5"
-                     Name="ConsoleListBox"
-                     AutoScrollToSelectedItem="True">
+                <ListBox ItemsSource="{Binding CurrentLogs}"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         Padding="10,5"
+                         Name="ConsoleListBox"
+                         AutoScrollToSelectedItem="True">
                     <ListBox.Styles>
                         <Style Selector="ListBoxItem">
                             <Setter Property="Padding" Value="2,1"/>
@@ -80,8 +75,7 @@
                     </ListBox.Styles>
                 </ListBox>
             </Grid>
+
         </Grid>
-
     </Border>
-
 </UserControl>

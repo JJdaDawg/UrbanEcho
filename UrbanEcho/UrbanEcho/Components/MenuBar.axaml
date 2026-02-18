@@ -89,31 +89,29 @@
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator />
-                    <MenuItem Header="Raster Background Image"
-                              IsChecked="{Binding Map.IsRasterVisible}"
-                              ToggleType="CheckBox"
-                              Command="{Binding Map.ToggleRasterCommand}">
+                    <MenuItem Header="Layers">
                         <MenuItem.Icon>
-							<icon:SymbolIcon Symbol="Image"/>
+							<icon:SymbolIcon Symbol="Layer"/>
                         </MenuItem.Icon>
-                    </MenuItem>
-                    <MenuItem Header="Road Names">
-                        <MenuItem.Icon>
-							<icon:SymbolIcon Symbol="Road"/>
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <MenuItem Header="Intersection Details">
-                        <MenuItem.Icon>
-							<icon:SymbolIcon Symbol="Info"/>
-                        </MenuItem.Icon>
+						<MenuItem Header="Raster Background Image"
+                                  IsChecked="{Binding Map.IsRasterVisible}"
+                                  ToggleType="CheckBox"
+                                  Command="{Binding Map.ToggleRasterCommand}"/>
+                        <MenuItem Header="Road Details"/>
+                        <MenuItem Header="Intersection Details"
+                                  IsChecked="{Binding Map.IsIntersectionsVisible}"
+                                  ToggleType="CheckBox"
+                                  Command="{Binding Map.ToggleIntersectionDetailsCommand}"/>
                     </MenuItem>
                     <Separator />
-                    <MenuItem Header="Console Window">
+                    <MenuItem Header="Console Window"
+                              Command="{Binding Console.ToggleCommand}">
                         <MenuItem.Icon>
 							<icon:SymbolIcon Symbol="WindowConsole"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="Project Explorer">
+                    <MenuItem Header="Project Explorer"
+                              Command="{Binding ProjectExplorer.ToggleCommand}">
                         <MenuItem.Icon>
 							<icon:SymbolIcon Symbol="Library"/>
                         </MenuItem.Icon>
@@ -123,12 +121,14 @@
 							<icon:SymbolIcon Symbol="ChartMultiple"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="Properties Window">
+                    <MenuItem Header="Properties Window"
+                              Command="{Binding Properties.ToggleCommand}">
                         <MenuItem.Icon>
 							<icon:SymbolIcon Symbol="TableCellsSplit"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="Real Time Data">
+                    <Separator/>
+                    <MenuItem Header="Real Time Data...">
                         <MenuItem.Icon>
 							<icon:SymbolIcon Symbol="LocationLive"/>
                         </MenuItem.Icon>

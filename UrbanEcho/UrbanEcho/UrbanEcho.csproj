@@ -48,6 +48,7 @@
     <PackageReference Include="FluentIcons.Avalonia" Version="2.0.318" />
     <PackageReference Include="Mapsui.Avalonia" Version="5.0.2" />
     <PackageReference Include="Mapsui.Extensions" Version="5.0.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="SourceGear.sqlite3" Version="3.50.4.5" />
   </ItemGroup>
