@@ -1,7 +1,7 @@
 ﻿using Avalonia.Media;
 using BruTile;
 using BruTile.MbTiles;
-
+using FluentAvalonia.Core;
 using Mapsui;
 using Mapsui.Layers;
 using Mapsui.Nts;
@@ -10,7 +10,7 @@ using Mapsui.Providers;
 using Mapsui.Styles;
 using Mapsui.Tiling.Layers;
 using Mapsui.UI.Avalonia;
-using NetTopologySuite.Geometries;
+
 using SQLite;
 using System;
 using System.Collections.Generic;
@@ -34,6 +34,7 @@ namespace UrbanEcho.FileManagement
         private static RasterizingLayer? roadLayerSecondPass;
         private static Layer? intersectionLayer;
         private static MemoryLayer? vehicleLayer;
+        private static MemoryLayer? graphLayer;
 
         private static bool backgroundRequiresLoading = false;
         private static bool roadRequiresLoading = false;
@@ -54,6 +55,8 @@ namespace UrbanEcho.FileManagement
         private static List<IFeature> RoadFeatures = new List<IFeature>();
 
         public static List<IFeature> VehicleFeatures = new List<IFeature>();
+
+        public static List<IFeature> GraphLayerFeatures = new List<IFeature>();
 
         public static MPoint CenterOfMap = new MPoint();
 
@@ -139,8 +142,12 @@ namespace UrbanEcho.FileManagement
                     {
                         ShapeFile roadNetwork = new ShapeFile(currentProjectFile.RoadLayerPath);
                         EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Load Road Shape File"));
-                        roadLayerFirstPass = new RasterizingLayer(CreateRoadLayer(roadNetwork, "Road Outline", true, false));
+                        Layer roadLayerFirst = CreateRoadLayer(roadNetwork, "Road Outline", true, false);
+                        roadLayerFirstPass = new RasterizingLayer(roadLayerFirst);
                         roadLayerSecondPass = new RasterizingLayer(CreateRoadLayer(roadNetwork, "Roads", false, true));
+
+                        RoadFeatures = Helpers.Helper.GetRoadNetworkFeatures(roadLayerFirst.DataSource);
+                        Sim.Sim.roadGraph = UrbanTrafficSim.Core.IO.RoadGraphLoader.LoadFromFeatures(Helpers.Helper.GetFeatures(roadLayerFirst.DataSource));
                     }
                     catch (Exception ex)
                     {
@@ -185,6 +192,8 @@ namespace UrbanEcho.FileManagement
                     }
                     vehicleLayer = CreateVehicleLayer();
                     vehicleRequiresLoading = false;
+
+                    graphLayer = CreateGraphLayer();
                     //TODO: if we are going to load new road network we should probably destroy box
                     ///2d world and dispose any handles created in the
                     ///IntersectionBody file. Then create a new world and make new shapes again
@@ -318,8 +327,6 @@ namespace UrbanEcho.FileManagement
                 layer.Style = style;
                 layer.Opacity = 1.0f;
                 EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Created Road Layer"));
-
-                RoadFeatures = Helpers.Helper.GetRoadNetworkFeatures(layer.DataSource);
             }
             catch (Exception ex)
             {
@@ -378,6 +385,52 @@ namespace UrbanEcho.FileManagement
             catch (Exception ex)
             {
                 EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to create Vehicle Layer {ex.ToString()}"));
+            }
+
+            return layer;
+        }
+
+        public static MemoryLayer? CreateGraphLayer()
+        {
+            MemoryLayer? layer = null;
+
+            try
+            {
+                layer = new MemoryLayer("Graph");
+
+                foreach (KeyValuePair<int, RoadNode> kvp in Sim.Sim.roadGraph.Nodes)
+                {
+                    MPoint mPoint = new MPoint(kvp.Value.X, kvp.Value.Y);
+                    PointFeature pf = new PointFeature(mPoint);
+                    pf["Node"] = kvp.Value.Id;
+
+                    GraphLayerFeatures.Add(pf);
+                }
+
+                for (int i = 0; i < Sim.Sim.roadGraph.Edges.Count; i++)
+                {
+                    if (Sim.Sim.roadGraph.Edges[i].Feature is GeometryFeature g)
+                    {
+                        GeometryFeature feature = new GeometryFeature(g);
+
+                        GraphLayerFeatures.Add(feature);
+                    }
+                }
+
+                layer.Features = GraphLayerFeatures;
+
+                layer.Opacity = 1.0f;
+
+                VectorStyle orangeDotStyle = new VectorStyle { Line = new Pen { Color = Color.Pink, Width = 5 }, Outline = new Pen { Color = Color.Black, Width = 0.5 }, Fill = new Mapsui.Styles.Brush(Color.Orange) };
+
+                layer.Style = orangeDotStyle;
+                //layer.MaxVisible = 3.5f;
+
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Created Graph Node Layer"));
+            }
+            catch (Exception ex)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to create Graph Node Layer {ex.ToString()}"));
             }
 
             return layer;
@@ -484,6 +537,11 @@ namespace UrbanEcho.FileManagement
             if (vehicleLayer != null)
             {
                 myMap?.Layers.Add(vehicleLayer);
+            }
+
+            if (graphLayer != null)
+            {
+                myMap?.Layers.Add(graphLayer);
             }
         }
 

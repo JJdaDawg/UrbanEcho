@@ -34,6 +34,9 @@ namespace UrbanEcho.Sim
         private static MainViewModel? mainViewModel;
 
         public static List<Vehicle> Vehicles = new List<Vehicle>();
+
+        public static RoadGraph? roadGraph;
+
         public static float SimTime = 0;
 
         public static void SetMainViewModel(MainViewModel setMainViewModel)
