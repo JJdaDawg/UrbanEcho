@@ -1,10 +1,14 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using BruTile.Wms;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using UrbanEcho.Events.UI;
 using UrbanEcho.Sim;
+using UrbanEcho.ViewModels;
 
 namespace UrbanEcho;
 
@@ -15,8 +19,18 @@ public partial class App : Application
         AvaloniaXamlLoader.Load(this);
     }
 
+    public static IServiceProvider Services { get; private set; } = null!;
+
     public override void OnFrameworkInitializationCompleted()
     {
+        var services = new ServiceCollection();
+
+        var mainWindow = new MainWindow();
+        services.AddSingleton<IPanelService>(mainWindow);
+        services.AddSingleton<MainViewModel>();
+
+        Services = services.BuildServiceProvider();
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             desktop.Exit += OnExit;
@@ -43,7 +57,7 @@ public partial class App : Application
                 Simulation.SimTask.Wait();
             }
         }
-        catch (Exception ex)
+        catch (System.Exception ex)
         {
             //TODO: Add errors for task had a exception
         }
