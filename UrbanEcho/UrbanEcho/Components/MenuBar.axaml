@@ -104,12 +104,14 @@
                                   Command="{Binding Map.ToggleIntersectionDetailsCommand}"/>
                     </MenuItem>
                     <Separator />
-                    <MenuItem Header="Console Window">
+                    <MenuItem Header="Console Window"
+                              Command="{Binding Console.ToggleCommand}">
                         <MenuItem.Icon>
 							<icon:SymbolIcon Symbol="WindowConsole"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="Project Explorer">
+                    <MenuItem Header="Project Explorer"
+                              Command="{Binding ProjectExplorer.ToggleCommand}">
                         <MenuItem.Icon>
 							<icon:SymbolIcon Symbol="Library"/>
                         </MenuItem.Icon>
@@ -119,7 +121,8 @@
 							<icon:SymbolIcon Symbol="ChartMultiple"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="Properties Window">
+                    <MenuItem Header="Properties Window"
+                              Command="{Binding Properties.ToggleCommand}">
                         <MenuItem.Icon>
 							<icon:SymbolIcon Symbol="TableCellsSplit"/>
                         </MenuItem.Icon>

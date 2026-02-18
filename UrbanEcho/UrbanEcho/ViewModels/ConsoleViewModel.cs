@@ -21,12 +21,12 @@ namespace UrbanEcho.ViewModels
         [ObservableProperty] private LogSource _selectedSource = LogSource.System;
         [ObservableProperty] private bool _isVisible = true;
 
-        public RelayCommand CloseCommand { get; }
+        public RelayCommand ToggleCommand { get; }
 
         public ConsoleViewModel(IPanelService panelService)
         {
             _panelService = panelService;
-            CloseCommand = new RelayCommand(Close);
+            ToggleCommand = new RelayCommand(Toggle);
         }
 
         public ObservableCollection<string> CurrentLogs => SelectedSource == LogSource.Map ? _mapLogs : _systemLogs;
@@ -40,10 +40,10 @@ namespace UrbanEcho.ViewModels
             OnPropertyChanged(nameof(CurrentLogs));
         }
 
-        private void Close()
+        public void Toggle()
         {
-            _isOpen = false;
-            _panelService.ToggleConsole(false);
+            _isOpen = !_isOpen;
+            _panelService.ToggleConsole(_isOpen);
         }
     }
 }

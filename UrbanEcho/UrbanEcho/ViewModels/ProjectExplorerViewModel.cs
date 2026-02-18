@@ -12,15 +12,20 @@ namespace UrbanEcho.ViewModels
     public partial class ProjectExplorerViewModel : ObservableObject
     {
         private readonly IPanelService _panelService;
+        private bool _isOpen = true;
+
+        public RelayCommand ToggleCommand { get; }
 
         public ProjectExplorerViewModel(IPanelService panelService)
         {
             _panelService = panelService;
-            CloseCommand = new RelayCommand(Close);
+            ToggleCommand = new RelayCommand(Toggle);
         }
 
-        public RelayCommand CloseCommand { get; }
-
-        private void Close() => _panelService.ToggleProjectExplorer(false);
+        public void Toggle()
+        {
+            _isOpen = !_isOpen;
+            _panelService.ToggleProjectExplorer(_isOpen);
+        }
     }
 }
