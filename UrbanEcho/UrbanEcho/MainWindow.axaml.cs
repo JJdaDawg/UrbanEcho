@@ -1,10 +1,28 @@
 using Avalonia.Controls;
 using FluentAvalonia.UI.Windowing;
+using Mapsui;
+using Mapsui.Extensions.Provider;
+using Mapsui.Layers;
+using Mapsui.Nts.Providers.Shapefile;
+using Mapsui.Providers;
+using Mapsui.Rendering.Skia;
+using Mapsui.Rendering.Skia.SkiaStyles;
+using Mapsui.Styles;
+using Mapsui.Tiling;
+using Mapsui.Tiling.Layers;
+using Mapsui.UI;
+using Mapsui.UI.Avalonia;
+using Mapsui.Utilities;
+using Mapsui.Widgets;
+using Mapsui.Widgets.InfoWidgets;
+using NetTopologySuite.Geometries;
+using SQLite;
 using System;
 using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
 using UrbanEcho.Sim;
 using UrbanEcho.ViewModels;
+using Layer = Mapsui.Layers.Layer;
 
 namespace UrbanEcho;
 
@@ -26,8 +44,8 @@ public partial class MainWindow : AppWindow, IPanelService
         MainViewModel vm = new MainViewModel(this);
         DataContext = vm;
         SetupMap.Init(vm.Map.MyMap);
-        Simulation.SetMainViewModel(vm);
-        Simulation.SimTask = Task.Factory.StartNew(new Action(Simulation.Run), Simulation.Cts.Token);
+        Sim.Sim.SetMainViewModel(vm);
+        Sim.Sim.SimTask = Task.Factory.StartNew(new Action(Sim.Sim.Run), Sim.Sim.Cts.Token);
     }
 
     public void ToggleConsole(bool open)

@@ -10,12 +10,12 @@ using UrbanEcho.Models;
 
 namespace UrbanEcho.Events.UI
 {
-    internal class ShowMessageConsoleWindowEvent : IEventForUI
+    internal class LogToConsole : IEventForUI
     {
         private MainViewModel? mainViewModel;
         private string message;
 
-        public ShowMessageConsoleWindowEvent(MainViewModel? mainViewModel, string message)
+        public LogToConsole(MainViewModel? mainViewModel, string message)
         {
             this.mainViewModel = mainViewModel;
             this.message = message;

@@ -1,4 +1,5 @@
-﻿using Mapsui;
+﻿using Box2dNet.Interop;
+using Mapsui;
 using Mapsui.Extensions;
 using Mapsui.Layers;
 using Mapsui.Providers;
@@ -7,6 +8,7 @@ using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -70,6 +72,43 @@ namespace UrbanEcho.Helpers
             }*/
 
             return roadNetworklist;
+        }
+
+        public static b2Polygon CreatePolygon(Vector2[] corners)
+        {
+            if (corners.Length is < 3 or > 8) throw new Exception($"Corner count ({corners.Length}) must be within [3,8].");
+
+            return B2Api.b2MakePolygon(B2Api.b2ComputeHull(corners, corners.Length), 0);
+        }
+
+        public static float Rad2Deg(float r)
+        {
+            return r * (180.0f / MathF.PI);
+        }
+
+        public static float Deg2Rad(float d)
+        {
+            return d * (MathF.PI / 180.0f);
+        }
+
+        public static Vector2 MS2Kmh(Vector2 v)
+        {
+            return v * 3.6f;
+        }
+
+        public static float MS2Kmh(float s)
+        {
+            return s * 3.6f;
+        }
+
+        public static Vector2 Kmh2Ms(Vector2 v)
+        {
+            return v / 3.6f;
+        }
+
+        public static float Kmh2Ms(float s)
+        {
+            return s / 3.6f;
         }
     }
 }

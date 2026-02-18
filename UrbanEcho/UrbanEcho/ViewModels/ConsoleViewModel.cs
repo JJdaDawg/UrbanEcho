@@ -18,7 +18,10 @@ namespace UrbanEcho.ViewModels
         private readonly IPanelService _panelService;
         private bool _isOpen = true;
 
-        [ObservableProperty] private LogSource _selectedSource = LogSource.System;
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CurrentLogs))]
+        private LogSource _selectedSource = LogSource.System;
+
         [ObservableProperty] private bool _isVisible = true;
 
         public RelayCommand ToggleCommand { get; }
