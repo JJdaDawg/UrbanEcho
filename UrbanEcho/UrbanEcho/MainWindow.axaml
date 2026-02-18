@@ -12,66 +12,49 @@
         Background="Transparent"
         x:DataType="vm:MainViewModel">
 
-    <Grid RowDefinitions="Auto,Auto,*">
-        
+    <DockPanel LastChildFill="True">
+
         <!-- MenuBar -->
-        <local:MenuBar Grid.Row="0" DataContext="{Binding}" Height="32"/>
+        <local:MenuBar DockPanel.Dock="Top" Height="32" DataContext="{Binding}"/>
 
         <!-- QuickToolbar -->
-        <local:QuickToolbar Grid.Row="1"
-                            DataContext="{Binding}" 
+        <local:QuickToolbar DockPanel.Dock="Top" 
+                            Margin="5,0,5,0"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Top"
-                            Margin="5,0,5,5"
+                            DataContext="{Binding}" 
                             Focusable="False"/>
 
-        <!-- Main Content -->
-        <Grid Grid.Row="2" RowDefinitions="*,Auto" ColumnDefinitions="*,300">
+        <!-- Footer -->
+        <local:FooterBar DockPanel.Dock="Bottom" DataContext="{Binding}"/>
 
-            <!-- Left Column: Map and Console -->
-            <Grid Grid.Row="0" Grid.Column="0" RowDefinitions="*,Auto,200">
-
-                <!-- Map -->
-                <Border Classes="focus-indicator"
-                        Focusable="True"
-                        Margin="5 0 0 0">
-                    <mapsui:MapControl Map="{Binding Map.MyMap}" x:Name="MyMapControl"/>
-                </Border>
-
-                <!-- Horizontal splitter between map and console -->
-                <GridSplitter Grid.Row="1" Background="Transparent" ResizeDirection="Rows" Height="5"/>
-
-                <!-- Console Panel -->
-                <Border Grid.Row="2" Margin="5 0 0 5" Classes="focus-indicator" Focusable="True">
-                    <local:ConsolePanel DataContext="{Binding Console}"/>
-                </Border>
-
-            </Grid>
-
-            <!-- Right Column: Project Explorer and Properties -->
-            <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="*,Auto,*">
-
+        <!-- Right Column: Project Explorer and Properties -->
+        <DockPanel DockPanel.Dock="Right" Width="300" LastChildFill="True" Margin="0,5,5,5">
+            <Grid RowDefinitions="*,*">  <!-- Two equal rows -->
                 <!-- Project Explorer -->
-                <Border Grid.Row="0" Margin="5 0 5 0" Classes="focus-indicator" Focusable="True">
+                <Border Grid.Row="0" Classes="focus-indicator" Focusable="True" Margin="0,0,0,2">
                     <local:ProjectExplorerPanel/>
                 </Border>
 
-                <!-- Horizontal splitter -->
-                <GridSplitter Grid.Row="1" Height="6" Background="Transparent" ResizeDirection="Rows"/>
-
-                <!-- Properties Panel -->
-                <Border Grid.Row="2" Margin="5 0 5 5" Classes="focus-indicator" Focusable="True">
+                <!-- Properties -->
+                <Border Grid.Row="1" Classes="focus-indicator" Focusable="True" Margin="0,2,0,0">
                     <local:PropertiesPanel/>
                 </Border>
-
             </Grid>
+        </DockPanel>
 
-            <!-- Vertical splitter between left and right columns -->
-            <GridSplitter Grid.Row="0" Grid.Column="0" Width="6" Background="Transparent" 
-                          HorizontalAlignment="Right" ResizeDirection="Columns"/>
 
-            <!-- Footer -->
-            <local:FooterBar Grid.Row="1" Grid.ColumnSpan="2" DataContext="{Binding}"/>
-        </Grid>
-    </Grid>
+        <!-- Left Column: Map and Console -->
+        <DockPanel LastChildFill="True" Margin="5,5,5,5">
+            
+            <!-- Console -->
+            <local:ConsolePanel DockPanel.Dock="Bottom" Margin="0,5,0,0" DataContext="{Binding Console}"/>
+
+            <!-- Map -->
+            <Border Classes="focus-indicator" Focusable="True">
+                <mapsui:MapControl Map="{Binding Map.MyMap}" x:Name="MyMapControl"/>
+            </Border>
+        </DockPanel>
+
+    </DockPanel>
 </Window>
