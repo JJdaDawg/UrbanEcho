@@ -1,13 +1,8 @@
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input;
-using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Specialized;
-using UrbanEcho.Services;
 using UrbanEcho.ViewModels;
 
 namespace UrbanEcho;
@@ -22,17 +17,13 @@ public partial class ConsolePanel : UserControl
     protected override void OnDataContextChanged(EventArgs e)
     {
         base.OnDataContextChanged(e);
-
         if (DataContext is ConsoleViewModel cvm)
         {
             cvm.PropertyChanged += (s, args) =>
             {
                 if (args.PropertyName == nameof(ConsoleViewModel.CurrentLogs))
-                {
                     SubscribeToCollection(cvm.CurrentLogs);
-                }
             };
-
             SubscribeToCollection(cvm.CurrentLogs);
         }
     }
@@ -49,7 +40,7 @@ public partial class ConsolePanel : UserControl
         {
             Dispatcher.UIThread.Post(() =>
             {
-                var scrollViewer = ConsoleListBox.FindDescendantOfType<ScrollViewer>();
+                var scrollViewer = ConsoleTextBox.FindDescendantOfType<ScrollViewer>();
                 scrollViewer?.ScrollToEnd();
             });
         }
