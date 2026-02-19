@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NetTopologySuite.Geometries;
+using System;
 using System.Collections.Generic;
 
 public sealed class RoadGraph
@@ -34,5 +35,37 @@ public sealed class RoadGraph
         return _adjacency.TryGetValue(nodeId, out var edges)
             ? edges
             : Array.Empty<RoadEdge>();
+    }
+
+    public RoadNode GetNearestNode(Coordinate position)
+    {
+        RoadNode? closest = null;
+        double best = double.MaxValue;
+
+        foreach (var node in Nodes.Values)
+        {
+            var d = node.Position.Distance(position);
+            if (d < best)
+            {
+                best = d;
+                closest = node;
+            }
+        }
+
+        return closest!;
+    }
+    public IReadOnlyList<RoadNode> GetNeighbors(int nodeId)
+    {
+        var neighbors = new List<RoadNode>();
+
+        foreach (var edge in GetOutgoingEdges(nodeId))
+        {
+            if (Nodes.TryGetValue(edge.To, out var neighbor))
+            {
+                neighbors.Add(neighbor);
+            }
+        }
+
+        return neighbors;
     }
 }
