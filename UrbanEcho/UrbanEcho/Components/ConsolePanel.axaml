@@ -42,7 +42,7 @@
                               VerticalAlignment="Center"
                               VerticalContentAlignment="Center"
                               SelectedIndex="{Binding SelectedSource}">
-                        <ComboBoxItem Content="System Debug"/>
+                        <ComboBoxItem Content="System"/>
                         <ComboBoxItem Content="Map Engine"/>
                     </ComboBox>
                     <Rectangle Width="1" Height="16" Fill="DimGray" Margin="5,0,0,0"/>
