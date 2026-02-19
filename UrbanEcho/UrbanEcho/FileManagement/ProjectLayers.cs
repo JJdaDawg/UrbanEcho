@@ -1,7 +1,8 @@
 ﻿using Avalonia.Media;
 using BruTile;
 using BruTile.MbTiles;
-
+using BruTile.Wms;
+using FluentAvalonia.Core;
 using Mapsui;
 using Mapsui.Layers;
 using Mapsui.Nts;
@@ -9,6 +10,7 @@ using Mapsui.Nts.Providers.Shapefile;
 using Mapsui.Providers;
 using Mapsui.Styles;
 using Mapsui.Tiling.Layers;
+using Mapsui.UI;
 using Mapsui.UI.Avalonia;
 using NetTopologySuite.Geometries;
 using SQLite;
@@ -22,6 +24,8 @@ using UrbanEcho.Sim;
 using UrbanEcho.Styles;
 using UrbanEcho.ViewModels;
 using Color = Mapsui.Styles.Color;
+using Exception = System.Exception;
+using Layer = Mapsui.Layers.Layer;
 using Pen = Mapsui.Styles.Pen;
 
 namespace UrbanEcho.FileManagement
@@ -34,6 +38,9 @@ namespace UrbanEcho.FileManagement
         private static RasterizingLayer? roadLayerSecondPass;
         private static Layer? intersectionLayer;
         private static MemoryLayer? vehicleLayer;
+
+        //private static MemoryProvider? vehicleProvider;
+        private static RasterizingLayer? graphLayer;
 
         private static bool backgroundRequiresLoading = false;
         private static bool roadRequiresLoading = false;
@@ -55,6 +62,8 @@ namespace UrbanEcho.FileManagement
         private static List<IFeature> RoadFeatures = new List<IFeature>();
 
         public static List<IFeature> VehicleFeatures = new List<IFeature>();
+
+        public static List<IFeature> GraphLayerFeatures = new List<IFeature>();
 
         public static MPoint CenterOfMap = new MPoint();
 
@@ -140,8 +149,12 @@ namespace UrbanEcho.FileManagement
                     {
                         ShapeFile roadNetwork = new ShapeFile(currentProjectFile.RoadLayerPath);
                         EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Load Road Shape File"));
-                        roadLayerFirstPass = new RasterizingLayer(CreateRoadLayer(roadNetwork, "Road Outline", true, false));
+                        Layer roadLayerFirst = CreateRoadLayer(roadNetwork, "Road Outline", true, false);
+                        roadLayerFirstPass = new RasterizingLayer(roadLayerFirst);
                         roadLayerSecondPass = new RasterizingLayer(CreateRoadLayer(roadNetwork, "Roads", false, true));
+
+                        RoadFeatures = Helpers.Helper.GetRoadNetworkFeatures(roadLayerFirst.DataSource);
+                        Sim.Sim.roadGraph = UrbanTrafficSim.Core.IO.RoadGraphLoader.LoadFromFeatures(Helpers.Helper.GetFeatures(roadLayerFirst.DataSource));
                     }
                     catch (Exception ex)
                     {
@@ -178,6 +191,12 @@ namespace UrbanEcho.FileManagement
 
                 if (vehicleRequiresLoading && intersectionLoaded && roadLoaded)
                 {
+                    MemoryLayer tempGraphLayer = CreateGraphLayer();
+
+                    //TODO: if we are going to load new road network we should probably destroy box
+                    ///2d world and dispose any handles created in the
+                    ///IntersectionBody file. Then create a new world and make new shapes again
+
                     MRect? extent = roadLayerFirstPass?.Extent;
                     if (extent != null)
                     {
@@ -185,10 +204,9 @@ namespace UrbanEcho.FileManagement
                                     extent.MinY + (extent.MaxY - extent.MinY) / 2);
                     }
                     vehicleLayer = CreateVehicleLayer();
+                    tempGraphLayer.Features = GraphLayerFeatures;
+                    graphLayer = new RasterizingLayer(tempGraphLayer);
                     vehicleRequiresLoading = false;
-                    //TODO: if we are going to load new road network we should probably destroy box
-                    ///2d world and dispose any handles created in the
-                    ///IntersectionBody file. Then create a new world and make new shapes again
                 }
             }
             else
@@ -319,8 +337,6 @@ namespace UrbanEcho.FileManagement
                 layer.Style = style;
                 layer.Opacity = 1.0f;
                 EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Created Road Layer"));
-
-                RoadFeatures = Helpers.Helper.GetRoadNetworkFeatures(layer.DataSource);
             }
             catch (Exception ex)
             {
@@ -341,7 +357,7 @@ namespace UrbanEcho.FileManagement
             try
             {
                 layer = new MemoryLayer("Vehicles");
-
+                /* Spawning at each road feature
                 for (int i = 0; RoadFeatures.Count > i; i++)
                 {
                     if (RoadFeatures[i] is GeometryFeature gf)
@@ -355,16 +371,75 @@ namespace UrbanEcho.FileManagement
                                 pf["VehicleNumber"] = i;
                                 pf["VehicleType"] = "RedCar";
                                 pf["Hidden"] = false;
-                                pf["Angle"] = 0;
+                                pf["Angle"] = 0.0f;
                                 VehicleFeatures.Add(pf);
 
                                 UrbanEcho.Sim.Sim.Vehicles.Add(new Vehicle(pf));
                             }
                         }
                     }
+                }*/
+                // Spawning at each road graph From Edge point
+                for (int i = 0; i < Sim.Sim.roadGraph?.Edges.Count; i++)
+                {
+                    if (Sim.Sim.roadGraph.Nodes.TryGetValue(Sim.Sim.roadGraph.Edges[i].From, out RoadNode? roadNodeFrom))
+                    {
+                        if (Sim.Sim.roadGraph.Nodes.TryGetValue(Sim.Sim.roadGraph.Edges[i].To, out RoadNode? roadNodeTo))
+                        {
+                            if (roadNodeFrom != null && roadNodeTo != null)
+                            {
+                                MPoint mPoint = new MPoint(roadNodeFrom.X, roadNodeFrom.Y);
+                                PointFeature pf = new PointFeature(mPoint);
+                                pf["VehicleNumber"] = i;
+                                pf["VehicleType"] = "RedCar";
+                                pf["Hidden"] = false;
+                                pf["Angle"] = 0.0f;
+
+                                Vehicle vehicle = new Vehicle(pf, roadNodeFrom, roadNodeTo, Sim.Sim.roadGraph?.Edges[i].Feature);
+
+                                if (vehicle.IsCreated)
+                                {
+                                    UrbanEcho.Sim.Sim.Vehicles.Add(vehicle);
+                                    VehicleFeatures.Add(pf);
+                                }
+                                else
+                                {
+                                    PointFeature pfFailed = new PointFeature(mPoint);
+
+                                    GraphLayerFeatures.Add(pfFailed);
+                                }
+                            }
+                        }
+                    }
                 }
+                /* Spawning at each road feature
+                for (int i = 0; RoadFeatures.Count > i; i++)
+                {
+                    if (RoadFeatures[i] is GeometryFeature gf)
+                    {
+                        if (gf.Geometry is NetTopologySuite.Geometries.LineString l)
+                        {
+                            if (l.Coordinates.Length > 0)
+                            {
+                                MPoint mPoint = new MPoint(l.Coordinates[0].X, l.Coordinates[0].Y);
+                                PointFeature pf = new PointFeature(mPoint);
+                                pf["VehicleNumber"] = i;
+                                pf["VehicleType"] = "RedCar";
+                                pf["Hidden"] = false;
+                                pf["Angle"] = 0.0f;
+                                VehicleFeatures.Add(pf);
+
+                                UrbanEcho.Sim.Sim.Vehicles.Add(new Vehicle(pf));
+                            }
+                        }
+                    }
+                }*/
 
                 layer.Features = VehicleFeatures;
+
+                //vehicleProvider = new MemoryProvider(VehicleFeatures);
+
+                //layer.DataSource = vehicleProvider;// .Features = (IEnumerable<IFeature>)VehicleFeatures.Select(v => (IFeature)v.Clone()).ToList();
 
                 layer.Opacity = 1.0f;
 
@@ -379,6 +454,70 @@ namespace UrbanEcho.FileManagement
             catch (Exception ex)
             {
                 EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to create Vehicle Layer {ex.ToString()}"));
+            }
+
+            return layer;
+        }
+
+        public static MemoryLayer? CreateGraphLayer()
+        {
+            MemoryLayer? layer = null;
+
+            try
+            {
+                layer = new MemoryLayer("Graph");
+                /*
+                foreach (KeyValuePair<int, RoadNode> kvp in Sim.Sim.roadGraph.Nodes)
+                {
+                    MPoint mPoint = new MPoint(kvp.Value.X, kvp.Value.Y);
+                    PointFeature pf = new PointFeature(mPoint);
+                    pf["Node"] = kvp.Value.Id;
+
+                    GraphLayerFeatures.Add(pf);
+                }*/
+
+                for (int i = 0; i < Sim.Sim.roadGraph.Edges.Count; i++)
+                {
+                    int fromNodeIndex = Sim.Sim.roadGraph.Edges[i].From;
+                    int toNodeIndex = Sim.Sim.roadGraph.Edges[i].To;
+
+                    if (Sim.Sim.roadGraph.Nodes.TryGetValue(fromNodeIndex, out RoadNode? fromNodeValue))
+                    {
+                        if (Sim.Sim.roadGraph.Nodes.TryGetValue(toNodeIndex, out RoadNode? toNodeValue))
+                        {
+                            GeometryFeature feature = new GeometryFeature();
+                            Coordinate[] coordinates = new Coordinate[2];
+
+                            coordinates[0] = new Coordinate(fromNodeValue.X, fromNodeValue.Y);
+                            coordinates[1] = new Coordinate(toNodeValue.X, toNodeValue.Y);
+
+                            feature.Geometry = new LineString(coordinates);
+
+                            GraphLayerFeatures.Add(feature);
+                        }
+                        else
+                        {
+                            EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to get to Node"));
+                        }
+                    }
+                    else
+                    {
+                        EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to get from Node"));
+                    }
+                }
+
+                layer.Opacity = 1.0f;
+
+                VectorStyle orangeDotStyle = new VectorStyle { Line = new Pen { Color = Color.Pink, Width = 5 }, Outline = new Pen { Color = Color.Black, Width = 0.5 }, Fill = new Mapsui.Styles.Brush(Color.Orange) };
+
+                layer.Style = orangeDotStyle;
+                //layer.MaxVisible = 3.5f;
+
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Created Graph Node Layer"));
+            }
+            catch (Exception ex)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to create Graph Node Layer {ex.ToString()}"));
             }
 
             return layer;
@@ -413,7 +552,7 @@ namespace UrbanEcho.FileManagement
                         if (panBounds != null)
                         {
                             map.Navigator.OverridePanBounds = panBounds;
-                            map.Navigator.OverrideZoomBounds = new MMinMax(0.1, 50);
+                            map.Navigator.OverrideZoomBounds = new MMinMax(0.01, 50);
 
                             map.Navigator.CenterOnAndZoomTo(new MPoint(extent.MinX + (extent.MaxX - extent.MinX) / 2,
                                 extent.MinY + (extent.MaxY - extent.MinY) / 2), 15.0);
@@ -468,7 +607,7 @@ namespace UrbanEcho.FileManagement
             if (IsRasterVisible && backgroundMBTile != null)
             {
                 myMap?.Layers.Add(backgroundMBTile);
-            }
+            }/*
             if (roadLayerFirstPass != null)
             {
                 myMap?.Layers.Add(roadLayerFirstPass);
@@ -480,18 +619,46 @@ namespace UrbanEcho.FileManagement
             if (IsIntersectionsVisible && intersectionLayer != null)
             {
                 myMap?.Layers.Add(intersectionLayer);
-            }
+            }*/
 
             if (vehicleLayer != null)
             {
                 myMap?.Layers.Add(vehicleLayer);
             }
+
+            if (graphLayer != null)
+            {
+                myMap?.Layers.Add(graphLayer);
+            }
         }
 
-        public static void SetVehicleLayerDataChanged()
+        public static void UpdateVehicleLayer(bool fullClone)
         {
             if (vehicleLayer != null)
+            {
+                if (fullClone)
+                {
+                    List<IFeature> copyOfVehiclesFeatures = new List<IFeature>();
+                    copyOfVehiclesFeatures = VehicleFeatures.Select(v => (IFeature)v.Clone()).ToList();
+
+                    EventQueueForUI.Instance.Add(new UpdatedVehicleMapEvent(copyOfVehiclesFeatures));
+                }
+                else
+                {
+                    EventQueueForUI.Instance.Add(new UpdatedVehicleMapEvent(VehicleFeatures));
+                }
+            }
+        }
+
+        //Only call from UI
+        public static void SetVehicleLayerDataChanged(List<IFeature> copyOfVehiclesFeatures)
+        {
+            if (vehicleLayer != null)
+            {
+                vehicleLayer.Features = copyOfVehiclesFeatures;
+                vehicleLayer.FeaturesWereModified();
                 vehicleLayer.DataHasChanged();
+            }
         }
 
         //Only call from UI

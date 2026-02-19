@@ -37,7 +37,9 @@ namespace UrbanEcho.Sim
             ProjectLayers.SetDefaultZoomLimit(MyMap);
 
             //Removes debug info on mapControl
+            /*
             LoggingWidget.ShowLoggingInMap = ActiveMode.No;
+
             try
             {
                 PerformanceWidget? performanceWidget = MyMap.Widgets.OfType<PerformanceWidget>().FirstOrDefault();
@@ -49,7 +51,7 @@ namespace UrbanEcho.Sim
             catch (System.Exception ex)
             {
                 EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Failed to remove performance Widget {ex.ToString()}"));
-            }
+            }*/
         }
     }
 }

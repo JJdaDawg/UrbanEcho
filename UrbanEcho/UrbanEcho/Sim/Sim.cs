@@ -29,12 +29,17 @@ namespace UrbanEcho.Sim
 
         public static Task? SimTask;
 
-        private static Map? MyMap;
+        public static Map? MyMap;
 
         private static MainViewModel? mainViewModel;
 
         public static List<Vehicle> Vehicles = new List<Vehicle>();
+
+        public static RoadGraph? roadGraph;
+
         public static float SimTime = 0;
+
+        public static long SimFrames = 0;
 
         public static void SetMainViewModel(MainViewModel setMainViewModel)
         {
@@ -101,16 +106,21 @@ namespace UrbanEcho.Sim
             //Thread.SpinWait(100000);
             if (World.Created)
             {
-                B2Api.b2World_Step(World.WorldId, 1 / 60f, 4);
+                B2Api.b2World_Step(World.WorldId, 1 / 60f, 1);
 
                 Sim.SimTime += 1 / 60f;
+
+                Sim.SimFrames++;
 
                 foreach (Vehicle v in Vehicles)
                 {
                     v.Update();
                 }
 
-                ProjectLayers.SetVehicleLayerDataChanged();
+                if (Sim.SimFrames % 2 == 0)
+                {
+                    ProjectLayers.UpdateVehicleLayer(true);
+                }
             }
         }
 
