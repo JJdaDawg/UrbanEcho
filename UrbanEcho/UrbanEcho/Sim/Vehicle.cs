@@ -126,8 +126,24 @@ namespace UrbanEcho.Sim
 
                     if (foundStartAndEnd == false)
                     {
-                        EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Failed Adding Car with From Node{nodeFrom.X:F2},{nodeFrom.Y:F2} and To Node {nodeTo.X:F2}, {nodeTo.Y:F2} and road with Start {lineString.StartPoint:F2} and End {lineString.EndPoint:F2}"));
-                        IsCreated = false;
+                        Point toPoint = Helper.MakePrecisePoint(new Point(nodeTo.X, nodeTo.Y), lineString.PrecisionModel);
+                        if (lineString.StartPoint.EqualsTopologically(toPoint))
+                        {
+                            foundStartAndEnd = true;
+                            //   EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Created Car with From Node{nodeFrom.X:F2},{nodeFrom.Y:F2} and To Node {nodeTo.X:F2}, {nodeTo.Y:F2} and road with Start {lineString.StartPoint:F2} and End {lineString.EndPoint:F2}"));
+                        }
+
+                        if (lineString.EndPoint.EqualsTopologically(toPoint))
+                        {
+                            foundStartAndEnd = true;
+                            // EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Created Car with From Node{nodeFrom.X:F2},{nodeFrom.Y:F2} and To Node {nodeTo.X:F2}, {nodeTo.Y:F2} and road with Start {lineString.StartPoint:F2} and End {lineString.EndPoint:F2}"));
+                        }
+
+                        if (foundStartAndEnd == false)
+                        {
+                            EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Failed Adding Car with From Node{nodeFrom.X:F2},{nodeFrom.Y:F2} and To Node {nodeTo.X:F2}, {nodeTo.Y:F2} and road with Start {lineString.StartPoint:F2} and End {lineString.EndPoint:F2}"));
+                            IsCreated = false;
+                        }
                     }
                 }
             }
