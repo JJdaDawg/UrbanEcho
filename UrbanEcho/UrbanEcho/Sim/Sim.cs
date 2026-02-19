@@ -1,4 +1,5 @@
 ﻿using Avalonia.Threading;
+using Box2dNet.Interop;
 using Mapsui;
 using Mapsui.Layers;
 using Mapsui.Nts.Providers.Shapefile;
@@ -14,12 +15,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using UrbanEcho.Events.Sim;
 using UrbanEcho.Events.UI;
-using UrbanEcho.Helpers;
 using UrbanEcho.FileManagement;
+using UrbanEcho.Graph;
+using UrbanEcho.Helpers;
 using UrbanEcho.ViewModels;
 using static Mapsui.MapBuilder;
 using Layer = Mapsui.Layers.Layer;
-using Box2dNet.Interop;
 
 namespace UrbanEcho.Sim
 {
@@ -129,6 +130,28 @@ namespace UrbanEcho.Sim
             while (!EventQueueForSim.Instance.IsEmpty())
             {
                 EventQueueForSim.Instance.Read()?.Run();
+            }
+        }
+
+        public static void InitializeVehiclePaths()
+        {
+            if (roadGraph == null || roadGraph.Nodes.Count < 2)
+                return;
+
+            var pathfinder = new AStarPathfinder(roadGraph);
+            var nodes = roadGraph.Nodes.Keys.ToList();
+
+            for (int i = 0; i < Vehicles.Count; i++)
+            {
+                int startNode = nodes[i % nodes.Count];
+                int goalNode = nodes[(i + 50) % nodes.Count];
+
+                var path = pathfinder.FindPath(startNode, goalNode).ToList();
+
+                if (path.Count > 1)
+                {
+                    //Vehicles[i].SetPath(roadGraph, path);
+                }
             }
         }
     }
