@@ -2,6 +2,8 @@
 using Box2dNet.Interop;
 using Mapsui;
 using Mapsui.Layers;
+using Mapsui.Nts;
+using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -13,6 +15,7 @@ using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
 using UrbanEcho.Helpers;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using Point = NetTopologySuite.Geometries.Point;
 
 namespace UrbanEcho.Sim
 {
@@ -38,14 +41,19 @@ namespace UrbanEcho.Sim
 
         private Rectangle carRectImage = new Rectangle(0, 0, 48, 24);
 
-        //from google normal car 4m long and width 1.7m
-        private float carLength = 4.0f;
+        //from google normal car 4.5m long and width 2.25m
+        private float carLength = 4.5f;
 
-        private float carWidth = 1.7f;
+        private float carWidth = 2.25f;
 
         private VehicleBody body;
 
-        private Vector2 startPos = new Vector2(350, 100);
+        private Vector2 startPos = Vector2.Zero;
+        private Vector2 endPos = Vector2.Zero;
+
+        private Vector2 nextPointOnPath = Vector2.Zero;
+        private bool indexingForwardThroughLineString = true;
+
         private float distanceToTravel = 100.0f;
 
         private b2QueryFilter queryFilter = B2Api.b2DefaultQueryFilter();
@@ -73,27 +81,104 @@ namespace UrbanEcho.Sim
 
         private float startingAngle = 0;
 
-        public Vehicle(PointFeature feature)
+        private RoadNode nodeFrom;
+        private RoadNode nodeTo;
+
+        private IFeature currentRoad;
+
+        public bool IsCreated = false;
+
+        public Vehicle(PointFeature feature, RoadNode roadNodeFrom, RoadNode roadNodeTo, IFeature currentRoad)
         {
-            Random random = new Random();
-            startingAngle = random.Next() * Helper.Deg2Rad(360.0f);
+            nodeFrom = roadNodeFrom;
+            nodeTo = roadNodeTo;
 
             this.feature = feature;
+
             double startX = feature.Point.X - World.Offset.X;
             double startY = feature.Point.Y - World.Offset.Y;
-            startPos = new Vector2((float)startX, (float)startY);
 
-            FRect rect = new FRect(startPos.X - carLength / 2, startPos.Y - carWidth / 2, carLength, carWidth);
+            double endX = roadNodeTo.X - World.Offset.X;
+            double endY = roadNodeTo.Y - World.Offset.Y;
 
-            rayCastDelegate = RayCastCallback;
+            double distance;
 
-            queryFilter.categoryBits = 0xFFFF;
-            queryFilter.maskBits = 0xFFFF;
+            this.currentRoad = currentRoad;
 
-            body = new VehicleBody(rect);
+            bool foundStartAndEnd = false;
 
-            b2Rot rot = b2Rot.FromAngle(startingAngle);
-            B2Api.b2Body_SetTransform(body.BodyId, startPos, rot);
+            if (currentRoad is GeometryFeature g)
+            {
+                if (g.Geometry is LineString lineString)
+                {
+                    Point fromPoint = Helper.MakePrecisePoint(new Point(nodeFrom.X, nodeFrom.Y), lineString.PrecisionModel);
+                    if (lineString.StartPoint.EqualsTopologically(fromPoint))
+                    {
+                        foundStartAndEnd = true;
+                        //   EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Created Car with From Node{nodeFrom.X:F2},{nodeFrom.Y:F2} and To Node {nodeTo.X:F2}, {nodeTo.Y:F2} and road with Start {lineString.StartPoint:F2} and End {lineString.EndPoint:F2}"));
+                    }
+
+                    if (lineString.EndPoint.EqualsTopologically(fromPoint))
+                    {
+                        foundStartAndEnd = true;
+                        // EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Created Car with From Node{nodeFrom.X:F2},{nodeFrom.Y:F2} and To Node {nodeTo.X:F2}, {nodeTo.Y:F2} and road with Start {lineString.StartPoint:F2} and End {lineString.EndPoint:F2}"));
+                    }
+
+                    if (foundStartAndEnd == false)
+                    {
+                        Point toPoint = Helper.MakePrecisePoint(new Point(nodeTo.X, nodeTo.Y), lineString.PrecisionModel);
+                        if (lineString.StartPoint.EqualsTopologically(toPoint))
+                        {
+                            foundStartAndEnd = true;
+                            //   EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Created Car with From Node{nodeFrom.X:F2},{nodeFrom.Y:F2} and To Node {nodeTo.X:F2}, {nodeTo.Y:F2} and road with Start {lineString.StartPoint:F2} and End {lineString.EndPoint:F2}"));
+                        }
+
+                        if (lineString.EndPoint.EqualsTopologically(toPoint))
+                        {
+                            foundStartAndEnd = true;
+                            // EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Created Car with From Node{nodeFrom.X:F2},{nodeFrom.Y:F2} and To Node {nodeTo.X:F2}, {nodeTo.Y:F2} and road with Start {lineString.StartPoint:F2} and End {lineString.EndPoint:F2}"));
+                        }
+
+                        if (foundStartAndEnd == false)
+                        {
+                            EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Failed Adding Car with From Node{nodeFrom.X:F2},{nodeFrom.Y:F2} and To Node {nodeTo.X:F2}, {nodeTo.Y:F2} and road with Start {lineString.StartPoint:F2} and End {lineString.EndPoint:F2}"));
+                            IsCreated = false;
+                        }
+                    }
+                }
+            }
+
+            if (foundStartAndEnd)
+            {
+                //if(distance>5)
+
+                startPos = new Vector2((float)startX, (float)startY);
+                Vector2 endPos = new Vector2((float)endX, (float)endY);
+
+                Vector2 directionNormalized = Vector2.Normalize(new Vector2(endPos.X - startPos.X, endPos.Y - startPos.Y));
+
+                startingAngle = MathF.Atan2(directionNormalized.Y, directionNormalized.X);
+
+                //move start and end so car is using
+                //right hand lane and heading to right hand lane
+
+                startPos = new Vector2(startPos.X + MathF.Cos(startingAngle + Helper.Deg2Rad(-90.0f)) * Helper.DefaultLaneWidth * 0.75f, startPos.Y + MathF.Sin(startingAngle + Helper.Deg2Rad(-90.0f)) * Helper.DefaultLaneWidth * 0.75f);
+                endPos = new Vector2(endPos.X + MathF.Cos(startingAngle + Helper.Deg2Rad(-90.0f)) * Helper.DefaultLaneWidth * 0.75f, endPos.Y + MathF.Sin(startingAngle + Helper.Deg2Rad(-90.0f)) * Helper.DefaultLaneWidth * 0.75f);
+
+                FRect rect = new FRect(startPos.X - carLength / 2, startPos.Y - carWidth / 2, carLength, carWidth);
+
+                rayCastDelegate = RayCastCallback;
+
+                queryFilter.categoryBits = 0xFFFF;
+                queryFilter.maskBits = 0xFFFF;
+
+                body = new VehicleBody(rect);
+
+                b2Rot rot = b2Rot.FromAngle(startingAngle);
+                B2Api.b2Body_SetTransform(body.BodyId, startPos, rot);
+
+                IsCreated = true;
+            }
         }
 
         public void SetIntersectionLastAt(b2ShapeId shapeId)

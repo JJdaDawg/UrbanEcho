@@ -34,7 +34,7 @@ namespace UrbanEcho.Styles
             {
                 try
                 {
-                    Styles.Add("RedCar", CreateImageStyle(projectName, "RedCar.png"));
+                    Styles.Add("RedCar", CreateImageStyle(projectName, "RedCar.png", 4.5f, 48));
                 }
                 catch (Exception ex)
                 {
@@ -47,7 +47,7 @@ namespace UrbanEcho.Styles
             }
         }
 
-        private ImageStyle CreateImageStyle(string projectName, string fileName)
+        private ImageStyle CreateImageStyle(string projectName, string fileName, float physicalCarLength, int imageWidth)
         {
             string sourceString = $"embedded://{projectName}.Resources.Images.VehicleIcons.{fileName}";
 
@@ -59,7 +59,7 @@ namespace UrbanEcho.Styles
                     Source = sourceString,
                 };
 
-            style.SymbolScale = 1.25f;
+            style.SymbolScale = physicalCarLength / (float)(imageWidth);
 
             return style;
         }
@@ -68,7 +68,14 @@ namespace UrbanEcho.Styles
         {
             ImageStyle newStyle = new ImageStyle();
             newStyle.Image = style.Image;
-            newStyle.SymbolScale = style.SymbolScale;
+            try
+            {
+                newStyle.SymbolScale = style.SymbolScale / Sim.Sim.MyMap.Navigator.Viewport.Resolution;
+            }
+            catch
+            {
+                newStyle.SymbolScale = 1.25f;
+            }
             return newStyle;
         }
 

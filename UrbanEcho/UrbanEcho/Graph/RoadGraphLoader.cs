@@ -1,24 +1,37 @@
 ﻿using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Precision;
+
+using Avalonia.Media;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Mapsui.Nts;
 
 namespace UrbanTrafficSim.Core.IO;
 
 public static class RoadGraphLoader
 {
-    public static RoadGraph LoadFromFeatures(IEnumerable<IFeature> features)
+    public static RoadGraph? LoadFromFeatures(IEnumerable<Mapsui.IFeature> features)
     {
         var featureList = features.ToList();
         if (!featureList.Any())
             return new RoadGraph(new(), new());
+        GeometryFeature? firstGeometryFeature;
+        if (featureList.First() is GeometryFeature firstFeature)
+        {
+            firstGeometryFeature = firstFeature;
+        }
+        else
+        {
+            return null;
+        }
 
-        var factory = featureList.First().Geometry.Factory;
+        var factory = firstGeometryFeature.Geometry.Factory;
+
         var precisionModel = factory.PrecisionModel;
 
-        
         NormalizeFeatures(featureList, precisionModel);
 
         var usage = CountCoordinateUsage(featureList);
@@ -42,54 +55,61 @@ public static class RoadGraphLoader
 
         foreach (var feature in featureList)
         {
-            if (feature.Geometry is not LineString line)
-                continue;
-
-            var metadata = ExtractMetadata(feature);
-
-            var coords = line.Coordinates;
-            int startIndex = 0;
-
-            while (startIndex < coords.Length - 1)
+            if (feature is GeometryFeature g)
             {
-                if (!IsGraphNode(coords[startIndex], startIndex == 0, usage))
-                {
-                    startIndex++;
+                if (g.Geometry is not LineString line)
                     continue;
-                }
 
-                double length = 0;
-                int endIndex = startIndex + 1;
+                var metadata = ExtractMetadata(feature);
 
-                while (endIndex < coords.Length)
+                var coords = line.Coordinates;
+                int startIndex = 0;
+
+                while (startIndex < coords.Length - 1)
                 {
-                    length += coords[endIndex - 1]
-                        .Distance(coords[endIndex]);
-
-                    if (IsGraphNode(
-                        coords[endIndex],
-                        endIndex == coords.Length - 1,
-                        usage))
-                        break;
-
-                    endIndex++;
-                }
-
-                if (endIndex < coords.Length)
-                {
-                    int from = GetNodeId(coords[startIndex]);
-                    int to = GetNodeId(coords[endIndex]);
-
-                    if (from != to && length > 0)
+                    if (!IsGraphNode(coords[startIndex], startIndex == 0, usage))
                     {
-                        edges.Add(new RoadEdge(from, to, length, metadata));
-
-                        if (!metadata.OneWay)
-                            edges.Add(new RoadEdge(to, from, length, metadata));
+                        startIndex++;
+                        continue;
                     }
-                }
 
-                startIndex = endIndex;
+                    double length = 0;
+                    int endIndex = startIndex + 1;
+
+                    while (endIndex < coords.Length)
+                    {
+                        length += coords[endIndex - 1]
+                            .Distance(coords[endIndex]);
+
+                        if (IsGraphNode(
+                            coords[endIndex],
+                            endIndex == coords.Length - 1,
+                            usage))
+                            break;
+
+                        endIndex++;
+                    }
+
+                    if (endIndex < coords.Length)
+                    {
+                        int from = GetNodeId(coords[startIndex]);
+                        int to = GetNodeId(coords[endIndex]);
+
+                        if (from != to && length > 0)
+                        {
+                            edges.Add(new RoadEdge(from, to, length, metadata, g));
+
+                            if (!metadata.OneWay)
+                                edges.Add(new RoadEdge(to, from, length, metadata, g));
+                        }
+                    }
+
+                    startIndex = endIndex;
+                }
+            }
+            else
+            {
+                continue;
             }
         }
 
@@ -99,33 +119,47 @@ public static class RoadGraphLoader
     }
 
     private static void NormalizeFeatures(
-        IEnumerable<IFeature> features,
+        IEnumerable<Mapsui.IFeature> features,
         PrecisionModel precision)
     {
         foreach (var f in features)
         {
-            if (f.Geometry is not LineString line)
-                continue;
+            if (f is GeometryFeature g)
+            {
+                if (g.Geometry is not LineString line)
+                    continue;
 
-            foreach (var c in line.Coordinates)
-                precision.MakePrecise(c);
+                foreach (var c in line.Coordinates)
+                    precision.MakePrecise(c);
+            }
+            else
+            {
+                continue;
+            }
         }
     }
 
     private static Dictionary<string, int> CountCoordinateUsage(
-        IEnumerable<IFeature> features)
+        IEnumerable<Mapsui.IFeature> features)
     {
         var usage = new Dictionary<string, int>();
 
         foreach (var f in features)
         {
-            if (f.Geometry is not LineString line)
-                continue;
-
-            foreach (var c in line.Coordinates)
+            if (f is GeometryFeature g)
             {
-                string key = $"{c.X}_{c.Y}";
-                usage[key] = usage.TryGetValue(key, out var n) ? n + 1 : 1;
+                if (g.Geometry is not LineString line)
+                    continue;
+
+                foreach (var c in line.Coordinates)
+                {
+                    string key = $"{c.X}_{c.Y}";
+                    usage[key] = usage.TryGetValue(key, out var n) ? n + 1 : 1;
+                }
+            }
+            else
+            {
+                continue;
             }
         }
 
@@ -141,29 +175,28 @@ public static class RoadGraphLoader
         return isEndpoint || usage[key] > 1;
     }
 
-    private static RoadMetadata ExtractMetadata(IFeature f)
+    private static RoadMetadata ExtractMetadata(Mapsui.IFeature f)
     {
         double speedKmh = 50; // fallback
 
-        if (f.Attributes.Exists("SPEED_LIMI"))
+        if (f.Fields.Contains("SPEED_LIMI"))
         {
-            var raw = f.Attributes["SPEED_LIMI"];
+            var raw = f["SPEED_LIMI"];
             if (raw != null && double.TryParse(raw.ToString(), out var parsed))
                 speedKmh = parsed;
         }
 
         return new RoadMetadata
         {
-            RoadType = f.Attributes.Exists("CATEGORY")
-                ? f.Attributes["CATEGORY"]?.ToString() ?? ""
+            RoadType = f.Fields.Contains("CATEGORY")
+                ? f["CATEGORY"]?.ToString() ?? ""
                 : "",
 
             SpeedLimit = speedKmh / 3.6,
-            OneWay = f.Attributes.Exists("FLOW_DIREC") &&
-                     f.Attributes["FLOW_DIREC"]?.ToString() == "OneWay"
+            OneWay = f.Fields.Contains("FLOW_DIREC") &&
+                     f["FLOW_DIREC"]?.ToString() == "OneWay"
         };
     }
-
 
     private static RoadGraph RemoveOrphanComponents(RoadGraph graph)
     {
