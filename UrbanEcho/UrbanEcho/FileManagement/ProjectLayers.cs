@@ -12,7 +12,7 @@ using Mapsui.Styles;
 using Mapsui.Tiling.Layers;
 using Mapsui.UI;
 using Mapsui.UI.Avalonia;
-
+using NetTopologySuite.Geometries;
 using SQLite;
 using System;
 using System.Collections.Generic;
@@ -190,7 +190,8 @@ namespace UrbanEcho.FileManagement
 
                 if (vehicleRequiresLoading && intersectionLoaded && roadLoaded)
                 {
-                    graphLayer = new RasterizingLayer(CreateGraphLayer());
+                    MemoryLayer tempGraphLayer = CreateGraphLayer();
+
                     //TODO: if we are going to load new road network we should probably destroy box
                     ///2d world and dispose any handles created in the
                     ///IntersectionBody file. Then create a new world and make new shapes again
@@ -202,6 +203,8 @@ namespace UrbanEcho.FileManagement
                                     extent.MinY + (extent.MaxY - extent.MinY) / 2);
                     }
                     vehicleLayer = CreateVehicleLayer();
+                    tempGraphLayer.Features = GraphLayerFeatures;
+                    graphLayer = new RasterizingLayer(tempGraphLayer);
                     vehicleRequiresLoading = false;
                 }
             }
@@ -398,6 +401,12 @@ namespace UrbanEcho.FileManagement
                                     UrbanEcho.Sim.Sim.Vehicles.Add(vehicle);
                                     VehicleFeatures.Add(pf);
                                 }
+                                else
+                                {
+                                    PointFeature pfFailed = new PointFeature(mPoint);
+
+                                    GraphLayerFeatures.Add(pfFailed);
+                                }
                             }
                         }
                     }
@@ -456,7 +465,7 @@ namespace UrbanEcho.FileManagement
             try
             {
                 layer = new MemoryLayer("Graph");
-
+                /*
                 foreach (KeyValuePair<int, RoadNode> kvp in Sim.Sim.roadGraph.Nodes)
                 {
                     MPoint mPoint = new MPoint(kvp.Value.X, kvp.Value.Y);
@@ -464,20 +473,37 @@ namespace UrbanEcho.FileManagement
                     pf["Node"] = kvp.Value.Id;
 
                     GraphLayerFeatures.Add(pf);
-                }
+                }*/
 
                 for (int i = 0; i < Sim.Sim.roadGraph.Edges.Count; i++)
                 {
-                    LineString
-                    if (Sim.Sim.roadGraph.Edges[i].Feature is GeometryFeature g)
-                    {
-                        GeometryFeature feature = new GeometryFeature(g);
+                    int fromNodeIndex = Sim.Sim.roadGraph.Edges[i].From;
+                    int toNodeIndex = Sim.Sim.roadGraph.Edges[i].To;
 
-                        GraphLayerFeatures.Add(feature);
+                    if (Sim.Sim.roadGraph.Nodes.TryGetValue(fromNodeIndex, out RoadNode? fromNodeValue))
+                    {
+                        if (Sim.Sim.roadGraph.Nodes.TryGetValue(toNodeIndex, out RoadNode? toNodeValue))
+                        {
+                            GeometryFeature feature = new GeometryFeature();
+                            Coordinate[] coordinates = new Coordinate[2];
+
+                            coordinates[0] = new Coordinate(fromNodeValue.X, fromNodeValue.Y);
+                            coordinates[1] = new Coordinate(toNodeValue.X, toNodeValue.Y);
+
+                            feature.Geometry = new LineString(coordinates);
+
+                            GraphLayerFeatures.Add(feature);
+                        }
+                        else
+                        {
+                            EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to get to Node"));
+                        }
+                    }
+                    else
+                    {
+                        EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to get from Node"));
                     }
                 }
-
-                layer.Features = GraphLayerFeatures;
 
                 layer.Opacity = 1.0f;
 
@@ -598,11 +624,11 @@ namespace UrbanEcho.FileManagement
             {
                 myMap?.Layers.Add(vehicleLayer);
             }
-            /*
+
             if (graphLayer != null)
             {
                 myMap?.Layers.Add(graphLayer);
-            }*/
+            }
         }
 
         public static void UpdateVehicleLayer(bool fullClone)
