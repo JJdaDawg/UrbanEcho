@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Box2dNet.Interop;
@@ -7,6 +8,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
+using UrbanEcho.Services;
 using UrbanEcho.Sim;
 using UrbanEcho.ViewModels;
 
@@ -28,6 +30,7 @@ public partial class App : Application
         var mainWindow = new MainWindow();
         services.AddSingleton<IPanelService>(mainWindow);
         services.AddSingleton<MainViewModel>();
+        services.AddSingleton<IClipboardService>(new ClipboardService(mainWindow));
 
         Services = services.BuildServiceProvider();
 

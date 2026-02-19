@@ -1,10 +1,13 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Specialized;
+using UrbanEcho.Services;
 using UrbanEcho.ViewModels;
 
 namespace UrbanEcho;
