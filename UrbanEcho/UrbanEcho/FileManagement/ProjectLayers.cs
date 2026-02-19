@@ -190,6 +190,11 @@ namespace UrbanEcho.FileManagement
 
                 if (vehicleRequiresLoading && intersectionLoaded && roadLoaded)
                 {
+                    graphLayer = new RasterizingLayer(CreateGraphLayer());
+                    //TODO: if we are going to load new road network we should probably destroy box
+                    ///2d world and dispose any handles created in the
+                    ///IntersectionBody file. Then create a new world and make new shapes again
+
                     MRect? extent = roadLayerFirstPass?.Extent;
                     if (extent != null)
                     {
@@ -198,11 +203,6 @@ namespace UrbanEcho.FileManagement
                     }
                     vehicleLayer = CreateVehicleLayer();
                     vehicleRequiresLoading = false;
-
-                    graphLayer = new RasterizingLayer(CreateGraphLayer());
-                    //TODO: if we are going to load new road network we should probably destroy box
-                    ///2d world and dispose any handles created in the
-                    ///IntersectionBody file. Then create a new world and make new shapes again
                 }
             }
             else
@@ -353,7 +353,7 @@ namespace UrbanEcho.FileManagement
             try
             {
                 layer = new MemoryLayer("Vehicles");
-
+                /* Spawning at each road feature
                 for (int i = 0; RoadFeatures.Count > i; i++)
                 {
                     if (RoadFeatures[i] is GeometryFeature gf)
@@ -374,7 +374,56 @@ namespace UrbanEcho.FileManagement
                             }
                         }
                     }
+                }*/
+                // Spawning at each road graph From Edge point
+                for (int i = 0; i < Sim.Sim.roadGraph?.Edges.Count; i++)
+                {
+                    if (Sim.Sim.roadGraph.Nodes.TryGetValue(Sim.Sim.roadGraph.Edges[i].From, out RoadNode? roadNodeFrom))
+                    {
+                        if (Sim.Sim.roadGraph.Nodes.TryGetValue(Sim.Sim.roadGraph.Edges[i].To, out RoadNode? roadNodeTo))
+                        {
+                            if (roadNodeFrom != null && roadNodeTo != null)
+                            {
+                                MPoint mPoint = new MPoint(roadNodeFrom.X, roadNodeFrom.Y);
+                                PointFeature pf = new PointFeature(mPoint);
+                                pf["VehicleNumber"] = i;
+                                pf["VehicleType"] = "RedCar";
+                                pf["Hidden"] = false;
+                                pf["Angle"] = 0.0f;
+
+                                Vehicle vehicle = new Vehicle(pf, roadNodeFrom, roadNodeTo, Sim.Sim.roadGraph?.Edges[i].Feature);
+
+                                if (vehicle.IsCreated)
+                                {
+                                    UrbanEcho.Sim.Sim.Vehicles.Add(vehicle);
+                                    VehicleFeatures.Add(pf);
+                                }
+                            }
+                        }
+                    }
                 }
+                /* Spawning at each road feature
+                for (int i = 0; RoadFeatures.Count > i; i++)
+                {
+                    if (RoadFeatures[i] is GeometryFeature gf)
+                    {
+                        if (gf.Geometry is NetTopologySuite.Geometries.LineString l)
+                        {
+                            if (l.Coordinates.Length > 0)
+                            {
+                                MPoint mPoint = new MPoint(l.Coordinates[0].X, l.Coordinates[0].Y);
+                                PointFeature pf = new PointFeature(mPoint);
+                                pf["VehicleNumber"] = i;
+                                pf["VehicleType"] = "RedCar";
+                                pf["Hidden"] = false;
+                                pf["Angle"] = 0.0f;
+                                VehicleFeatures.Add(pf);
+
+                                UrbanEcho.Sim.Sim.Vehicles.Add(new Vehicle(pf));
+                            }
+                        }
+                    }
+                }*/
 
                 layer.Features = VehicleFeatures;
 
@@ -419,6 +468,7 @@ namespace UrbanEcho.FileManagement
 
                 for (int i = 0; i < Sim.Sim.roadGraph.Edges.Count; i++)
                 {
+                    LineString
                     if (Sim.Sim.roadGraph.Edges[i].Feature is GeometryFeature g)
                     {
                         GeometryFeature feature = new GeometryFeature(g);
@@ -530,7 +580,7 @@ namespace UrbanEcho.FileManagement
             if (IsRasterVisible && backgroundMBTile != null)
             {
                 myMap?.Layers.Add(backgroundMBTile);
-            }
+            }/*
             if (roadLayerFirstPass != null)
             {
                 myMap?.Layers.Add(roadLayerFirstPass);
@@ -542,17 +592,17 @@ namespace UrbanEcho.FileManagement
             if (intersectionLayer != null)
             {
                 myMap?.Layers.Add(intersectionLayer);
-            }
+            }*/
 
             if (vehicleLayer != null)
             {
                 myMap?.Layers.Add(vehicleLayer);
             }
-
+            /*
             if (graphLayer != null)
             {
                 myMap?.Layers.Add(graphLayer);
-            }
+            }*/
         }
 
         public static void UpdateVehicleLayer(bool fullClone)

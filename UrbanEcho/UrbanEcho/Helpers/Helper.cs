@@ -2,6 +2,7 @@
 using Mapsui;
 using Mapsui.Extensions;
 using Mapsui.Layers;
+using Mapsui.Nts;
 using Mapsui.Providers;
 using NetTopologySuite.Geometries;
 using SkiaSharp;
@@ -19,6 +20,15 @@ namespace UrbanEcho.Helpers
 
     public class Helper
     {
+        public const float DefaultLaneWidth = 3.5f;//in meters
+
+        public static Point MakePrecisePoint(
+        Point p,
+        PrecisionModel precision)
+        {
+            return new Point(precision.MakePrecise(p.X), precision.MakePrecise(p.Y));
+        }
+
         /// <summary>
         /// Convert a list of Mapsui points in world coordinates to SKPoint in screen coordinates
         /// </summary>

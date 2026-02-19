@@ -29,7 +29,7 @@ namespace UrbanEcho.Sim
 
         public static Task? SimTask;
 
-        private static Map? MyMap;
+        public static Map? MyMap;
 
         private static MainViewModel? mainViewModel;
 
@@ -66,7 +66,7 @@ namespace UrbanEcho.Sim
             LoadFileEvent loadProjectEvent = new LoadFileEvent(FileTypes.FileType.ProjectFile, "Resources/ProjectFiles/myFile.Json", mainViewModel.Map.MyMap);
             EventQueueForSim.Instance.Add(loadProjectEvent); //will usually happen from UI
 
-            FrameTimer frameTimer = new FrameTimer(true);
+            FrameTimer frameTimer = new FrameTimer(false);
 
             while (Cts.IsCancellationRequested == false)
             {
