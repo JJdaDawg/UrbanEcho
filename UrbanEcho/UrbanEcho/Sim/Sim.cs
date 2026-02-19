@@ -39,6 +39,8 @@ namespace UrbanEcho.Sim
 
         public static float SimTime = 0;
 
+        public static long SimFrames = 0;
+
         public static void SetMainViewModel(MainViewModel setMainViewModel)
         {
             mainViewModel = setMainViewModel;
@@ -64,7 +66,7 @@ namespace UrbanEcho.Sim
             LoadFileEvent loadProjectEvent = new LoadFileEvent(FileTypes.FileType.ProjectFile, "Resources/ProjectFiles/myFile.Json", mainViewModel.Map.MyMap);
             EventQueueForSim.Instance.Add(loadProjectEvent); //will usually happen from UI
 
-            FrameTimer frameTimer = new FrameTimer(false);
+            FrameTimer frameTimer = new FrameTimer(true);
 
             while (Cts.IsCancellationRequested == false)
             {
@@ -104,16 +106,21 @@ namespace UrbanEcho.Sim
             //Thread.SpinWait(100000);
             if (World.Created)
             {
-                B2Api.b2World_Step(World.WorldId, 1 / 60f, 4);
+                B2Api.b2World_Step(World.WorldId, 1 / 60f, 1);
 
                 Sim.SimTime += 1 / 60f;
+
+                Sim.SimFrames++;
 
                 foreach (Vehicle v in Vehicles)
                 {
                     v.Update();
                 }
 
-                ProjectLayers.SetVehicleLayerDataChanged();
+                if (Sim.SimFrames % 2 == 0)
+                {
+                    ProjectLayers.UpdateVehicleLayer(true);
+                }
             }
         }
 

@@ -46,6 +46,7 @@ public partial class MainWindow : AppWindow
         DataContext = vm;
         SetupMap.Init(vm.Map.MyMap);
         Sim.Sim.SetMainViewModel(vm);
+
         Sim.Sim.SimTask = Task.Factory.StartNew(new Action(Sim.Sim.Run), Sim.Sim.Cts.Token);
     }
 }

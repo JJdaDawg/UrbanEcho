@@ -1,6 +1,7 @@
 ﻿using Avalonia.Media;
 using BruTile;
 using BruTile.MbTiles;
+using BruTile.Wms;
 using FluentAvalonia.Core;
 using Mapsui;
 using Mapsui.Layers;
@@ -9,6 +10,7 @@ using Mapsui.Nts.Providers.Shapefile;
 using Mapsui.Providers;
 using Mapsui.Styles;
 using Mapsui.Tiling.Layers;
+using Mapsui.UI;
 using Mapsui.UI.Avalonia;
 
 using SQLite;
@@ -22,6 +24,8 @@ using UrbanEcho.Sim;
 using UrbanEcho.Styles;
 using UrbanEcho.ViewModels;
 using Color = Mapsui.Styles.Color;
+using Exception = System.Exception;
+using Layer = Mapsui.Layers.Layer;
 using Pen = Mapsui.Styles.Pen;
 
 namespace UrbanEcho.FileManagement
@@ -34,7 +38,9 @@ namespace UrbanEcho.FileManagement
         private static RasterizingLayer? roadLayerSecondPass;
         private static Layer? intersectionLayer;
         private static MemoryLayer? vehicleLayer;
-        private static MemoryLayer? graphLayer;
+
+        //private static MemoryProvider? vehicleProvider;
+        private static RasterizingLayer? graphLayer;
 
         private static bool backgroundRequiresLoading = false;
         private static bool roadRequiresLoading = false;
@@ -193,7 +199,7 @@ namespace UrbanEcho.FileManagement
                     vehicleLayer = CreateVehicleLayer();
                     vehicleRequiresLoading = false;
 
-                    graphLayer = CreateGraphLayer();
+                    graphLayer = new RasterizingLayer(CreateGraphLayer());
                     //TODO: if we are going to load new road network we should probably destroy box
                     ///2d world and dispose any handles created in the
                     ///IntersectionBody file. Then create a new world and make new shapes again
@@ -361,7 +367,7 @@ namespace UrbanEcho.FileManagement
                                 pf["VehicleNumber"] = i;
                                 pf["VehicleType"] = "RedCar";
                                 pf["Hidden"] = false;
-                                pf["Angle"] = 0;
+                                pf["Angle"] = 0.0f;
                                 VehicleFeatures.Add(pf);
 
                                 UrbanEcho.Sim.Sim.Vehicles.Add(new Vehicle(pf));
@@ -371,6 +377,10 @@ namespace UrbanEcho.FileManagement
                 }
 
                 layer.Features = VehicleFeatures;
+
+                //vehicleProvider = new MemoryProvider(VehicleFeatures);
+
+                //layer.DataSource = vehicleProvider;// .Features = (IEnumerable<IFeature>)VehicleFeatures.Select(v => (IFeature)v.Clone()).ToList();
 
                 layer.Opacity = 1.0f;
 
@@ -465,7 +475,7 @@ namespace UrbanEcho.FileManagement
                         if (panBounds != null)
                         {
                             map.Navigator.OverridePanBounds = panBounds;
-                            map.Navigator.OverrideZoomBounds = new MMinMax(0.1, 50);
+                            map.Navigator.OverrideZoomBounds = new MMinMax(0.01, 50);
 
                             map.Navigator.CenterOnAndZoomTo(new MPoint(extent.MinX + (extent.MaxX - extent.MinX) / 2,
                                 extent.MinY + (extent.MaxY - extent.MinY) / 2), 15.0);
@@ -545,10 +555,33 @@ namespace UrbanEcho.FileManagement
             }
         }
 
-        public static void SetVehicleLayerDataChanged()
+        public static void UpdateVehicleLayer(bool fullClone)
         {
             if (vehicleLayer != null)
+            {
+                if (fullClone)
+                {
+                    List<IFeature> copyOfVehiclesFeatures = new List<IFeature>();
+                    copyOfVehiclesFeatures = VehicleFeatures.Select(v => (IFeature)v.Clone()).ToList();
+
+                    EventQueueForUI.Instance.Add(new UpdatedVehicleMapEvent(copyOfVehiclesFeatures));
+                }
+                else
+                {
+                    EventQueueForUI.Instance.Add(new UpdatedVehicleMapEvent(VehicleFeatures));
+                }
+            }
+        }
+
+        //Only call from UI
+        public static void SetVehicleLayerDataChanged(List<IFeature> copyOfVehiclesFeatures)
+        {
+            if (vehicleLayer != null)
+            {
+                vehicleLayer.Features = copyOfVehiclesFeatures;
+                vehicleLayer.FeaturesWereModified();
                 vehicleLayer.DataHasChanged();
+            }
         }
 
         //Only call from UI
