@@ -5,11 +5,14 @@ using System.Threading.Tasks;
 using UrbanEcho.Events.Sim;
 using UrbanEcho.FileManagement;
 using UrbanEcho.Services;
+using CommunityToolkit.Mvvm.Messaging;
+using UrbanEcho.Messages;
 
 namespace UrbanEcho.ViewModels
 {
     public partial class ProjectViewModel : ObservableObject
     {
+
         private readonly IFileDialogService _fileDialogService;
         private ProjectFile? _currentProject;
 
@@ -31,6 +34,7 @@ namespace UrbanEcho.ViewModels
             {
                 HasProject = true;
                 NotifyProjectCommands();
+                WeakReferenceMessenger.Default.Send(new ProjectLoadedMessage());
             }
         }
 
@@ -55,7 +59,14 @@ namespace UrbanEcho.ViewModels
         [RelayCommand]
         private async Task CreateProject()
         {
-            // TODO: Implement create project
+            var path = await _fileDialogService.SaveFileAsync();
+            if (path is null) return;
+
+            _currentProject = new ProjectFile();
+            ProjectFile.SaveAs(_currentProject, path);
+            HasProject = true;
+            NotifyProjectCommands();
+            WeakReferenceMessenger.Default.Send(new ProjectLoadedMessage());
         }
 
         [RelayCommand(CanExecute = nameof(CanClose))] 

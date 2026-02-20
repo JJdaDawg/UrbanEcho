@@ -1,8 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using System;
 using System.Collections.ObjectModel;
 using UrbanEcho.Events.UI;
+using UrbanEcho.Messages;
 using UrbanEcho.Models;
 
 namespace UrbanEcho.ViewModels
@@ -27,6 +29,10 @@ namespace UrbanEcho.ViewModels
         {
             _panelService = panelService;
             ToggleCommand = new RelayCommand(Toggle);
+            WeakReferenceMessenger.Default.Register<LogMessage>(this, (r, m) =>
+            {
+                AddLog(m.Text, m.Source);
+            });
         }
 
         public ObservableCollection<string> CurrentLogs => SelectedSource == LogSource.Map ? _mapLogs : _systemLogs;

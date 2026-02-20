@@ -33,10 +33,10 @@ namespace UrbanEcho.ViewModels
             Console = new ConsoleViewModel(panelService);
             Properties = new PropertiesViewModel(panelService);
             ProjectExplorer = new ProjectExplorerViewModel(panelService);
-            Map = new MapViewModel(Console);
+            Map = new MapViewModel();
             EditMode = new EditModeViewModel();
             Project = new ProjectViewModel(fileDialogService);
-            Simulation = new SimulationViewModel(Console, Project);
+            Simulation = new SimulationViewModel();
         }
     }
 }

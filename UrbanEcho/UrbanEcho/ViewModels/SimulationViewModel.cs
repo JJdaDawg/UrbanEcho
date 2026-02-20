@@ -1,6 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using UrbanEcho.Models;
+using CommunityToolkit.Mvvm.Messaging;
+using UrbanEcho.Messages;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,20 +13,15 @@ namespace UrbanEcho.ViewModels
 {
     public partial class SimulationViewModel : ObservableObject
     {
-        private readonly ConsoleViewModel _console;
-        private readonly ProjectViewModel _project;
+        private bool _hasProject;
 
-        public SimulationViewModel(ConsoleViewModel console, ProjectViewModel project) 
+        public SimulationViewModel() 
         {
-            _console = console;
-            _project = project;
-            _project.PropertyChanged += (s, args) => 
+            WeakReferenceMessenger.Default.Register<ProjectLoadedMessage>(this, (r, m) =>
             {
-                if (args.PropertyName == nameof(ProjectViewModel.HasProject))
-                {
-                    NotifyAllCommands();
-                }
-            };
+                _hasProject = true;
+                NotifyAllCommands();
+            });
         }
 
         [ObservableProperty]
@@ -35,7 +32,7 @@ namespace UrbanEcho.ViewModels
         {
             IsRunning = true;
             NotifyAllCommands();
-            _console.AddLog("Simulation started", LogSource.System);
+            WeakReferenceMessenger.Default.Send(new LogMessage("Simulation started", LogSource.System));
         }
 
         [RelayCommand(CanExecute = nameof(CanStop))]
@@ -43,13 +40,13 @@ namespace UrbanEcho.ViewModels
         {
             IsRunning = false;
             NotifyAllCommands();
-            _console.AddLog("Simulation stopped", LogSource.System);
+            WeakReferenceMessenger.Default.Send(new LogMessage("Simulation stopped", LogSource.System));
         }
 
         [RelayCommand(CanExecute = nameof(CanPause))]
         private void Pause()
         {
-            _console.AddLog("Simulation paused", LogSource.System);
+            WeakReferenceMessenger.Default.Send(new LogMessage("Simulation paused", LogSource.System));
         }
 
         [RelayCommand(CanExecute = nameof(CanSpeedUp))]
@@ -61,11 +58,11 @@ namespace UrbanEcho.ViewModels
         [RelayCommand]
         private void RealTime() { }
 
-        private bool CanStart() => !IsRunning && _project.HasProject;
-        private bool CanStop() => IsRunning && _project.HasProject;
-        private bool CanPause() => IsRunning && _project.HasProject;
-        private bool CanSpeedUp() => IsRunning && _project.HasProject;
-        private bool CanSpeedDown() => IsRunning && _project.HasProject;
+        private bool CanStart() => !IsRunning && _hasProject;
+        private bool CanStop() => IsRunning && _hasProject;
+        private bool CanPause() => IsRunning && _hasProject;
+        private bool CanSpeedUp() => IsRunning && _hasProject;
+        private bool CanSpeedDown() => IsRunning && _hasProject;
 
         private void NotifyAllCommands()
         {
