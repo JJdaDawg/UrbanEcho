@@ -6,14 +6,11 @@ using System.Threading.Tasks;
 
 namespace UrbanEcho.FileManagement
 {
-    public class FileTypes
+    public enum FileType
     {
-        public enum FileType
-        {
-            ProjectFile = 1,
-            BackgroundFile = 2,
-            RoadLayerFile = 3,
-            IntersectionLayerFile = 4
-        };
-    }
+        ProjectFile = 1,
+        BackgroundFile = 2,
+        RoadLayerFile = 3,
+        IntersectionLayerFile = 4
+    };
 }

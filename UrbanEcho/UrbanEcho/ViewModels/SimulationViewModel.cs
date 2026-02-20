@@ -12,10 +12,19 @@ namespace UrbanEcho.ViewModels
     public partial class SimulationViewModel : ObservableObject
     {
         private readonly ConsoleViewModel _console;
+        private readonly ProjectViewModel _project;
 
-        public SimulationViewModel(ConsoleViewModel console)
+        public SimulationViewModel(ConsoleViewModel console, ProjectViewModel project) 
         {
             _console = console;
+            _project = project;
+            _project.PropertyChanged += (s, args) => 
+            {
+                if (args.PropertyName == nameof(ProjectViewModel.HasProject))
+                {
+                    NotifyAllCommands();
+                }
+            };
         }
 
         [ObservableProperty]
@@ -25,9 +34,7 @@ namespace UrbanEcho.ViewModels
         private void Start()
         {
             IsRunning = true;
-            StopCommand.NotifyCanExecuteChanged();
-            PauseCommand.NotifyCanExecuteChanged();
-            StartCommand.NotifyCanExecuteChanged();
+            NotifyAllCommands();
             _console.AddLog("Simulation started.", LogSource.System);
         }
 
@@ -35,42 +42,38 @@ namespace UrbanEcho.ViewModels
         private void Stop()
         {
             IsRunning = false;
-            StopCommand.NotifyCanExecuteChanged();
-            PauseCommand.NotifyCanExecuteChanged();
-            StartCommand.NotifyCanExecuteChanged();
+            NotifyAllCommands();
             _console.AddLog("Simulation stopped.", LogSource.System);
         }
 
         [RelayCommand(CanExecute = nameof(CanPause))]
         private void Pause()
         {
-            // Pause logic here
             _console.AddLog("Simulation paused.", LogSource.System);
         }
 
         [RelayCommand(CanExecute = nameof(CanSpeedUp))]
-        private void SpeedUp()
-        {
-
-        }
+        private void SpeedUp() { }
 
         [RelayCommand(CanExecute = nameof(CanSpeedDown))]
-        private void SpeedDown()
-        {
-
-        }
+        private void SpeedDown() { }
 
         [RelayCommand]
-        private void RealTime()
+        private void RealTime() { }
+
+        private bool CanStart() => !IsRunning && _project.HasProject;
+        private bool CanStop() => IsRunning && _project.HasProject;
+        private bool CanPause() => IsRunning && _project.HasProject;
+        private bool CanSpeedUp() => IsRunning && _project.HasProject;
+        private bool CanSpeedDown() => IsRunning && _project.HasProject;
+
+        private void NotifyAllCommands()
         {
-
+            StartCommand.NotifyCanExecuteChanged();
+            StopCommand.NotifyCanExecuteChanged();
+            PauseCommand.NotifyCanExecuteChanged();
+            SpeedUpCommand.NotifyCanExecuteChanged();
+            SpeedDownCommand.NotifyCanExecuteChanged();
         }
-
-        private bool CanStart() => !IsRunning;
-        private bool CanStop() => IsRunning;
-        private bool CanPause() => IsRunning;
-        private bool CanSpeedUp() => IsRunning;
-        private bool CanSpeedDown() => IsRunning;
     }
-
 }

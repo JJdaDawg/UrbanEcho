@@ -31,6 +31,7 @@ public partial class App : Application
         services.AddSingleton<IPanelService>(mainWindow);
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<IClipboardService>(new ClipboardService(mainWindow));
+        services.AddSingleton<IFileDialogService>(new FileDialogService(mainWindow));
 
         Services = services.BuildServiceProvider();
 

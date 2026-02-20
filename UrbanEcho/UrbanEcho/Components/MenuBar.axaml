@@ -16,7 +16,7 @@
                     Height="32">
 
                 <MenuItem Header="Project">
-                    <MenuItem Header="_Open Project" Background="Transparent">
+                    <MenuItem Header="_Open Project" Background="Transparent" Command="{Binding Project.OpenProjectCommand}">
                         <MenuItem.Icon>
 							<icon:SymbolIcon Symbol="FolderOpen"/>
                         </MenuItem.Icon>
@@ -27,19 +27,19 @@
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator />
-                    <MenuItem Header="_Save Project">
+                    <MenuItem Header="_Save Project" Command="{Binding Project.SaveProjectCommand}">
                         <MenuItem.Icon>
 							<icon:SymbolIcon Symbol="Save" Foreground="LightSkyBlue"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="Save Project As..."/>
+                    <MenuItem Header="Save Project As..." Command="{Binding Project.SaveAsProjectCommand}"/>
                     <Separator />
-                    <MenuItem Header="Close Project">
+                    <MenuItem Header="Close Project" Command="{Binding Project.CloseProjectCommand}">
                         <MenuItem.Icon>
 							<icon:SymbolIcon Symbol="DismissSquare"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="Load Data Set..."/>
+                    <MenuItem Header="Load Data Set..." Command="{Binding Project.ImportDataCommand}"/>
                 </MenuItem>
 
                 <MenuItem Header="Simulation">

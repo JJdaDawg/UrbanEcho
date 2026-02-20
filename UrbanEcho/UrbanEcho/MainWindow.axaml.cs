@@ -20,6 +20,7 @@ using SQLite;
 using System;
 using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
+using UrbanEcho.Services;
 using UrbanEcho.Sim;
 using UrbanEcho.ViewModels;
 using Layer = Mapsui.Layers.Layer;
@@ -41,7 +42,8 @@ public partial class MainWindow : AppWindow, IPanelService
 
         TitleBar.ExtendsContentIntoTitleBar = true;
         TitleBar.TitleBarHitTestType = TitleBarHitTestType.Complex;
-        MainViewModel vm = new MainViewModel(this);
+        var fileDialogService = new FileDialogService(this);
+        MainViewModel vm = new MainViewModel(this, fileDialogService);
         DataContext = vm;
         SetupMap.Init(vm.Map.MyMap);
         Sim.Sim.SetMainViewModel(vm);

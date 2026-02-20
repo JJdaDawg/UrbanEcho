@@ -13,6 +13,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
 using UrbanEcho.Models;
+using UrbanEcho.Services;
 
 namespace UrbanEcho.ViewModels
 {
@@ -24,16 +25,18 @@ namespace UrbanEcho.ViewModels
         public PropertiesViewModel Properties { get; }
         public ProjectExplorerViewModel ProjectExplorer { get; }
         public EditModeViewModel EditMode { get; }
+        public ProjectViewModel Project { get; }
         public bool IsEditMode => EditMode.IsEditMode;
 
-        public MainViewModel(IPanelService panelService)
+        public MainViewModel(IPanelService panelService, IFileDialogService fileDialogService)
         {
             Console = new ConsoleViewModel(panelService);
             Properties = new PropertiesViewModel(panelService);
             ProjectExplorer = new ProjectExplorerViewModel(panelService);
-            Simulation = new SimulationViewModel(Console);
             Map = new MapViewModel(Console);
             EditMode = new EditModeViewModel();
+            Project = new ProjectViewModel(fileDialogService);
+            Simulation = new SimulationViewModel(Console, Project);
         }
     }
 }

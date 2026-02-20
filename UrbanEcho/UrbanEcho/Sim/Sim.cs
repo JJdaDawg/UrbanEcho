@@ -64,7 +64,7 @@ namespace UrbanEcho.Sim
                 return;
             }
             //TODO: Remove this once we have UI for loading project
-            LoadFileEvent loadProjectEvent = new LoadFileEvent(FileTypes.FileType.ProjectFile, "Resources/ProjectFiles/myFile.Json", mainViewModel.Map.MyMap);
+            LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/ProjectFiles/myFile.Json", mainViewModel.Map.MyMap);
             EventQueueForSim.Instance.Add(loadProjectEvent); //will usually happen from UI
 
             FrameTimer frameTimer = new FrameTimer(false);
