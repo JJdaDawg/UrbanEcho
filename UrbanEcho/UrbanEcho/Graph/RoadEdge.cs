@@ -9,13 +9,17 @@ public sealed class RoadEdge
 
     public IFeature Feature { get; }
 
-    public RoadEdge(int from, int to, double length, RoadMetadata metadata, IFeature feature)
+    public bool IsFromStartOfLineString { get; }
+
+    public RoadEdge(int from, int to, double length, RoadMetadata metadata, IFeature feature, bool isFromStartOfLineString)
     {
         From = from;
         To = to;
         Length = length;
         Metadata = metadata;
         Feature = feature;
+
+        IsFromStartOfLineString = isFromStartOfLineString;
     }
 
     public double TravelTimeSeconds =>

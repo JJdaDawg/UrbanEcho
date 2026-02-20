@@ -42,6 +42,8 @@ namespace UrbanEcho.Sim
 
         public static long SimFrames = 0;
 
+        public static int GroupToUpdate = 0;
+
         public static void SetMainViewModel(MainViewModel setMainViewModel)
         {
             mainViewModel = setMainViewModel;
@@ -67,7 +69,7 @@ namespace UrbanEcho.Sim
             LoadFileEvent loadProjectEvent = new LoadFileEvent(FileTypes.FileType.ProjectFile, "Resources/ProjectFiles/myFile.Json", mainViewModel.Map.MyMap);
             EventQueueForSim.Instance.Add(loadProjectEvent); //will usually happen from UI
 
-            FrameTimer frameTimer = new FrameTimer(false);
+            FrameTimer frameTimer = new FrameTimer(true);
 
             while (Cts.IsCancellationRequested == false)
             {
@@ -82,7 +84,7 @@ namespace UrbanEcho.Sim
                             }
                         });
                 }
-
+                frameTimer.Update();
                 simulationLoop();
                 readQueue();
 
@@ -105,22 +107,26 @@ namespace UrbanEcho.Sim
         {
             //simulate doing stuff
             //Thread.SpinWait(100000);
+
             if (World.Created)
             {
-                B2Api.b2World_Step(World.WorldId, 1 / 60f, 1);
+                B2Api.b2World_Step(World.WorldId, 1 / 60.0f, 1);
 
-                Sim.SimTime += 1 / 60f;
+                Sim.SimTime += 1 / 60.0f;
 
                 Sim.SimFrames++;
+
+                Sim.GroupToUpdate = (Sim.GroupToUpdate + 1) % Helper.NumberOfVehicleGroups;
 
                 foreach (Vehicle v in Vehicles)
                 {
                     v.Update();
                 }
 
-                if (Sim.SimFrames % 2 == 0)
+                //Only update vehicle layer if ui queue is empty
+                if (EventQueueForUI.Instance.IsEmpty())
                 {
-                    ProjectLayers.UpdateVehicleLayer(true);
+                    ProjectLayers.UpdateVehicleLayer(true, MyMap);
                 }
             }
         }

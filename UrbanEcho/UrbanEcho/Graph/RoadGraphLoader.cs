@@ -97,10 +97,10 @@ public static class RoadGraphLoader
 
                         if (from != to && length > 0)
                         {
-                            edges.Add(new RoadEdge(from, to, length, metadata, g));
+                            edges.Add(new RoadEdge(from, to, length, metadata, g, true));
 
                             if (!metadata.OneWay)
-                                edges.Add(new RoadEdge(to, from, length, metadata, g));
+                                edges.Add(new RoadEdge(to, from, length, metadata, g, false));
                         }
                     }
 

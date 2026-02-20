@@ -21,6 +21,7 @@ namespace UrbanEcho.Helpers
     public class Helper
     {
         public const float DefaultLaneWidth = 3.5f;//in meters
+        public const int NumberOfVehicleGroups = 1; //spread out the updates so we can have better fps
 
         public static Point MakePrecisePoint(
         Point p,
