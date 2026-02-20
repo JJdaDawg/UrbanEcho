@@ -14,8 +14,6 @@ namespace UrbanEcho.ViewModels
         [ObservableProperty]
         private bool _isEditMode;
 
-        private bool CanEdit() => IsEditMode;
-
         [RelayCommand]
         private void ToggleEditMode() => IsEditMode = !IsEditMode;
 
@@ -30,5 +28,7 @@ namespace UrbanEcho.ViewModels
 
         [RelayCommand(CanExecute = nameof(CanEdit))]
         private void DeleteTrafficSignal() { }
+
+        private bool CanEdit() => IsEditMode;
     }
 }

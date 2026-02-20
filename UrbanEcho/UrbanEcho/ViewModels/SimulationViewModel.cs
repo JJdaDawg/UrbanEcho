@@ -35,7 +35,7 @@ namespace UrbanEcho.ViewModels
         {
             IsRunning = true;
             NotifyAllCommands();
-            _console.AddLog("Simulation started.", LogSource.System);
+            _console.AddLog("Simulation started", LogSource.System);
         }
 
         [RelayCommand(CanExecute = nameof(CanStop))]
@@ -43,13 +43,13 @@ namespace UrbanEcho.ViewModels
         {
             IsRunning = false;
             NotifyAllCommands();
-            _console.AddLog("Simulation stopped.", LogSource.System);
+            _console.AddLog("Simulation stopped", LogSource.System);
         }
 
         [RelayCommand(CanExecute = nameof(CanPause))]
         private void Pause()
         {
-            _console.AddLog("Simulation paused.", LogSource.System);
+            _console.AddLog("Simulation paused", LogSource.System);
         }
 
         [RelayCommand(CanExecute = nameof(CanSpeedUp))]
