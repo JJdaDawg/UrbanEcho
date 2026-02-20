@@ -43,11 +43,6 @@ namespace UrbanEcho.Sim
 
         private Rectangle carRectImage = new Rectangle(0, 0, 48, 24);
 
-        //from google normal car 4.5m long and width 2.25m
-        private float carLength = 4.5f;
-
-        private float carWidth = 2.25f;
-
         private VehicleBody? body;
 
         private Vector2 initialStartPos = Vector2.Zero;
@@ -62,18 +57,16 @@ namespace UrbanEcho.Sim
         private b2QueryFilter queryFilter = B2Api.b2DefaultQueryFilter();
 
         private Ray ray = new Ray(Vector2.Zero, Vector2.Zero);
-        private float rayDistance = 15.0f;
+        private float rayDistance = Helper.DoMapCorrection(15.0f);
         private b2Rot currentAngle;
 
         private bool waitingOnIntersection = false;
         private bool isWaiting = false;
 
         private float targetSpeed = 0;
-        private float speedLimit = 50;
-        private float acceleration = 1.0f * Helper.NumberOfVehicleGroups;
-        private float deceleration = 5.0f * Helper.NumberOfVehicleGroups;
-        private float slowDownfactor = 0.5f;//number from 0 to 1 multiplied by deceleration for slowing down on turns
-        private float turnSpeed = 10.0f;
+        private float speedLimit = Helper.DoMapCorrection(50);
+        private VehicleSettings settings;
+
         private float angleThresholdToDecelerate = Helper.Deg2Rad(45.0f);//How many degrees off target angle before decelerate
         private bool angleAboveThreshold = false;
         private bool carInFront = false;
@@ -87,8 +80,8 @@ namespace UrbanEcho.Sim
 
         private float angleToDest = 0;
 
-        private RoadNode nodeFrom;
-        private RoadNode nodeTo;
+        private RoadNode? nodeFrom;
+        private RoadNode? nodeTo;
 
         private GeometryFeature? currentRoad;
 
@@ -98,17 +91,25 @@ namespace UrbanEcho.Sim
 
         private int updateGroup = 0;
 
-        private LineString lineString;
+        private LineString? lineString;
 
-        public Vehicle(PointFeature feature, RoadNode roadNodeFrom, RoadNode roadNodeTo, RoadEdge currentRoad, int updateGroup)
+        public Vehicle(PointFeature feature, RoadNode roadNodeFrom, RoadNode roadNodeTo, RoadEdge currentRoad, string carType, int updateGroup)
         {
+            settings = new VehicleSettings(carType);
+            nodeFrom = roadNodeFrom;
+            nodeTo = roadNodeTo;
+
             if (currentRoad == null)
             {
                 EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Failed Adding Car with From Node{nodeFrom.X:F2},{nodeFrom.Y:F2} and To Node {nodeTo.X:F2}, {nodeTo.Y:F2} Road Edge passed was null"));
                 return;
             }
-            nodeFrom = roadNodeFrom;
-            nodeTo = roadNodeTo;
+
+            if (!settings.IsValid())
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Failed Adding Car that had {carType} as type"));
+                return;
+            }
 
             this.feature = feature;
             this.updateGroup = updateGroup;
@@ -201,7 +202,7 @@ namespace UrbanEcho.Sim
                         initialStartPos = startPos;
                         endPos = new Vector2(endPos.X + laneOffset.X, endPos.Y + laneOffset.Y);
 
-                        FRect rect = new FRect(startPos.X - carLength / 2, startPos.Y - carWidth / 2, carLength, carWidth);
+                        FRect rect = new FRect(startPos.X - settings.GetLength() / 2, startPos.Y - settings.GetWidth() / 2, settings.GetLength(), settings.GetWidth());
 
                         rayCastDelegate = RayCastCallback;
 
@@ -324,16 +325,16 @@ namespace UrbanEcho.Sim
 
                 if (state == VehicleStates.Accelerating)
                 {
-                    updateToSpeed = Math.Clamp(updateToSpeed + acceleration, 0, speedLimit);
+                    updateToSpeed = Math.Clamp(updateToSpeed + settings.GetAcceleration(), 0, speedLimit);
                 }
                 if (state == VehicleStates.Decelerating)
                 {
-                    updateToSpeed = Math.Clamp(updateToSpeed - deceleration, 0, speedLimit);
+                    updateToSpeed = Math.Clamp(updateToSpeed - settings.GetDeceleration(), 0, speedLimit);
                 }
 
                 if (state == VehicleStates.SlowDownForTurn)
                 {
-                    updateToSpeed = Math.Clamp(updateToSpeed - deceleration * slowDownfactor, 0, speedLimit);
+                    updateToSpeed = Math.Clamp(updateToSpeed - settings.GetDeceleration() * settings.GetSlowDownfactor(), 0, speedLimit);
                 }
 
                 if (updateToSpeed > 0)
@@ -489,7 +490,7 @@ namespace UrbanEcho.Sim
                 //https://phaser.io/tutorials/box2d-tutorials/rotate-to-angle#:~:text=This%20topic%20covers%20rotating%20a%20body%20to,directly%20setting%20the%20angle%20or%20using%20torque/
                 angle = (float)(((angle + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI);
 
-                B2Api.b2Body_SetAngularVelocity(body.BodyId, angle * turnSpeed);
+                B2Api.b2Body_SetAngularVelocity(body.BodyId, angle * settings.GetTurnSpeed());
 
                 if (Math.Abs(angle) >= angleThresholdToDecelerate)
                 {

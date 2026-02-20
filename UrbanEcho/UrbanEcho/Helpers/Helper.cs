@@ -18,8 +18,11 @@ namespace UrbanEcho.Helpers
     //was internal function in clipping class
     //https://github.com/Mapsui/Mapsui/blob/main/Mapsui.Rendering.Skia/Functions/ClippingFunctions.cs
 
-    public class Helper
+    public static class Helper
     {
+        //1.0f / MathF.Cos(43.4511f*(MathF.PI / 180.0f))
+        public const float MapCorrection = 1.37748f;
+
         public const float DefaultLaneWidth = 3.5f;//in meters
         public const int NumberOfVehicleGroups = 1; //spread out the updates so we can have better fps
 
@@ -120,6 +123,16 @@ namespace UrbanEcho.Helpers
         public static float Kmh2Ms(float s)
         {
             return s / 3.6f;
+        }
+
+        public static float DoMapCorrection(float value)
+        {
+            return value * MapCorrection;
+        }
+
+        public static double DoMapCorrection(double value)
+        {
+            return value * MapCorrection;
         }
     }
 }

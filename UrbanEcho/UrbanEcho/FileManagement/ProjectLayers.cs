@@ -399,7 +399,7 @@ namespace UrbanEcho.FileManagement
                                 pf["Hidden"] = false;
                                 pf["Angle"] = 0.0f;
                                 //Vehicle groups used so we don't raycast and update velocities every frame (was slowing down fps)
-                                Vehicle vehicle = new Vehicle(pf, roadNodeFrom, roadNodeTo, Sim.Sim.roadGraph?.Edges[i], vehiclesAdded % Helper.NumberOfVehicleGroups);
+                                Vehicle vehicle = new Vehicle(pf, roadNodeFrom, roadNodeTo, Sim.Sim.roadGraph?.Edges[i], "RegularCar", vehiclesAdded % Helper.NumberOfVehicleGroups);
                                 vehiclesAdded++;
                                 if (vehicle.IsCreated)
                                 {
@@ -611,7 +611,7 @@ namespace UrbanEcho.FileManagement
             if (IsRasterVisible && backgroundMBTile != null)
             {
                 myMap?.Layers.Add(backgroundMBTile);
-            }/*
+            }
             if (roadLayerFirstPass != null)
             {
                 myMap?.Layers.Add(roadLayerFirstPass);
@@ -623,7 +623,7 @@ namespace UrbanEcho.FileManagement
             if (IsIntersectionsVisible && intersectionLayer != null)
             {
                 myMap?.Layers.Add(intersectionLayer);
-            }*/
+            }
 
             if (vehicleLayer != null)
             {
