@@ -14,6 +14,16 @@
             <Setter Property="FontSize" Value="11" />
         </Style>
 
+        <!-- Reduce the opacity for disabled buttons  -->
+        <Style Selector="Button:disabled">
+            <Setter Property="Opacity" Value="0.3"/>
+        </Style>
+
+        <!-- Reduce the opacity for disabled menu item icons  -->
+        <Style Selector="MenuItem:disabled">
+            <Setter Property="Opacity" Value="0.4"/>
+        </Style>
+
         <!-- Global size for all icons -->
         <Style Selector="icon|SymbolIcon">
             <Setter Property="Width" Value="24"/>

@@ -1,12 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
+using UrbanEcho.Messages;
 using UrbanEcho.Models;
 
 namespace UrbanEcho.ViewModels
@@ -20,6 +18,7 @@ namespace UrbanEcho.ViewModels
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(CurrentLogs))]
+        [NotifyPropertyChangedFor(nameof(LogText))]  
         private LogSource _selectedSource = LogSource.System;
 
         [ObservableProperty] private bool _isVisible = true;
@@ -30,17 +29,29 @@ namespace UrbanEcho.ViewModels
         {
             _panelService = panelService;
             ToggleCommand = new RelayCommand(Toggle);
+            WeakReferenceMessenger.Default.Register<LogMessage>(this, (r, m) =>
+            {
+                AddLog(m.Text, m.Source);
+            });
         }
 
         public ObservableCollection<string> CurrentLogs => SelectedSource == LogSource.Map ? _mapLogs : _systemLogs;
 
-        [RelayCommand] private void ClearConsole() => CurrentLogs.Clear();
+        public string LogText => string.Join(Environment.NewLine, CurrentLogs);  
+
+        [RelayCommand]
+        private void ClearConsole()
+        {
+            CurrentLogs.Clear();
+            OnPropertyChanged(nameof(LogText));      
+        }
 
         public void AddLog(string message, LogSource source)
         {
             if (source == LogSource.Map) _mapLogs.Add($"[Map] {message}");
             else _systemLogs.Add($"[Sys] {message}");
             OnPropertyChanged(nameof(CurrentLogs));
+            OnPropertyChanged(nameof(LogText));        
         }
 
         public void Toggle()
