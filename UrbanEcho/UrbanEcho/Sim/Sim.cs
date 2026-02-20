@@ -20,6 +20,7 @@ using UrbanEcho.Graph;
 using UrbanEcho.Helpers;
 using UrbanEcho.ViewModels;
 using static Mapsui.MapBuilder;
+using static UrbanEcho.FileManagement.FileTypes;
 using Layer = Mapsui.Layers.Layer;
 
 namespace UrbanEcho.Sim

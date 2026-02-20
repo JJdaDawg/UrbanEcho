@@ -5,12 +5,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UrbanEcho.FileManagement;
 
 namespace UrbanEcho.Services
 {
     public class FileDialogService : IFileDialogService
     {
         private readonly TopLevel _topLevel;
+        private static readonly string[] options = new[] { "*.uep" };
 
         public FileDialogService(TopLevel topLevel)
         {
@@ -23,7 +25,7 @@ namespace UrbanEcho.Services
             {
                 Title = "Open Project",
                 AllowMultiple = false,
-                // FileTypeChoices here to specify file acceptable file types
+                FileTypeFilter = new[] { FileTypes.ProjectFile }
             });
 
             return files.Count > 0 ? files[0].Path.LocalPath : null;
@@ -35,7 +37,7 @@ namespace UrbanEcho.Services
             {
                 Title = "Save Project",
                 DefaultExtension = "uep",
-                // FileTypeChoices here to specify file acceptable file types
+                FileTypeChoices = new[] { FileTypes.ProjectFile }
             });
 
             return file?.Path.LocalPath;

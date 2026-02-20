@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Avalonia.Platform.Storage;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,11 +7,19 @@ using System.Threading.Tasks;
 
 namespace UrbanEcho.FileManagement
 {
-    public enum FileType
+    public static class FileTypes
     {
-        ProjectFile = 1,
-        BackgroundFile = 2,
-        RoadLayerFile = 3,
-        IntersectionLayerFile = 4
-    };
+        public enum FileType
+        {
+            ProjectFile = 1,
+            BackgroundFile = 2,
+            RoadLayerFile = 3,
+            IntersectionLayerFile = 4
+        };
+
+        public static readonly FilePickerFileType ProjectFile = new("Urban Echo Project")
+        {
+            Patterns = new[] { "*.uep" }
+        };
+    }
 }

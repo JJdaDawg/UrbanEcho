@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
 using UrbanEcho.FileManagement;
+using static UrbanEcho.FileManagement.FileTypes;
 
 namespace UrbanEcho.Events.Sim
 {

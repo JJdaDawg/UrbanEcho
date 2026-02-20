@@ -1,20 +1,33 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Mapsui.Nts.Editing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UrbanEcho.Messages;
 
 namespace UrbanEcho.ViewModels
 {
     public partial class EditModeViewModel : ObservableObject
     {
+        private bool _hasProject;
+
         [ObservableProperty]
         private bool _isEditMode;
 
-        [RelayCommand]
+        public EditModeViewModel()
+        {
+            WeakReferenceMessenger.Default.Register<ProjectLoadedMessage>(this, (r, m) =>
+            {
+                _hasProject = true;
+                NotifyEditCommands();
+            });
+        }
+
+        [RelayCommand(CanExecute = nameof(CanToggleEdit))]
         private void ToggleEditMode() => IsEditMode = !IsEditMode;
 
         [RelayCommand(CanExecute = nameof(CanEdit))]
@@ -29,6 +42,16 @@ namespace UrbanEcho.ViewModels
         [RelayCommand(CanExecute = nameof(CanEdit))]
         private void DeleteTrafficSignal() { }
 
-        private bool CanEdit() => IsEditMode;
+        private void NotifyEditCommands()
+        {
+            ToggleEditModeCommand.NotifyCanExecuteChanged();
+            CreateRoadCommand.NotifyCanExecuteChanged();
+            DeleteRoadCommand.NotifyCanExecuteChanged();
+            CreateTrafficSignalCommand.NotifyCanExecuteChanged();
+            DeleteTrafficSignalCommand.NotifyCanExecuteChanged();
+        }
+
+        private bool CanToggleEdit() => _hasProject;
+        private bool CanEdit() => IsEditMode && _hasProject;
     }
 }
