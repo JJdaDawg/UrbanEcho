@@ -1,6 +1,4 @@
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using System;
@@ -19,17 +17,13 @@ public partial class ConsolePanel : UserControl
     protected override void OnDataContextChanged(EventArgs e)
     {
         base.OnDataContextChanged(e);
-
         if (DataContext is ConsoleViewModel cvm)
         {
             cvm.PropertyChanged += (s, args) =>
             {
                 if (args.PropertyName == nameof(ConsoleViewModel.CurrentLogs))
-                {
                     SubscribeToCollection(cvm.CurrentLogs);
-                }
             };
-
             SubscribeToCollection(cvm.CurrentLogs);
         }
     }
@@ -46,7 +40,7 @@ public partial class ConsolePanel : UserControl
         {
             Dispatcher.UIThread.Post(() =>
             {
-                var scrollViewer = ConsoleListBox.FindDescendantOfType<ScrollViewer>();
+                var scrollViewer = ConsoleTextBox.FindDescendantOfType<ScrollViewer>();
                 scrollViewer?.ScrollToEnd();
             });
         }

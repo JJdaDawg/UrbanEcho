@@ -1,0 +1,103 @@
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using Mapsui;
+using System.Threading.Tasks;
+using UrbanEcho.Events.Sim;
+using UrbanEcho.FileManagement;
+using UrbanEcho.Messages;
+using UrbanEcho.Models;
+using UrbanEcho.Services;
+
+namespace UrbanEcho.ViewModels
+{
+    public partial class ProjectViewModel : ObservableObject
+    {
+
+        private readonly IFileDialogService _fileDialogService;
+        private ProjectFile? _currentProject;
+
+        [ObservableProperty] private bool _hasProject;
+
+        public ProjectViewModel(IFileDialogService fileDialogService)
+        {
+            _fileDialogService = fileDialogService;
+        }
+
+        [RelayCommand]
+        private async Task OpenProject()
+        {
+            var path = await _fileDialogService.OpenFileAsync();
+            if (path is null) return;
+
+            _currentProject = ProjectFile.Open(path);
+            if (_currentProject is not null)
+            {
+                HasProject = true;
+                NotifyProjectCommands();
+                WeakReferenceMessenger.Default.Send(new ProjectLoadedMessage());
+                WeakReferenceMessenger.Default.Send(new LogMessage($"Project successfully opened '{path}'", LogSource.System));
+            }
+        }
+
+        [RelayCommand(CanExecute = nameof(CanSave))]
+        private async Task SaveAsProject()
+        {
+            if (_currentProject is null) return;
+
+            var path = await _fileDialogService.SaveFileAsync();
+            if (path is null) return;
+
+            ProjectFile.SaveAs(_currentProject, path);
+            WeakReferenceMessenger.Default.Send(new LogMessage($"Project successfully saved '{path}'", LogSource.System));
+        }
+
+        [RelayCommand(CanExecute = nameof(CanSave))]
+        private void SaveProject()
+        {
+            if (_currentProject is null) return;
+            ProjectFile.Save(_currentProject);
+            WeakReferenceMessenger.Default.Send(new LogMessage("Project successfully saved", LogSource.System));
+        }
+
+        [RelayCommand]
+        private async Task CreateProject()
+        {
+            var path = await _fileDialogService.SaveFileAsync();
+            if (path is null) return;
+
+            _currentProject = new ProjectFile();
+            ProjectFile.SaveAs(_currentProject, path);
+            HasProject = true;
+            NotifyProjectCommands();
+            WeakReferenceMessenger.Default.Send(new ProjectLoadedMessage());
+            WeakReferenceMessenger.Default.Send(new LogMessage($"Project successfully created '{path}'", LogSource.System));
+        }
+
+        [RelayCommand(CanExecute = nameof(CanClose))] 
+        private void CloseProject()
+        {
+            // TODO: Implement close project
+            WeakReferenceMessenger.Default.Send(new LogMessage("Project successfully closed", LogSource.System));
+        }
+
+        [RelayCommand(CanExecute = nameof(CanImportData))]
+        private void ImportData()
+        {
+            // TODO: Implement importing of data
+            WeakReferenceMessenger.Default.Send(new LogMessage("Data imported successfully", LogSource.System));
+        }
+
+        private bool CanSave() => _currentProject is not null;
+        private bool CanClose() => _currentProject is not null;
+        private bool CanImportData() => _currentProject is not null;
+
+        private void NotifyProjectCommands()
+        {
+            SaveAsProjectCommand.NotifyCanExecuteChanged();
+            SaveProjectCommand.NotifyCanExecuteChanged();
+            CloseProjectCommand.NotifyCanExecuteChanged();
+            ImportDataCommand.NotifyCanExecuteChanged();
+        }
+    }
+}

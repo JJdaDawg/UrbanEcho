@@ -50,41 +50,41 @@
             CornerRadius="4">
 
             <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
-				<Button Classes="ToolbarButton">
+				<Button Classes="ToolbarButton" ToolTip.Tip="Open Project" Command="{Binding Project.OpenProjectCommand}">
                     <icon:SymbolIcon Symbol="FolderOpen" IconVariant="Regular"/>
                 </Button>
-                <Button Classes="ToolbarButton">
-                    <icon:SymbolIcon Symbol="FolderAdd" IconVariant="Regular"/>
+                <Button Classes="ToolbarButton" ToolTip.Tip="Create Project" Command="{Binding Project.CreateProjectCommand}">
+                    <icon:SymbolIcon Symbol="AddSquare" IconVariant="Regular"/>
                 </Button>
-                <Button Classes="ToolbarButton">
+                <Button Classes="ToolbarButton" ToolTip.Tip="Save Project" Command="{Binding Project.SaveProjectCommand}">
                     <icon:SymbolIcon Symbol="Save" Foreground="LightSkyBlue"/>
                 </Button>
-                <Button Classes="ToolbarButton">
+                <Button Classes="ToolbarButton" ToolTip.Tip="Save As" Command="{Binding Project.SaveAsProjectCommand}">
                     <icon:SymbolIcon Symbol="SaveEdit" Foreground="LightSkyBlue"/>
                 </Button>
                 <Rectangle Width="1" Height="16" Fill="DimGray" Margin="5,0"/>
-                <Button Classes="ToolbarButton" Command="{Binding Simulation.StartCommand}" IsVisible="{Binding !Simulation.IsRunning}">
+                <Button Classes="ToolbarButton" ToolTip.Tip="Start Simulation" Command="{Binding Simulation.StartCommand}" IsVisible="{Binding !Simulation.IsRunning}">
                     <icon:SymbolIcon Symbol="Play" Foreground="LightGreen" IconVariant="Filled"/>
                 </Button>
                 <Button Classes="ToolbarButton" Command="{Binding Simulation.StopCommand}" IsVisible="{Binding Simulation.IsRunning}">
                     <icon:SymbolIcon Symbol="Stop" Foreground="IndianRed" IconVariant="Filled"/>
                 </Button>
-                <Button Classes="ToolbarButton" Command="{Binding Simulation.PauseCommand}" IsVisible="{Binding Simulation.IsRunning}">
+                <Button Classes="ToolbarButton" ToolTip.Tip="Stop Simulation" Command="{Binding Simulation.PauseCommand}" IsVisible="{Binding Simulation.IsRunning}">
                     <icon:SymbolIcon Symbol="Pause" IconVariant="Filled"/>
                 </Button>
                 <Rectangle Width="1" Height="16" Fill="DimGray" Margin="5,0"/>
-                <Button Classes="ToolbarButton">
+                <Button Classes="ToolbarButton" ToolTip.Tip="Real Time Mode">
                     <icon:SymbolIcon Symbol="LocationLive" IconVariant="Regular"/>
                 </Button>
                 <Rectangle Width="1" Height="16" Fill="DimGray" Margin="5,0"/>
-                <Button Classes="ToolbarButton">
+                <Button Classes="ToolbarButton" ToolTip.Tip="Edit Mode" Command="{Binding EditMode.ToggleEditModeCommand}">
                     <icon:SymbolIcon Symbol="Edit" IconVariant="Regular"/>
                 </Button>
                 <Rectangle Width="1" Height="16" Fill="DimGray" Margin="5,0" IsVisible="{Binding Simulation.IsRunning}"/>
-                <Button Classes="ToolbarButton" IsVisible="{Binding Simulation.IsRunning}">
+                <Button Classes="ToolbarButton" ToolTip.Tip="Speed Down" IsVisible="{Binding Simulation.IsRunning}">
                     <icon:SymbolIcon Symbol="Previous" IconVariant="Regular"/>
                 </Button>
-                <Button Classes="ToolbarButton" IsVisible="{Binding Simulation.IsRunning}">
+                <Button Classes="ToolbarButton" ToolTip.Tip="Speed Up" IsVisible="{Binding Simulation.IsRunning}">
                     <icon:SymbolIcon Symbol="Next" IconVariant="Regular"/>
                 </Button>
             </StackPanel>
