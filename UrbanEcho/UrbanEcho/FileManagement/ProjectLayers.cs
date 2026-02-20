@@ -4,6 +4,7 @@ using BruTile.MbTiles;
 using BruTile.Wms;
 using FluentAvalonia.Core;
 using Mapsui;
+using Mapsui.Extensions;
 using Mapsui.Layers;
 using Mapsui.Nts;
 using Mapsui.Nts.Providers.Shapefile;
@@ -20,6 +21,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
+using UrbanEcho.Helpers;
 using UrbanEcho.Sim;
 using UrbanEcho.Styles;
 using UrbanEcho.ViewModels;
@@ -379,6 +381,8 @@ namespace UrbanEcho.FileManagement
                         }
                     }
                 }*/
+
+                int vehiclesAdded = 0;
                 // Spawning at each road graph From Edge point
                 for (int i = 0; i < Sim.Sim.roadGraph?.Edges.Count; i++)
                 {
@@ -394,9 +398,9 @@ namespace UrbanEcho.FileManagement
                                 pf["VehicleType"] = "RedCar";
                                 pf["Hidden"] = false;
                                 pf["Angle"] = 0.0f;
-
-                                Vehicle vehicle = new Vehicle(pf, roadNodeFrom, roadNodeTo, Sim.Sim.roadGraph?.Edges[i].Feature);
-
+                                //Vehicle groups used so we don't raycast and update velocities every frame (was slowing down fps)
+                                Vehicle vehicle = new Vehicle(pf, roadNodeFrom, roadNodeTo, Sim.Sim.roadGraph?.Edges[i], vehiclesAdded % Helper.NumberOfVehicleGroups);
+                                vehiclesAdded++;
                                 if (vehicle.IsCreated)
                                 {
                                     UrbanEcho.Sim.Sim.Vehicles.Add(vehicle);
@@ -443,7 +447,7 @@ namespace UrbanEcho.FileManagement
 
                 layer.Opacity = 1.0f;
 
-                layer.MaxVisible = 3.5f;
+                layer.MaxVisible = 1.75f;
 
                 VehicleStyles vehiclesStyle = new VehicleStyles();
 
@@ -625,21 +629,36 @@ namespace UrbanEcho.FileManagement
             {
                 myMap?.Layers.Add(vehicleLayer);
             }
-
+            /*
             if (graphLayer != null)
             {
                 myMap?.Layers.Add(graphLayer);
-            }
+            }*/
         }
 
-        public static void UpdateVehicleLayer(bool fullClone)
+        public static void UpdateVehicleLayer(bool fullClone, Map? map)
         {
-            if (vehicleLayer != null)
+            if (vehicleLayer != null && map != null)
             {
                 if (fullClone)
                 {
+                    MRect extent = map.Navigator.Viewport.ToExtent();
+
                     List<IFeature> copyOfVehiclesFeatures = new List<IFeature>();
-                    copyOfVehiclesFeatures = VehicleFeatures.Select(v => (IFeature)v.Clone()).ToList();
+
+                    foreach (IFeature v in VehicleFeatures)
+                    {
+                        if (map.Navigator.Viewport.Resolution <= vehicleLayer.MaxVisible)
+                        {
+                            if (v is PointFeature pf)
+                            {
+                                if (extent.Contains(pf.Point))
+                                {
+                                    copyOfVehiclesFeatures.Add((IFeature)pf.Clone());
+                                }
+                            }
+                        }
+                    }
 
                     EventQueueForUI.Instance.Add(new UpdatedVehicleMapEvent(copyOfVehiclesFeatures));
                 }

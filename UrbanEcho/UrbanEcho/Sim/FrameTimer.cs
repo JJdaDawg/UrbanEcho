@@ -27,6 +27,8 @@ namespace UrbanEcho.Sim
 
         private bool showingFPS = false;
 
+        public double ElaspedSecondsSinceLastFrame = 0;
+
         public FrameTimer(bool showingFPS)
         {
             fpsTimer = new Stopwatch();
@@ -37,7 +39,8 @@ namespace UrbanEcho.Sim
             this.showingFPS = showingFPS;
         }
 
-        public int GetTimeToSleep()
+        //Called each frame
+        public void Update()
         {
             frames++;
 
@@ -53,7 +56,7 @@ namespace UrbanEcho.Sim
             }
 
             actualMs += fpsTimer.ElapsedTicks * second / Stopwatch.Frequency;
-
+            ElaspedSecondsSinceLastFrame = (double)fpsTimer.ElapsedTicks / (double)Stopwatch.Frequency;
             targetMs += targetFrameTime;
             //So Computer doesn't use 100% CPU and we update 60 times a second
             //16.77ms is 1/(60Hz) so if time since last scan is less than that sleep for bit
@@ -67,7 +70,10 @@ namespace UrbanEcho.Sim
                 targetMs += targetFrameTime;
             }
             fpsTimer.Restart();
+        }
 
+        public int GetTimeToSleep()
+        {
             return (int)timeToSleep;
         }
 
