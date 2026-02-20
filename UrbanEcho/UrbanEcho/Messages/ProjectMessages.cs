@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace UrbanEcho.Messages
 {
-    public class ProjectLoadedMessage
-    {
-    }
+    public class ProjectLoadedMessage { }
+    public class ProjectClosedMessage { }
 }
