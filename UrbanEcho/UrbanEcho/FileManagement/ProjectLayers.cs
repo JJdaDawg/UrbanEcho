@@ -209,6 +209,8 @@ namespace UrbanEcho.FileManagement
                     tempGraphLayer.Features = GraphLayerFeatures;
                     graphLayer = new RasterizingLayer(tempGraphLayer);
                     vehicleRequiresLoading = false;
+
+                    Sim.Sim.InitializeVehiclePaths();
                 }
             }
             else
