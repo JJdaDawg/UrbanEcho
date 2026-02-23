@@ -37,6 +37,8 @@ namespace UrbanEcho.Sim
 
         public static List<Vehicle> Vehicles = new List<Vehicle>();
 
+        public static List<RoadIntersection> RoadIntersections = new List<RoadIntersection>();
+
         public static RoadGraph? roadGraph;
 
         public static float SimTime = 0;
@@ -45,8 +47,8 @@ namespace UrbanEcho.Sim
 
         public static int GroupToUpdate = 0;
 
-        private static AStarPathfinder? pathfinder;
-        private static List<int>? nodes;
+        public static AStarPathfinder? pathfinder;
+        public static List<int>? nodes;
 
         private static bool showedPathsLoaded = false;
 
@@ -186,6 +188,32 @@ namespace UrbanEcho.Sim
             {
                 v.SetPath(roadGraph, path);
                 v.PathSet = true;
+            }
+        }
+
+        public static void Free()
+        {
+            Sim.Cts.Cancel();
+            try
+            {
+                if (Sim.SimTask != null)
+                {
+                    Sim.SimTask.Wait();
+
+                    foreach (RoadIntersection r in Sim.RoadIntersections)
+                    {
+                        if (r.Body != null)
+                        {
+                            r.Body.Dispose();
+                        }
+                    }
+
+                    B2Api.b2DestroyWorld(World.WorldId);//Destroy world
+                }
+            }
+            finally
+            {
+                Sim.Cts.Dispose();
             }
         }
     }

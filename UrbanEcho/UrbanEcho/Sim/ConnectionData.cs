@@ -16,5 +16,11 @@ namespace UrbanEcho.Sim
             RoadSegment = roadSegment;
             IndexValue = indexValue;
         }
+
+        public ConnectionData(RoadSegment roadSegment)
+        {
+            RoadSegment = roadSegment;
+            IndexValue = 0;
+        }
     }
 }

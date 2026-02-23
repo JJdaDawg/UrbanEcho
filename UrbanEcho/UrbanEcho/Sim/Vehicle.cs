@@ -7,6 +7,7 @@ using Mapsui.Nts;
 using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Numerics;
@@ -58,7 +59,7 @@ namespace UrbanEcho.Sim
         private b2QueryFilter queryFilter = B2Api.b2DefaultQueryFilter();
 
         private Ray ray = new Ray(Vector2.Zero, Vector2.Zero);
-        private float rayDistance = Helper.DoMapCorrection(15.0f);
+        private float rayDistance = Helper.DoMapCorrection(10.0f);
         private b2Rot currentAngle;
 
         private bool waitingOnIntersection = false;
@@ -102,6 +103,13 @@ namespace UrbanEcho.Sim
         public int? NodeToId => nodeTo?.Id;
 
         public bool PathSet = false;
+
+        private float vehicleInFrontThresholdWaitTime = 30.0f;
+
+        private float vehicleInFrontStartTime = 0;
+        private float vehicleInFrontElaspedTime = 0;
+
+        private int vehicleInFrontCount = 0;
 
         public Vehicle(PointFeature feature, RoadNode roadNodeFrom, RoadNode roadNodeTo, RoadEdge currentRoad, string carType, int updateGroup)
         {
@@ -188,14 +196,8 @@ namespace UrbanEcho.Sim
                             }
                         }
 
-                        double startX = lineString.Coordinates[startingIndex].X - World.Offset.X;
-                        double startY = lineString.Coordinates[startingIndex].Y - World.Offset.Y;
-
-                        double endX = lineString.Coordinates[indexLineString].X - World.Offset.X;
-                        double endY = lineString.Coordinates[indexLineString].Y - World.Offset.Y;
-
-                        startPos = new Vector2((float)startX, (float)startY);
-                        endPos = new Vector2((float)endX, (float)endY);
+                        startPos = Helper.Convert2Box2dWorldPosition(lineString.Coordinates[startingIndex].X, lineString.Coordinates[startingIndex].Y);
+                        endPos = Helper.Convert2Box2dWorldPosition(lineString.Coordinates[indexLineString].X, lineString.Coordinates[indexLineString].Y);
 
                         Vector2 directionNormalized = Vector2.Normalize(new Vector2(endPos.X - startPos.X, endPos.Y - startPos.Y));
 
@@ -302,15 +304,9 @@ namespace UrbanEcho.Sim
                     startingIndex = lineString.Count - 1;
                     indexLineString = Math.Max(lineString.Count - 2, 0);
                 }
-                //This snaps body to start position, try without this
-                //double startX = lineString.Coordinates[startingIndex].X - World.Offset.X;
-                //double startY = lineString.Coordinates[startingIndex].Y - World.Offset.Y;
-                double endX = lineString.Coordinates[indexLineString].X - World.Offset.X;
-                double endY = lineString.Coordinates[indexLineString].Y - World.Offset.Y;
-                //This snaps body to start position, try without this
-                //startPos = new Vector2((float)startX, (float)startY);
+
                 startPos = Pos;//set start position to be current position
-                endPos = new Vector2((float)endX, (float)endY);
+                endPos = Helper.Convert2Box2dWorldPosition(lineString.Coordinates[indexLineString].X, lineString.Coordinates[indexLineString].Y);
 
                 Vector2 directionNormalized = Vector2.Normalize(new Vector2(endPos.X - startPos.X, endPos.Y - startPos.Y));
                 angleToDest = MathF.Atan2(directionNormalized.Y, directionNormalized.X);
@@ -362,16 +358,20 @@ namespace UrbanEcho.Sim
             }
         }
 
-        public void SetVehicleInFront(float howFar)
+        public void SetVehicleInFrontCount(float howFar)
         {
             metersFromCarInFront = rayDistance * howFar;
 
-            vehicleInFront = true;
+            if (!vehicleInFront)
+            {
+                vehicleInFrontStartTime = Sim.SimTime;
+            }
+            vehicleInFrontCount++;
         }
 
-        public void ResetVehicleInFront()
+        public void ResetVehicleInFrontCount()
         {
-            vehicleInFront = false;
+            vehicleInFrontCount = 0;
         }
 
         public void Update()
@@ -515,9 +515,52 @@ namespace UrbanEcho.Sim
                 }
 
                 ray = new Ray(Pos, new Vector2(currentAngle.c * rayDistance, currentAngle.s * rayDistance));
-                ResetVehicleInFront();//Has to be before the raycast else will always be false
+                ResetVehicleInFrontCount();//Has to be before the raycast else will always be false
                 B2Api.b2World_CastRay(World.WorldId, ray.Start, ray.Translation, queryFilter, rayCastDelegate, 1);
+
+                if (vehicleInFrontCount > 0)
+                {
+                    vehicleInFront = true;
+                    vehicleInFrontElaspedTime = Sim.SimTime - vehicleInFrontStartTime;
+
+                    if (vehicleInFrontElaspedTime > vehicleInFrontThresholdWaitTime)
+                    {
+                        resetVehicleToNewPos();
+                    }
+                }
+                else
+                {
+                    vehicleInFront = false;
+                    vehicleInFrontElaspedTime = 0;
+                }
             }
+        }
+
+        private void resetVehicleToNewPos()
+        {
+            int goalNode;
+            int startNode;
+            do
+            {
+                goalNode = Sim.nodes[Random.Shared.Next(Sim.nodes.Count)];
+                startNode = Sim.nodes[Random.Shared.Next(Sim.nodes.Count)];
+            } while (goalNode == startNode && Sim.nodes.Count > 1);
+
+            var path = Sim.pathfinder.FindPath(startNode, goalNode).ToList();
+
+            if (path.Count > 1)
+            {
+                SetPath(graph, path);
+                PathSet = true;
+            }
+
+            Vector2 startingPos = Helpers.Helper.Convert2Box2dWorldPosition(Sim.roadGraph.Nodes[path[0]].X, Sim.roadGraph.Nodes[path[0]].Y);
+
+            b2Rot rot = b2Rot.FromAngle(0);
+            B2Api.b2Body_SetTransform(body.BodyId, startingPos, rot);
+            Pos = B2Api.b2Body_GetPosition(body.BodyId);
+            B2Api.b2Body_SetAngularVelocity(body.BodyId, 0.0f);
+            AdvanceToNextRoad();
         }
 
         private void UpdateEndPos(float currentFloatAngle)
@@ -576,10 +619,7 @@ namespace UrbanEcho.Sim
                 }
             }
 
-            double endX = lineString.Coordinates[indexLineString].X - World.Offset.X;
-            double endY = lineString.Coordinates[indexLineString].Y - World.Offset.Y;
-
-            endPos = new Vector2((float)endX, (float)endY);
+            endPos = Helper.Convert2Box2dWorldPosition(lineString.Coordinates[indexLineString].X, lineString.Coordinates[indexLineString].Y);
 
             Vector2 directionNormalized = Vector2.Normalize(new Vector2(endPos.X - startPos.X, endPos.Y - startPos.Y));
 
@@ -640,7 +680,7 @@ namespace UrbanEcho.Sim
             }
             if (filter.categoryBits == (ulong)ShapeCategories.Vehicle && fraction != 0)
             {
-                SetVehicleInFront(fraction);
+                SetVehicleInFrontCount(fraction);
             }
 
             return -1.0f;//-1.0f means keep doing raycasting if hit any other object

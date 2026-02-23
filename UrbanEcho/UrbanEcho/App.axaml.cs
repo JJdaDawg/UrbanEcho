@@ -60,13 +60,8 @@ public partial class App : Application
             {
                 UIUpdate.UITask.Wait();
             }
-            Sim.Sim.Cts.Cancel();
 
-            if (Sim.Sim.SimTask != null)
-            {
-                Sim.Sim.SimTask.Wait();
-                B2Api.b2DestroyWorld(World.WorldId);//Destroy world
-            }
+            Sim.Sim.Free();
         }
         catch
         {
@@ -75,7 +70,6 @@ public partial class App : Application
         finally
         {
             UIUpdate.Cts.Dispose();
-            Sim.Sim.Cts.Dispose();
         }
     }
 }

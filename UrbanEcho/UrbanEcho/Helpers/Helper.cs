@@ -12,6 +12,8 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using UrbanEcho.Events.UI;
+using UrbanEcho.Sim;
 
 namespace UrbanEcho.Helpers
 {
@@ -54,38 +56,46 @@ namespace UrbanEcho.Helpers
             return result;
         }
 
-        public static IEnumerable<IFeature> GetFeatures(IProvider source)
+        private static IEnumerable<IFeature>? TryGetFeatures(IProvider source)
         {
-            MRect rect = new MRect(double.MinValue, double.MinValue, double.MaxValue, double.MaxValue);
-            FetchInfo fetch = new FetchInfo(new MSection(rect, 10000));
+            try
+            {
+                MRect rect = new MRect(double.MinValue, double.MinValue, double.MaxValue, double.MaxValue);
+                FetchInfo fetch = new FetchInfo(new MSection(rect, 10000));
 
-            Task<IEnumerable<IFeature>> features = source.GetFeaturesAsync(fetch);
-            return features.Result;
+                Task<IEnumerable<IFeature>> features = source.GetFeaturesAsync(fetch);
+                return features.Result;
+            }
+            catch (Exception ex)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Unable to get features {ex.ToString()}"));
+
+                return null;
+            }
         }
 
-        public static List<IFeature> GetRoadNetworkFeatures(IProvider source)
+        public static Vector2 Convert2Box2dWorldPosition(double x, double y)
         {
-            List<IFeature> roadNetworklist = new List<IFeature>();
+            double worldPosX = x - World.Offset.X;
+            double worldPosY = y - World.Offset.Y;
+
+            return new Vector2((float)worldPosX, (float)worldPosY);
+        }
+
+        public static List<IFeature> GetFeatures(IProvider source)
+        {
+            List<IFeature> featureList = new List<IFeature>();
 
             if (source != null)
             {
-                roadNetworklist = Helper.GetFeatures(source).ToList();
+                IEnumerable<IFeature>? features = Helper.TryGetFeatures(source);
+                if (features != null)
+                {
+                    featureList = features.ToList();
+                }
             }
 
-            /* Example of how to read from the list
-            if (roadNetworklist.Count > 0)
-            {
-                if (roadNetworklist[0] is BaseFeature f)
-                {
-                    object? o = f["LANES"];
-                    if (o != null)
-                    {
-                        string? test = o.ToString();
-                    }
-                }
-            }*/
-
-            return roadNetworklist;
+            return featureList;
         }
 
         public static b2Polygon CreatePolygon(Vector2[] corners)

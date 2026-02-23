@@ -18,7 +18,7 @@ namespace UrbanEcho.Events.UI
         public LogToConsole(MainViewModel? mainViewModel, string message)
         {
             this.mainViewModel = mainViewModel;
-            this.message = message + "-" + DateTime.Now;
+            this.message = $"{message} [{DateTime.Now}]";
         }
 
         public void Run()
