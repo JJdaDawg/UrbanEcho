@@ -41,7 +41,7 @@ namespace UrbanEcho.Sim
 
         public Vector2 Pos;
 
-        private Rectangle carRectImage = new Rectangle(0, 0, 48, 24);
+        private Rectangle vehicleRectImage = new Rectangle(0, 0, 48, 24);
 
         private VehicleBody? body;
 
@@ -69,7 +69,7 @@ namespace UrbanEcho.Sim
 
         private float angleThresholdToDecelerate = Helper.Deg2Rad(45.0f);//How many degrees off target angle before decelerate
         private bool angleAboveThreshold = false;
-        private bool carInFront = false;
+        private bool vehicleInFront = false;
         private float metersFromCarInFront = 0;
 
         private float kmh = 0;
@@ -248,12 +248,12 @@ namespace UrbanEcho.Sim
         {
             metersFromCarInFront = rayDistance * howFar;
 
-            carInFront = true;
+            vehicleInFront = true;
         }
 
         public void ResetVehicleInFront()
         {
-            carInFront = false;
+            vehicleInFront = false;
         }
 
         public void Update()
@@ -354,7 +354,7 @@ namespace UrbanEcho.Sim
                 {
                     kmh = 0;
                 }
-                if (carInFront == false)
+                if (vehicleInFront == false)
                 {
                     if (kmh <= 0 && targetSpeed == 0)
                     {
