@@ -552,15 +552,15 @@ namespace UrbanEcho.Sim
             {
                 SetPath(graph, path);
                 PathSet = true;
+
+                Vector2 startingPos = Helpers.Helper.Convert2Box2dWorldPosition(Sim.roadGraph.Nodes[path[0]].X, Sim.roadGraph.Nodes[path[0]].Y);
+
+                b2Rot rot = b2Rot.FromAngle(0);
+                B2Api.b2Body_SetTransform(body.BodyId, startingPos, rot);
+                Pos = B2Api.b2Body_GetPosition(body.BodyId);
+                B2Api.b2Body_SetAngularVelocity(body.BodyId, 0.0f);
+                AdvanceToNextRoad();
             }
-
-            Vector2 startingPos = Helpers.Helper.Convert2Box2dWorldPosition(Sim.roadGraph.Nodes[path[0]].X, Sim.roadGraph.Nodes[path[0]].Y);
-
-            b2Rot rot = b2Rot.FromAngle(0);
-            B2Api.b2Body_SetTransform(body.BodyId, startingPos, rot);
-            Pos = B2Api.b2Body_GetPosition(body.BodyId);
-            B2Api.b2Body_SetAngularVelocity(body.BodyId, 0.0f);
-            AdvanceToNextRoad();
         }
 
         private void UpdateEndPos(float currentFloatAngle)
