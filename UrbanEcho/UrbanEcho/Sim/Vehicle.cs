@@ -101,6 +101,8 @@ namespace UrbanEcho.Sim
         public int? NodeFromId => nodeFrom?.Id;
         public int? NodeToId => nodeTo?.Id;
 
+        public bool PathSet = false;
+
         public Vehicle(PointFeature feature, RoadNode roadNodeFrom, RoadNode roadNodeTo, RoadEdge currentRoad, string carType, int updateGroup)
         {
             settings = new VehicleSettings(carType);
@@ -162,7 +164,7 @@ namespace UrbanEcho.Sim
 
                             if (foundStartAndEnd == false)
                             {
-                                EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Failed Adding Car with From Node{nodeFrom.X:F2},{nodeFrom.Y:F2} and To Node {nodeTo.X:F2}, {nodeTo.Y:F2} and road with Start {lineString.StartPoint:F2} and End {lineString.EndPoint:F2}"));
+                                //EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Failed Adding Car with From Node{nodeFrom.X:F2},{nodeFrom.Y:F2} and To Node {nodeTo.X:F2}, {nodeTo.Y:F2} and road with Start {lineString.StartPoint:F2} and End {lineString.EndPoint:F2}"));
                                 IsCreated = false;
                             }
                         }
@@ -300,13 +302,14 @@ namespace UrbanEcho.Sim
                     startingIndex = lineString.Count - 1;
                     indexLineString = Math.Max(lineString.Count - 2, 0);
                 }
-
-                double startX = lineString.Coordinates[startingIndex].X - World.Offset.X;
-                double startY = lineString.Coordinates[startingIndex].Y - World.Offset.Y;
+                //This snaps body to start position, try without this
+                //double startX = lineString.Coordinates[startingIndex].X - World.Offset.X;
+                //double startY = lineString.Coordinates[startingIndex].Y - World.Offset.Y;
                 double endX = lineString.Coordinates[indexLineString].X - World.Offset.X;
                 double endY = lineString.Coordinates[indexLineString].Y - World.Offset.Y;
-
-                startPos = new Vector2((float)startX, (float)startY);
+                //This snaps body to start position, try without this
+                //startPos = new Vector2((float)startX, (float)startY);
+                startPos = Pos;//set start position to be current position
                 endPos = new Vector2((float)endX, (float)endY);
 
                 Vector2 directionNormalized = Vector2.Normalize(new Vector2(endPos.X - startPos.X, endPos.Y - startPos.Y));
@@ -322,10 +325,11 @@ namespace UrbanEcho.Sim
                 initialStartPos = startPos;
                 endPos = new Vector2(endPos.X + laneOffset.X, endPos.Y + laneOffset.Y);
 
-                b2Rot rot = b2Rot.FromAngle(angleToDest);
-                B2Api.b2Body_SetTransform(body.BodyId, startPos, rot);
-                Pos = B2Api.b2Body_GetPosition(body.BodyId);
-                B2Api.b2Body_SetAngularVelocity(body.BodyId, 0.0f);
+                //This snaps body to start position, try without this
+                //b2Rot rot = b2Rot.FromAngle(angleToDest);
+                //B2Api.b2Body_SetTransform(body.BodyId, startPos, rot);
+                //Pos = B2Api.b2Body_GetPosition(body.BodyId);
+                //B2Api.b2Body_SetAngularVelocity(body.BodyId, 0.0f);
 
                 pathSegmentIndex++;
                 return true;

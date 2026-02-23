@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
 using UrbanEcho.Services;
 using UrbanEcho.Sim;
+using UrbanEcho.UI;
 using UrbanEcho.ViewModels;
 
 namespace UrbanEcho;
@@ -54,6 +55,11 @@ public partial class App : Application
     {
         try
         {
+            UIUpdate.Cts.Cancel();
+            if (UIUpdate.UITask != null)
+            {
+                UIUpdate.UITask.Wait();
+            }
             Sim.Sim.Cts.Cancel();
 
             if (Sim.Sim.SimTask != null)
@@ -68,6 +74,7 @@ public partial class App : Application
         }
         finally
         {
+            UIUpdate.Cts.Dispose();
             Sim.Sim.Cts.Dispose();
         }
     }

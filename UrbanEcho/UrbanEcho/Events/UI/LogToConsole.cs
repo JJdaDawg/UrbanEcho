@@ -18,12 +18,12 @@ namespace UrbanEcho.Events.UI
         public LogToConsole(MainViewModel? mainViewModel, string message)
         {
             this.mainViewModel = mainViewModel;
-            this.message = message;
+            this.message = message + "-" + DateTime.Now;
         }
 
         public void Run()
         {
-            mainViewModel?.Console.AddLog(message, LogSource.Map);
+            mainViewModel?.Console.AddLog(message, LogSource.System);
         }
     }
 }

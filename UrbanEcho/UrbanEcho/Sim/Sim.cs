@@ -45,6 +45,11 @@ namespace UrbanEcho.Sim
 
         public static int GroupToUpdate = 0;
 
+        private static AStarPathfinder? pathfinder;
+        private static List<int>? nodes;
+
+        private static bool showedPathsLoaded = false;
+
         public static void SetMainViewModel(MainViewModel setMainViewModel)
         {
             mainViewModel = setMainViewModel;
@@ -70,10 +75,10 @@ namespace UrbanEcho.Sim
             LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/ProjectFiles/myFile.Json", mainViewModel.Map.MyMap);
             EventQueueForSim.Instance.Add(loadProjectEvent); //will usually happen from UI
 
-            FrameTimer frameTimer = new FrameTimer(true);
+            FrameTimer frameTimer = new FrameTimer(false);
 
             while (Cts.IsCancellationRequested == false)
-            {
+            {/*Moved to UI update class
                 if (!EventQueueForUI.Instance.IsEmpty())
                 {
                     if (!EventQueueForUI.Instance.IsEmpty())
@@ -84,7 +89,7 @@ namespace UrbanEcho.Sim
                                 EventQueueForUI.Instance.Read()?.Run();
                             }
                         });
-                }
+                }*/
                 frameTimer.Update();
                 simulationLoop();
                 readQueue();
@@ -118,10 +123,25 @@ namespace UrbanEcho.Sim
                 Sim.SimFrames++;
 
                 Sim.GroupToUpdate = (Sim.GroupToUpdate + 1) % Helper.NumberOfVehicleGroups;
-
+                bool aPathNotLoaded = false;
                 foreach (Vehicle v in Vehicles)
                 {
+                    if (!v.PathSet)
+                    {
+                        aPathNotLoaded = true;
+                        InitializeVehiclePath(v);
+                    }
+
                     v.Update();
+                }
+
+                if (!aPathNotLoaded)
+                {
+                    if (!showedPathsLoaded)
+                    {
+                        showedPathsLoaded = true;
+                        EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), "All vehicle paths loaded"));
+                    }
                 }
 
                 //Only update vehicle layer if ui queue is empty
@@ -140,31 +160,32 @@ namespace UrbanEcho.Sim
             }
         }
 
-        public static void InitializeVehiclePaths()
+        public static void InitializeGraph()
         {
             if (roadGraph == null || roadGraph.Nodes.Count < 2)
                 return;
 
-            var pathfinder = new AStarPathfinder(roadGraph);
-            var nodes = roadGraph.Nodes.Keys.ToList();
+            pathfinder = new AStarPathfinder(roadGraph);
+            nodes = roadGraph.Nodes.Keys.ToList();
+        }
 
-            for (int i = 0; i < Vehicles.Count; i++)
+        public static void InitializeVehiclePath(Vehicle v)
+        {
+            int? startNodeId = v.NodeToId;
+            if (startNodeId == null || nodes == null || pathfinder == null || roadGraph == null) return;
+
+            int goalNode;
+            do
             {
-                int? startNodeId = Vehicles[i].NodeToId;
-                if (startNodeId == null) continue;
+                goalNode = nodes[Random.Shared.Next(nodes.Count)];
+            } while (goalNode == startNodeId.Value && nodes.Count > 1);
 
-                int goalNode;
-                do
-                {
-                    goalNode = nodes[Random.Shared.Next(nodes.Count)];
-                } while (goalNode == startNodeId.Value && nodes.Count > 1);
+            var path = pathfinder.FindPath(startNodeId.Value, goalNode).ToList();
 
-                var path = pathfinder.FindPath(startNodeId.Value, goalNode).ToList();
-
-                if (path.Count > 1)
-                {
-                    Vehicles[i].SetPath(roadGraph, path);
-                }
+            if (path.Count > 1)
+            {
+                v.SetPath(roadGraph, path);
+                v.PathSet = true;
             }
         }
     }
