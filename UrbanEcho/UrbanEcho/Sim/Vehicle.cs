@@ -14,6 +14,7 @@ using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
+using UrbanEcho.Graph;
 using UrbanEcho.Helpers;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using Point = NetTopologySuite.Geometries.Point;
@@ -92,6 +93,13 @@ namespace UrbanEcho.Sim
         private int updateGroup = 0;
 
         private LineString? lineString;
+
+        private List<int>? path;
+        private int pathSegmentIndex = 0;
+        private RoadGraph? graph;
+
+        public int? NodeFromId => nodeFrom?.Id;
+        public int? NodeToId => nodeTo?.Id;
 
         public Vehicle(PointFeature feature, RoadNode roadNodeFrom, RoadNode roadNodeTo, RoadEdge currentRoad, string carType, int updateGroup)
         {
@@ -218,6 +226,112 @@ namespace UrbanEcho.Sim
                     }
                 }
             }
+        }
+
+        public void SetPath(RoadGraph graph, List<int> path)
+        {
+            this.graph = graph;
+            this.path = path;
+            this.pathSegmentIndex = 0;
+        }
+
+        private bool AdvanceToNextRoad()
+        {
+            if (path == null || graph == null || body == null)
+                return false;
+
+            if (pathSegmentIndex >= path.Count - 1)
+            {
+                int currentNodeId = path[path.Count - 1];
+                var nodes = graph.Nodes.Keys.ToList();
+                if (nodes.Count < 2)
+                    return false;
+
+                var pathfinder = new AStarPathfinder(graph);
+                int goalNode;
+                do
+                {
+                    goalNode = nodes[Random.Shared.Next(nodes.Count)];
+                } while (goalNode == currentNodeId);
+
+                var newPath = pathfinder.FindPath(currentNodeId, goalNode).ToList();
+                if (newPath.Count < 2)
+                    return false;
+
+                path = newPath;
+                pathSegmentIndex = 0;
+            }
+
+            int fromId = path[pathSegmentIndex];
+            int toId = path[pathSegmentIndex + 1];
+
+            RoadEdge? nextEdge = null;
+            foreach (var edge in graph.GetOutgoingEdges(fromId))
+            {
+                if (edge.To == toId)
+                {
+                    nextEdge = edge;
+                    break;
+                }
+            }
+
+            if (nextEdge == null)
+                return false;
+
+            if (graph.Nodes.TryGetValue(fromId, out var fromNode))
+                nodeFrom = fromNode;
+            if (graph.Nodes.TryGetValue(toId, out var toNode))
+                nodeTo = toNode;
+
+            if (nextEdge.Feature is GeometryFeature theRoad && theRoad.Geometry is LineString newLineString)
+            {
+                currentRoad = theRoad;
+                lineString = newLineString;
+                indexingForwardThroughLineString = nextEdge.IsFromStartOfLineString;
+
+                int startingIndex;
+                if (indexingForwardThroughLineString)
+                {
+                    startingIndex = 0;
+                    indexLineString = Math.Min(1, lineString.Count - 1);
+                }
+                else
+                {
+                    startingIndex = lineString.Count - 1;
+                    indexLineString = Math.Max(lineString.Count - 2, 0);
+                }
+
+                double startX = lineString.Coordinates[startingIndex].X - World.Offset.X;
+                double startY = lineString.Coordinates[startingIndex].Y - World.Offset.Y;
+                double endX = lineString.Coordinates[indexLineString].X - World.Offset.X;
+                double endY = lineString.Coordinates[indexLineString].Y - World.Offset.Y;
+
+                startPos = new Vector2((float)startX, (float)startY);
+                endPos = new Vector2((float)endX, (float)endY);
+
+                Vector2 directionNormalized = Vector2.Normalize(new Vector2(endPos.X - startPos.X, endPos.Y - startPos.Y));
+                angleToDest = MathF.Atan2(directionNormalized.Y, directionNormalized.X);
+                if (float.IsNaN(angleToDest))
+                    angleToDest = 0;
+
+                Vector2 laneOffset = new Vector2(
+                    MathF.Cos(angleToDest + Helper.Deg2Rad(-90.0f)) * Helper.DefaultLaneWidth * 0.75f,
+                    MathF.Sin(angleToDest + Helper.Deg2Rad(-90.0f)) * Helper.DefaultLaneWidth * 0.75f);
+
+                startPos = new Vector2(startPos.X + laneOffset.X, startPos.Y + laneOffset.Y);
+                initialStartPos = startPos;
+                endPos = new Vector2(endPos.X + laneOffset.X, endPos.Y + laneOffset.Y);
+
+                b2Rot rot = b2Rot.FromAngle(angleToDest);
+                B2Api.b2Body_SetTransform(body.BodyId, startPos, rot);
+                Pos = B2Api.b2Body_GetPosition(body.BodyId);
+                B2Api.b2Body_SetAngularVelocity(body.BodyId, 0.0f);
+
+                pathSegmentIndex++;
+                return true;
+            }
+
+            return false;
         }
 
         public void SetIntersectionLastAt(b2ShapeId shapeId)
@@ -413,8 +527,13 @@ namespace UrbanEcho.Sim
                 {
                     indexLineString++;
                 }
-                else //TODO: remove this later
+                else
                 {
+                    if (AdvanceToNextRoad())
+                    {
+                        return;
+                    }
+
                     b2Rot rot = b2Rot.FromAngle(angleToDest);
                     B2Api.b2Body_SetTransform(body.BodyId, initialStartPos, rot);
                     Pos = B2Api.b2Body_GetPosition(body.BodyId);
@@ -433,8 +552,13 @@ namespace UrbanEcho.Sim
                 {
                     indexLineString--;
                 }
-                else //TODO: remove this later
+                else
                 {
+                    if (AdvanceToNextRoad())
+                    {
+                        return;
+                    }
+
                     b2Rot rot = b2Rot.FromAngle(angleToDest);
                     B2Api.b2Body_SetTransform(body.BodyId, initialStartPos, rot);
                     Pos = B2Api.b2Body_GetPosition(body.BodyId);

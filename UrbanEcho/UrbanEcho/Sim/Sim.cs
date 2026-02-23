@@ -150,14 +150,20 @@ namespace UrbanEcho.Sim
 
             for (int i = 0; i < Vehicles.Count; i++)
             {
-                int startNode = nodes[i % nodes.Count];
-                int goalNode = nodes[(i + 50) % nodes.Count];
+                int? startNodeId = Vehicles[i].NodeToId;
+                if (startNodeId == null) continue;
 
-                var path = pathfinder.FindPath(startNode, goalNode).ToList();
+                int goalNode;
+                do
+                {
+                    goalNode = nodes[Random.Shared.Next(nodes.Count)];
+                } while (goalNode == startNodeId.Value && nodes.Count > 1);
+
+                var path = pathfinder.FindPath(startNodeId.Value, goalNode).ToList();
 
                 if (path.Count > 1)
                 {
-                    //Vehicles[i].SetPath(roadGraph, path);
+                    Vehicles[i].SetPath(roadGraph, path);
                 }
             }
         }
