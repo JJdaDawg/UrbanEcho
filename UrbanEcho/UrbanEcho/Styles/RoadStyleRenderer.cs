@@ -41,13 +41,14 @@ namespace UrbanEcho.Styles
                     //TODO: make pavement not hardcoded
                     if (gf.Fields.Contains("PAVEMENT_W"))
                     {
+                        float minPavementWidth = 4.0f;
                         if (double.TryParse(gf["PAVEMENT_W"]?.ToString(), out double pavementWidth))
                         {
                             if (viewport.Resolution > 0.01f)
                             {
-                                if (pavementWidth < 4)
+                                if (pavementWidth < minPavementWidth)
                                 {
-                                    pen.Width = Helper.DoMapCorrection(4 / viewport.Resolution);
+                                    pen.Width = Helper.DoMapCorrection(minPavementWidth / viewport.Resolution);
                                     outlinePen.Width = pen.Width * 0.1f;
                                 }
                                 else
@@ -64,7 +65,7 @@ namespace UrbanEcho.Styles
                         }
                         else
                         {
-                            pen.Width = 1;
+                            pen.Width = Helper.DoMapCorrection(minPavementWidth / viewport.Resolution);
                             outlinePen.Width = pen.Width * 0.1f;
                         }
 
