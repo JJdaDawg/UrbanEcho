@@ -1,5 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using UrbanEcho.Messages;
 using UrbanEcho.ViewModels.Properties;
 
 namespace UrbanEcho.ViewModels.Properties
@@ -25,6 +27,11 @@ namespace UrbanEcho.ViewModels.Properties
 
         public VehiclePropertiesViewModel()
         {
+            WeakReferenceMessenger.Default.Register<EditModeChangedMessage>(this, (r, m) =>
+            {
+                IsEditMode = m.IsEditMode;
+            });
+
             HighlightPathCommand = new RelayCommand(HighlightPath);
             ShowTrendCommand = new RelayCommand(ShowTrend);
             TrackVehicleCommand = new RelayCommand(TrackVehicle);
