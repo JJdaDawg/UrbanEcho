@@ -1,23 +1,17 @@
 ﻿using Box2dNet;
 using Box2dNet.Interop;
 using ExCSS;
-using Mapsui;
 using Mapsui.Layers;
 using Mapsui.Nts;
 using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Numerics;
-using System.Reflection.Metadata;
-using System.Text;
-using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
 using UrbanEcho.Graph;
 using UrbanEcho.Helpers;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 using Point = NetTopologySuite.Geometries.Point;
 
 namespace UrbanEcho.Sim
@@ -54,7 +48,7 @@ namespace UrbanEcho.Sim
         private Vector2 nextPointOnPath = Vector2.Zero;
         private bool indexingForwardThroughLineString = true;
 
-        private float distanceThresholdReachedTarget = 4.0f;
+        private float distanceThresholdReachedTarget = 7.0f;
 
         private b2QueryFilter queryFilter = B2Api.b2DefaultQueryFilter();
 
@@ -208,7 +202,7 @@ namespace UrbanEcho.Sim
                         }
                         //move start and end so car is using
                         //right hand lane
-                        Vector2 laneOffset = new Vector2(MathF.Cos(angleToDest + Helper.Deg2Rad(-90.0f)) * Helper.DefaultLaneWidth * 0.75f, +MathF.Sin(angleToDest + Helper.Deg2Rad(-90.0f)) * Helper.DefaultLaneWidth * 0.75f);
+                        Vector2 laneOffset = new Vector2(MathF.Cos(angleToDest + Helper.Deg2Rad(-90.0f)) * Helper.DefaultLaneWidth / 2.0f, +MathF.Sin(angleToDest + Helper.Deg2Rad(-90.0f)) * Helper.DefaultLaneWidth / 2.0f);
 
                         startPos = new Vector2(startPos.X + laneOffset.X, startPos.Y + laneOffset.Y);
                         initialStartPos = startPos;
@@ -305,27 +299,21 @@ namespace UrbanEcho.Sim
                     indexLineString = Math.Max(lineString.Count - 2, 0);
                 }
 
-                startPos = Pos;//set start position to be current position
-                endPos = Helper.Convert2Box2dWorldPosition(lineString.Coordinates[indexLineString].X, lineString.Coordinates[indexLineString].Y);
+                Vector2 startPosRoad = Helper.Convert2Box2dWorldPosition(lineString.Coordinates[startingIndex].X, lineString.Coordinates[startingIndex].Y);
+                Vector2 endPosRoad = Helper.Convert2Box2dWorldPosition(lineString.Coordinates[indexLineString].X, lineString.Coordinates[indexLineString].Y);
 
-                Vector2 directionNormalized = Vector2.Normalize(new Vector2(endPos.X - startPos.X, endPos.Y - startPos.Y));
-                angleToDest = MathF.Atan2(directionNormalized.Y, directionNormalized.X);
-                if (float.IsNaN(angleToDest))
-                    angleToDest = 0;
+                Vector2 roadDirectionNormalized = Vector2.Normalize(new Vector2(endPosRoad.X - startPosRoad.X, endPosRoad.Y - startPosRoad.Y));
+                float angleForLaneOffset = MathF.Atan2(roadDirectionNormalized.Y, roadDirectionNormalized.X);
+                if (float.IsNaN(angleForLaneOffset))
+                    angleForLaneOffset = 0;
 
                 Vector2 laneOffset = new Vector2(
-                    MathF.Cos(angleToDest + Helper.Deg2Rad(-90.0f)) * Helper.DefaultLaneWidth * 0.75f,
-                    MathF.Sin(angleToDest + Helper.Deg2Rad(-90.0f)) * Helper.DefaultLaneWidth * 0.75f);
+                    MathF.Cos(angleForLaneOffset + Helper.Deg2Rad(-90.0f)) * Helper.DefaultLaneWidth / 2.0f,
+                    MathF.Sin(angleForLaneOffset + Helper.Deg2Rad(-90.0f)) * Helper.DefaultLaneWidth / 2.0f);
 
-                startPos = new Vector2(startPos.X + laneOffset.X, startPos.Y + laneOffset.Y);
-                initialStartPos = startPos;
-                endPos = new Vector2(endPos.X + laneOffset.X, endPos.Y + laneOffset.Y);
-
-                //This snaps body to start position, try without this
-                //b2Rot rot = b2Rot.FromAngle(angleToDest);
-                //B2Api.b2Body_SetTransform(body.BodyId, startPos, rot);
-                //Pos = B2Api.b2Body_GetPosition(body.BodyId);
-                //B2Api.b2Body_SetAngularVelocity(body.BodyId, 0.0f);
+                startPos = new Vector2(startPosRoad.X + laneOffset.X, startPosRoad.Y + laneOffset.Y);
+                initialStartPos = startPosRoad;
+                endPos = new Vector2(endPosRoad.X + laneOffset.X, endPosRoad.Y + laneOffset.Y);
 
                 pathSegmentIndex++;
                 return true;
@@ -566,7 +554,8 @@ namespace UrbanEcho.Sim
         private void UpdateEndPos(float currentFloatAngle)
         {
             bool startingOver = false;
-            startPos = endPos;
+
+            int currentLineStringIndex = indexLineString;
 
             if (indexingForwardThroughLineString)
             {
@@ -584,6 +573,7 @@ namespace UrbanEcho.Sim
                     b2Rot rot = b2Rot.FromAngle(angleToDest);
                     B2Api.b2Body_SetTransform(body.BodyId, initialStartPos, rot);
                     Pos = B2Api.b2Body_GetPosition(body.BodyId);
+                    currentLineStringIndex = 0;
                     if (lineString.Count >= 2)
                     {
                         indexLineString = 1;
@@ -609,6 +599,7 @@ namespace UrbanEcho.Sim
                     b2Rot rot = b2Rot.FromAngle(angleToDest);
                     B2Api.b2Body_SetTransform(body.BodyId, initialStartPos, rot);
                     Pos = B2Api.b2Body_GetPosition(body.BodyId);
+                    currentLineStringIndex = lineString.Count - 1;
                     if (lineString.Count >= 2)
                     {
                         indexLineString = lineString.Count - 2;
@@ -619,33 +610,57 @@ namespace UrbanEcho.Sim
                 }
             }
 
-            endPos = Helper.Convert2Box2dWorldPosition(lineString.Coordinates[indexLineString].X, lineString.Coordinates[indexLineString].Y);
+            Vector2 startPosRoad = Helper.Convert2Box2dWorldPosition(lineString.Coordinates[currentLineStringIndex].X, lineString.Coordinates[currentLineStringIndex].Y);
+            Vector2 endPosRoad = Helper.Convert2Box2dWorldPosition(lineString.Coordinates[indexLineString].X, lineString.Coordinates[indexLineString].Y);
 
-            Vector2 directionNormalized = Vector2.Normalize(new Vector2(endPos.X - startPos.X, endPos.Y - startPos.Y));
+            Vector2 roadDirectionNormalized = Vector2.Normalize(new Vector2(endPosRoad.X - startPosRoad.X, endPosRoad.Y - startPosRoad.Y));
+            float angleForLaneOffset = MathF.Atan2(roadDirectionNormalized.Y, roadDirectionNormalized.X);
+            if (float.IsNaN(angleForLaneOffset))
+                angleForLaneOffset = 0;
 
-            angleToDest = MathF.Atan2(directionNormalized.Y, directionNormalized.X);
-            if (float.IsNaN(angleToDest))
-            {
-                angleToDest = 0;
-            }
-            //move start and end so car is using
-            //right hand lane
-            Vector2 laneOffset = new Vector2(MathF.Cos(angleToDest + Helper.Deg2Rad(-90.0f)) * Helper.DefaultLaneWidth * 0.75f, +MathF.Sin(angleToDest + Helper.Deg2Rad(-90.0f)) * Helper.DefaultLaneWidth * 0.75f);
+            Vector2 laneOffset = new Vector2(
+                MathF.Cos(angleForLaneOffset + Helper.Deg2Rad(-90.0f)) * Helper.DefaultLaneWidth / 2.0f,
+                MathF.Sin(angleForLaneOffset + Helper.Deg2Rad(-90.0f)) * Helper.DefaultLaneWidth / 2.0f);
 
-            if (startingOver)
-            {
-                startPos = new Vector2(startPos.X + laneOffset.X, startPos.Y + laneOffset.Y);
-            }
-            endPos = new Vector2(endPos.X + laneOffset.X, endPos.Y + laneOffset.Y);
+            startPos = new Vector2(startPosRoad.X + laneOffset.X, startPosRoad.Y + laneOffset.Y);
+            initialStartPos = startPosRoad;
+            endPos = new Vector2(endPosRoad.X + laneOffset.X, endPosRoad.Y + laneOffset.Y);
         }
 
         private void SetAngle(float currentAngle)
         {
             float targetAngle = 0;
 
-            Vector2 directionNormalized = Vector2.Normalize(new Vector2(endPos.X - Pos.X, endPos.Y - Pos.Y));
+            Vector2 roadDirection = Vector2.Normalize(new Vector2(endPos.X - startPos.X, endPos.Y - startPos.Y));
+            Vector2 closestPointToLine = findNearestPointOnLine(startPos, endPos, Pos);
+
+            Vector2 targetPointToAimTowards = new Vector2(closestPointToLine.X + roadDirection.X * settings.GetLookAheadValueForSteerTowardsLane(), closestPointToLine.Y + roadDirection.Y * settings.GetLookAheadValueForSteerTowardsLane());
+            if (Vector2.Distance(endPos, startPos) <= Vector2.Distance(targetPointToAimTowards, startPos))
+            {
+                targetPointToAimTowards = endPos;
+            }
+
+            Vector2 directionNormalized = Vector2.Normalize(new Vector2(targetPointToAimTowards.X - Pos.X, targetPointToAimTowards.Y - Pos.Y));
 
             targetAngle = MathF.Atan2(directionNormalized.Y, directionNormalized.X);
+
+            //https://stackoverflow.com/questions/51905268/how-to-find-closest-point-on-line
+            //https://stackoverflow.com/questions/22668659/calculate-on-which-side-of-a-line-a-point-is
+            //https://stackoverflow.com/questions/1560492/how-to-tell-whether-a-point-is-to-the-right-or-left-side-of-a-line/1560510#1560510
+
+            Vector2 findNearestPointOnLine(Vector2 origin, Vector2 end, Vector2 point)
+            {
+                //Get heading
+                Vector2 heading = (end - origin);
+                float magnitudeMax = heading.Length();
+                heading = Vector2.Normalize(heading);
+
+                //Do projection from the point but clamp it
+                Vector2 lhs = point - origin;
+                float dotP = Vector2.Dot(lhs, heading);
+                dotP = Math.Clamp(dotP, 0f, magnitudeMax);
+                return origin + heading * dotP;
+            }
 
             float angle = targetAngle - currentAngle;
 

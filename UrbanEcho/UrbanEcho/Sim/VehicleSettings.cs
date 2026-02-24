@@ -10,6 +10,7 @@ namespace UrbanEcho.Sim
         private float deceleration;
         private float slowDownfactor;//number from 0 to 1 multiplied by deceleration for slowing down on turns
         private float turnSpeed;
+        private float lookAheadValueForSteerTowardsLane;
         private bool validType = false;
 
         //Have variable for length of each car type so style can scale image correct
@@ -22,10 +23,11 @@ namespace UrbanEcho.Sim
                 length = CarLength;
                 width = Helper.DoMapCorrection(2.0f);
 
-                acceleration = Helper.DoMapCorrection(1.0f * Helper.NumberOfVehicleGroups);
-                deceleration = Helper.DoMapCorrection(5.0f * Helper.NumberOfVehicleGroups);
-                slowDownfactor = 0.5f;//number from 0 to 1 multiplied by deceleration for slowing down on turns
-                turnSpeed = 10.0f;
+                acceleration = Helper.DoMapCorrection(0.5f * Helper.NumberOfVehicleGroups);
+                deceleration = Helper.DoMapCorrection(3.0f * Helper.NumberOfVehicleGroups);
+                slowDownfactor = 0.25f;//number from 0 to 1 multiplied by deceleration for slowing down on turns
+                turnSpeed = 4.0f;
+                lookAheadValueForSteerTowardsLane = 5.0f;
 
                 validType = true;
             }
@@ -59,6 +61,11 @@ namespace UrbanEcho.Sim
         public float GetTurnSpeed()
         {
             return turnSpeed;
+        }
+
+        public float GetLookAheadValueForSteerTowardsLane()
+        {
+            return lookAheadValueForSteerTowardsLane;
         }
 
         public bool IsValid()

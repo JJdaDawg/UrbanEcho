@@ -25,7 +25,7 @@ namespace UrbanEcho.Helpers
         //1.0f / MathF.Cos(43.4511f*(MathF.PI / 180.0f))
         public const float MapCorrection = 1.37748f;
 
-        public const float DefaultLaneWidth = 3.5f;//in meters
+        public const float DefaultLaneWidth = 3.5f * MapCorrection;//in meters
         public const int NumberOfVehicleGroups = 1; //spread out the updates so we can have better fps
 
         public static Point MakePrecisePoint(
