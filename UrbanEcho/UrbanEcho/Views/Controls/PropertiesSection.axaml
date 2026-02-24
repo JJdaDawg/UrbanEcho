@@ -1,0 +1,21 @@
+<UserControl
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    x:Class="UrbanEcho.Views.Controls.PropertiesSection"
+    x:Name="SectionControl">
+
+    <StackPanel>
+        <Button Click="ToggleButton_Click" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+            <Grid ColumnDefinitions="*, Auto">
+                <TextBlock Grid.Column="0"
+                           Text="{Binding Header, ElementName=SectionControl}"
+                           FontWeight="SemiBold" />
+                <TextBlock Grid.Column="1" Text="?" IsVisible="{Binding IsExpanded, ElementName=SectionControl}" />
+                <TextBlock Grid.Column="1" Text="?" IsVisible="{Binding !IsExpanded, ElementName=SectionControl}" />
+            </Grid>
+        </Button>
+
+        <ContentPresenter IsVisible="{Binding IsExpanded, ElementName=SectionControl}"
+                          Content="{Binding Content, ElementName=SectionControl}" />
+    </StackPanel>
+</UserControl>

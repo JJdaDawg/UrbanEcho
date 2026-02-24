@@ -26,6 +26,14 @@ namespace UrbanEcho.ViewModels
         {
             _panelService = panelService;
             ToggleCommand = new RelayCommand(Toggle);
+
+            SelectedProperties = new VehiclePropertiesViewModel
+            {
+                VehicleId = 42,
+                Status = "Running",
+                OriginStreet = "Main St",
+                DestinationStreet = "Elm St"
+            };
         }
 
         public void Toggle()
