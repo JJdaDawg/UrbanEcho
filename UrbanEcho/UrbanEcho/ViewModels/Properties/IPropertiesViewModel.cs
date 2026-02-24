@@ -8,5 +8,7 @@ namespace UrbanEcho.ViewModels.Properties
 {
     public interface IPropertiesViewModel
     {
+        string Title { get; }
+        string Subtitle { get; }
     }
 }

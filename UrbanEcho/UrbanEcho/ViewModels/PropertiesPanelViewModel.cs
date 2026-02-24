@@ -1,11 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
+using UrbanEcho.ViewModels.Properties;
 
 namespace UrbanEcho.ViewModels
 {
@@ -13,6 +9,16 @@ namespace UrbanEcho.ViewModels
     {
         private readonly IPanelService _panelService;
         private bool _isOpen = true;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(Title))]
+        [NotifyPropertyChangedFor(nameof(Subtitle))]
+        [NotifyPropertyChangedFor(nameof(HasSelection))]
+        private IPropertiesViewModel? _selectedProperties;
+
+        public string Title => SelectedProperties?.Title ?? "Properties";
+        public string Subtitle => SelectedProperties?.Subtitle ?? string.Empty;
+        public bool HasSelection => SelectedProperties is not null;
 
         public RelayCommand ToggleCommand { get; }
 

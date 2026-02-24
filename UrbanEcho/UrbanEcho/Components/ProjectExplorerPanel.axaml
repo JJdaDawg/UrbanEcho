@@ -4,7 +4,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     x:Class="UrbanEcho.ProjectExplorerPanel"
     xmlns:vm="using:UrbanEcho.ViewModels"
-    x:DataType="vm:ProjectExplorerViewModel"
+    x:DataType="vm:ProjectExplorerPanelViewModel"
     d:DesignHeight="500"
     d:DesignWidth="300">
 
