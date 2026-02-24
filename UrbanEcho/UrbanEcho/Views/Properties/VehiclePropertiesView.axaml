@@ -10,7 +10,7 @@
 
     <StackPanel Spacing="2">
 
-        <Expander Header="Identity" IsExpanded="True">
+        <Expander Header="Info" IsExpanded="True">
             <StackPanel Margin="0" Spacing="2">
                 <TextBlock Text="{Binding VehicleId, StringFormat='ID: {0}'}" />
                 <TextBlock Text="{Binding Status, StringFormat='Status: {0}'}" />
