@@ -35,7 +35,7 @@ namespace UrbanEcho.Sim
 
             //Add default Zoom limit right away so no crashes if mouse wheel scrolling without layer loaded
             ProjectLayers.SetDefaultZoomLimit(MyMap);
-
+            MyMap.BackColor = Color.Black;
             //Removes debug info on mapControl
             /*
             LoggingWidget.ShowLoggingInMap = ActiveMode.No;

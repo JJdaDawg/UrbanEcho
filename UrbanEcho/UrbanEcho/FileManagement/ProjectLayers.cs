@@ -467,6 +467,7 @@ namespace UrbanEcho.FileManagement
                 layer = new MemoryLayer("Vehicles");
 
                 int vehiclesAdded = 0;
+                Random random = new Random();
                 // Spawning at each road graph From Edge point
                 for (int i = 0; i < Sim.Sim.roadGraph?.Edges.Count; i++)
                 {
@@ -479,7 +480,7 @@ namespace UrbanEcho.FileManagement
                                 MPoint mPoint = new MPoint(roadNodeFrom.X, roadNodeFrom.Y);
                                 PointFeature pf = new PointFeature(mPoint);
                                 pf["VehicleNumber"] = i;
-                                pf["VehicleType"] = "RedCar";
+                                pf["VehicleType"] = "Car" + random.Next(0, VehicleStyles.NumberOFCarColors);
                                 pf["Hidden"] = false;
                                 pf["Angle"] = 0.0f;
                                 //Vehicle groups used so we don't raycast and update velocities every frame (was slowing down fps)
