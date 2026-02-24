@@ -22,11 +22,13 @@ namespace UrbanEcho.Styles
         private Dictionary<string, IStyle> Styles = new Dictionary<string, IStyle>();
 
         private Random random = new Random();
+        public static int NumberOFCarColors = 20;
 
         public VehicleStyles()
         {
             Styles.Add("Default", new VectorStyle { Line = new Pen { Width = 0.25 } });
             Styles.Add("Hidden", new VectorStyle { Fill = new Brush(Color.Transparent), Outline = new Pen(Color.Transparent) });
+
             //https://stackoverflow.com/questions/18316683/how-to-get-the-current-project-name-in-c-sharp-code
             string? projectName = Assembly.GetCallingAssembly().GetName().Name;
 
@@ -34,7 +36,10 @@ namespace UrbanEcho.Styles
             {
                 try
                 {
-                    Styles.Add("RedCar", CreateImageStyle(projectName, "RedCar.png", VehicleSettings.CarLength, 48));
+                    for (int i = 0; i < NumberOFCarColors; i++)
+                    {
+                        Styles.Add($"Car{i}", CreateImageStyle(projectName, "Car.svg", VehicleSettings.CarLength, 48));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -52,11 +57,12 @@ namespace UrbanEcho.Styles
             string sourceString = $"embedded://{projectName}.Resources.Images.VehicleIcons.{fileName}";
 
             ImageStyle style = new ImageStyle();
-
+            Random random = new Random();
             style.Image =
                 new Image
                 {
                     Source = sourceString,
+                    SvgFillColor = new Color(random.Next(0, 255), random.Next(0, 255), random.Next(0, 255))
                 };
 
             style.SymbolScale = physicalCarLength / (float)(imageWidth);
@@ -94,19 +100,17 @@ namespace UrbanEcho.Styles
                         }
                         else
                         {
-                            switch (f["VehicleType"]?.ToString())
+                            string? carType = f["VehicleType"]?.ToString();
+                            if (carType != null)
                             {
-                                case "RedCar":
-
-                                    ImageStyle style = CopyStyle((ImageStyle)Styles["RedCar"]);
+                                if (Styles.ContainsKey(carType))
+                                {
+                                    ImageStyle style = CopyStyle((ImageStyle)Styles[carType]);
 
                                     float angle = -(float)f["Angle"];
                                     style.SymbolRotation = angle;
                                     return style;
-
-                                default:
-
-                                    return Styles["Default"];
+                                }
                             }
                         }
                     }
