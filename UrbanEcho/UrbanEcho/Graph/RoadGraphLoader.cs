@@ -97,10 +97,22 @@ public static class RoadGraphLoader
 
                         if (from != to && length > 0)
                         {
-                            edges.Add(new RoadEdge(from, to, length, metadata, g, true));
-
-                            if (!metadata.OneWay)
+                            if (!(metadata.OneWay))
+                            {
+                                edges.Add(new RoadEdge(from, to, length, metadata, g, true));
                                 edges.Add(new RoadEdge(to, from, length, metadata, g, false));
+                            }
+                            else
+                            {
+                                if (metadata.FromToFlowDirection)
+                                {
+                                    edges.Add(new RoadEdge(from, to, length, metadata, g, true));
+                                }
+                                else
+                                {
+                                    edges.Add(new RoadEdge(to, from, length, metadata, g, false));
+                                }
+                            }
                         }
                     }
 
@@ -186,6 +198,23 @@ public static class RoadGraphLoader
                 speedKmh = parsed;
         }
 
+        bool fromTo = false;
+        bool oneWay = false;
+
+        if (f.Fields.Contains("FLOW_DIREC"))
+        {
+            if (f["FLOW_DIREC"]?.ToString() == "FromTo")
+            {
+                fromTo = true;
+                oneWay = true;
+            }
+            if (f["FLOW_DIREC"]?.ToString() == "ToFrom")
+            {
+                fromTo = false;
+                oneWay = true;
+            }
+        }
+
         return new RoadMetadata
         {
             RoadType = f.Fields.Contains("CATEGORY")
@@ -193,8 +222,8 @@ public static class RoadGraphLoader
                 : "",
 
             SpeedLimit = speedKmh / 3.6,
-            OneWay = f.Fields.Contains("FLOW_DIREC") &&
-                     f["FLOW_DIREC"]?.ToString() == "OneWay"
+            OneWay = oneWay,
+            FromToFlowDirection = fromTo
         };
     }
 

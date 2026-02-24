@@ -18,6 +18,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.Extensions;
+using UrbanEcho.Helpers;
 
 //Modified VectorStyleRenderer for custom style
 //https://github.com/Mapsui/Mapsui/blob/main/Mapsui.Rendering.Skia/SkiaStyles/VectorStyleRenderer.cs
@@ -40,18 +41,19 @@ namespace UrbanEcho.Styles
                     //TODO: make pavement not hardcoded
                     if (gf.Fields.Contains("PAVEMENT_W"))
                     {
+                        float minPavementWidth = 4.0f;
                         if (double.TryParse(gf["PAVEMENT_W"]?.ToString(), out double pavementWidth))
                         {
                             if (viewport.Resolution > 0.01f)
                             {
-                                if (pavementWidth < 4)
+                                if (pavementWidth < minPavementWidth)
                                 {
-                                    pen.Width = 4 / viewport.Resolution;
+                                    pen.Width = Helper.DoMapCorrection(minPavementWidth / viewport.Resolution);
                                     outlinePen.Width = pen.Width * 0.1f;
                                 }
                                 else
                                 {
-                                    pen.Width = pavementWidth / viewport.Resolution;
+                                    pen.Width = Helper.DoMapCorrection(pavementWidth / viewport.Resolution);
                                     outlinePen.Width = pen.Width * 0.1f;
                                 }
                             }
@@ -63,7 +65,7 @@ namespace UrbanEcho.Styles
                         }
                         else
                         {
-                            pen.Width = 1;
+                            pen.Width = Helper.DoMapCorrection(minPavementWidth / viewport.Resolution);
                             outlinePen.Width = pen.Width * 0.1f;
                         }
 

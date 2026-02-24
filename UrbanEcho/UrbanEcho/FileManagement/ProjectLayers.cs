@@ -18,6 +18,7 @@ using SQLite;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
@@ -151,12 +152,12 @@ namespace UrbanEcho.FileManagement
                     {
                         ShapeFile roadNetwork = new ShapeFile(currentProjectFile.RoadLayerPath);
                         EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Load Road Shape File"));
-                        Layer roadLayerFirst = CreateRoadLayer(roadNetwork, "Road Outline", true, false);
-                        roadLayerFirstPass = new RasterizingLayer(roadLayerFirst);
+                        Layer roadLayer = CreateRoadLayer(roadNetwork, "Road Outline", true, false);
+                        roadLayerFirstPass = new RasterizingLayer(roadLayer);
                         roadLayerSecondPass = new RasterizingLayer(CreateRoadLayer(roadNetwork, "Roads", false, true));
 
-                        RoadFeatures = Helpers.Helper.GetRoadNetworkFeatures(roadLayerFirst.DataSource);
-                        Sim.Sim.roadGraph = UrbanTrafficSim.Core.IO.RoadGraphLoader.LoadFromFeatures(Helpers.Helper.GetFeatures(roadLayerFirst.DataSource));
+                        RoadFeatures = Helpers.Helper.GetFeatures(roadLayer.DataSource);
+                        Sim.Sim.roadGraph = UrbanTrafficSim.Core.IO.RoadGraphLoader.LoadFromFeatures(Helpers.Helper.GetFeatures(roadLayer.DataSource));
                     }
                     catch (Exception ex)
                     {
@@ -199,16 +200,12 @@ namespace UrbanEcho.FileManagement
                     ///2d world and dispose any handles created in the
                     ///IntersectionBody file. Then create a new world and make new shapes again
 
-                    MRect? extent = roadLayerFirstPass?.Extent;
-                    if (extent != null)
-                    {
-                        CenterOfMap = new MPoint(extent.MinX + (extent.MaxX - extent.MinX) / 2,
-                                    extent.MinY + (extent.MaxY - extent.MinY) / 2);
-                    }
                     vehicleLayer = CreateVehicleLayer();
                     tempGraphLayer.Features = GraphLayerFeatures;
                     graphLayer = new RasterizingLayer(tempGraphLayer);
                     vehicleRequiresLoading = false;
+                    EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Initialize Graph"));
+                    Sim.Sim.InitializeGraph();
                 }
             }
             else
@@ -282,6 +279,24 @@ namespace UrbanEcho.FileManagement
 
                 layer.DataSource = projectingProvider;
 
+                if (World.Created == false)
+                {
+                    MRect? extent = layer?.Extent;
+                    if (extent != null)
+                    {
+                        CenterOfMap = new MPoint(extent.MinX + (extent.MaxX - extent.MinX) / 2,
+                                    extent.MinY + (extent.MaxY - extent.MinY) / 2);
+                    }
+                    World.Init(CenterOfMap.X, CenterOfMap.Y);
+                }
+
+                if (World.Created == false)
+                {
+                    return null;
+                }
+
+                CreateRoadIntersections(layer.DataSource);
+
                 IntersectionStyles intersectionsStyle = new IntersectionStyles();
 
                 layer.Style = intersectionsStyle.CreateThemeStyle();
@@ -293,6 +308,84 @@ namespace UrbanEcho.FileManagement
             }
 
             return layer;
+        }
+
+        public static void CreateRoadIntersections(IProvider dataSource)
+        {
+            List<IFeature> features = Helpers.Helper.GetFeatures(dataSource);
+
+            for (int i = 0; i < features.Count; i++)
+            {
+                IFeature feature = features[i];
+
+                if (feature != null)
+                {
+                    string? name = feature["Intersecti"]?.ToString();//default name
+                    if (name == null)
+                    {
+                        name = Guid.NewGuid().ToString();
+                    }
+
+                    if (feature is GeometryFeature intersectGF)
+                    {
+                        if (intersectGF.Geometry is Point p)
+                        {
+                            RoadIntersection r = new RoadIntersection(name, 3.0f, new MPoint(p.X, p.Y));
+
+                            if (RoadFeatures.Count > 0)
+                            {
+                                for (int roadIndex = 0; roadIndex < RoadFeatures.Count; roadIndex++)
+                                {
+                                    IFeature roadFeature = RoadFeatures[roadIndex];
+
+                                    if (roadFeature is GeometryFeature gf)
+                                        if (gf.Geometry is LineString lineString)
+                                        {
+                                            if (lineString.Count > 1)
+                                            {
+                                                bool connectionHasBeenAdded = CheckIfAddConnection(0, true);
+                                                if (!connectionHasBeenAdded)
+                                                {
+                                                    connectionHasBeenAdded = CheckIfAddConnection(lineString.Count - 1, false);
+                                                }
+
+                                                bool CheckIfAddConnection(int startIndex, bool forwardDirection)
+                                                {
+                                                    float threshold = 5.0f;
+                                                    Vector2 roadFeaturePos = Helpers.Helper.Convert2Box2dWorldPosition(lineString.Coordinates[startIndex].X, lineString.Coordinates[startIndex].Y);
+                                                    bool connectionAdded = false;
+                                                    if (Vector2.Distance(r.Center, roadFeaturePos) < threshold)
+                                                    {
+                                                        Vector2 start = r.Center;
+                                                        int nextIndexForSegment = (forwardDirection) ? startIndex + 1 : startIndex - 1;
+                                                        Vector2 end = Helpers.Helper.Convert2Box2dWorldPosition(lineString.Coordinates[nextIndexForSegment].X, lineString.Coordinates[nextIndexForSegment].Y);
+
+                                                        RoadSegment roadSegment = new RoadSegment(start, end);
+                                                        ConnectionData connectionData = new ConnectionData(roadSegment);
+                                                        r.Connections.Add(connectionData);
+                                                        connectionAdded = true;
+                                                    }
+                                                    return connectionAdded;
+                                                }
+                                            }
+                                        }
+                                }
+                                //Connections added to the intersection so add body for it
+                                if (r.Connections.Count > 0)
+                                {
+                                    r.Init();
+                                    Sim.Sim.RoadIntersections.Add(r);
+                                }
+                            }
+                            else
+                            {
+                                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Road features need to be loaded before creating intersection points"));
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         public static Layer? CreateRoadLayer(IProvider source, string name, bool doOutline, bool showAADT)
@@ -353,34 +446,25 @@ namespace UrbanEcho.FileManagement
 
             if (World.Created == false)
             {
-                World.Init(CenterOfMap.X, CenterOfMap.Y);
+                MRect? extent = roadLayerFirstPass?.Extent;
+                if (extent != null)
+                {
+                    CenterOfMap = new MPoint(extent.MinX + (extent.MaxX - extent.MinX) / 2,
+                                extent.MinY + (extent.MaxY - extent.MinY) / 2);
+
+                    World.Init(CenterOfMap.X, CenterOfMap.Y);
+                }
+            }
+
+            if (World.Created == false)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Unable To Create Vehicle Layer if box2d world was not initialized"));
+                return null;
             }
 
             try
             {
                 layer = new MemoryLayer("Vehicles");
-                /* Spawning at each road feature
-                for (int i = 0; RoadFeatures.Count > i; i++)
-                {
-                    if (RoadFeatures[i] is GeometryFeature gf)
-                    {
-                        if (gf.Geometry is NetTopologySuite.Geometries.LineString l)
-                        {
-                            if (l.Coordinates.Length > 0)
-                            {
-                                MPoint mPoint = new MPoint(l.Coordinates[0].X, l.Coordinates[0].Y);
-                                PointFeature pf = new PointFeature(mPoint);
-                                pf["VehicleNumber"] = i;
-                                pf["VehicleType"] = "RedCar";
-                                pf["Hidden"] = false;
-                                pf["Angle"] = 0.0f;
-                                VehicleFeatures.Add(pf);
-
-                                UrbanEcho.Sim.Sim.Vehicles.Add(new Vehicle(pf));
-                            }
-                        }
-                    }
-                }*/
 
                 int vehiclesAdded = 0;
                 // Spawning at each road graph From Edge point
@@ -399,7 +483,8 @@ namespace UrbanEcho.FileManagement
                                 pf["Hidden"] = false;
                                 pf["Angle"] = 0.0f;
                                 //Vehicle groups used so we don't raycast and update velocities every frame (was slowing down fps)
-                                Vehicle vehicle = new Vehicle(pf, roadNodeFrom, roadNodeTo, Sim.Sim.roadGraph?.Edges[i], vehiclesAdded % Helper.NumberOfVehicleGroups);
+                                //currently vehicle groups just set as 1 so vehicle groups is bypassed
+                                Vehicle vehicle = new Vehicle(pf, roadNodeFrom, roadNodeTo, Sim.Sim.roadGraph?.Edges[i], "RegularCar", vehiclesAdded % Helper.NumberOfVehicleGroups);
                                 vehiclesAdded++;
                                 if (vehicle.IsCreated)
                                 {
@@ -416,34 +501,8 @@ namespace UrbanEcho.FileManagement
                         }
                     }
                 }
-                /* Spawning at each road feature
-                for (int i = 0; RoadFeatures.Count > i; i++)
-                {
-                    if (RoadFeatures[i] is GeometryFeature gf)
-                    {
-                        if (gf.Geometry is NetTopologySuite.Geometries.LineString l)
-                        {
-                            if (l.Coordinates.Length > 0)
-                            {
-                                MPoint mPoint = new MPoint(l.Coordinates[0].X, l.Coordinates[0].Y);
-                                PointFeature pf = new PointFeature(mPoint);
-                                pf["VehicleNumber"] = i;
-                                pf["VehicleType"] = "RedCar";
-                                pf["Hidden"] = false;
-                                pf["Angle"] = 0.0f;
-                                VehicleFeatures.Add(pf);
-
-                                UrbanEcho.Sim.Sim.Vehicles.Add(new Vehicle(pf));
-                            }
-                        }
-                    }
-                }*/
 
                 layer.Features = VehicleFeatures;
-
-                //vehicleProvider = new MemoryProvider(VehicleFeatures);
-
-                //layer.DataSource = vehicleProvider;// .Features = (IEnumerable<IFeature>)VehicleFeatures.Select(v => (IFeature)v.Clone()).ToList();
 
                 layer.Opacity = 1.0f;
 
@@ -611,7 +670,7 @@ namespace UrbanEcho.FileManagement
             if (IsRasterVisible && backgroundMBTile != null)
             {
                 myMap?.Layers.Add(backgroundMBTile);
-            }/*
+            }
             if (roadLayerFirstPass != null)
             {
                 myMap?.Layers.Add(roadLayerFirstPass);
@@ -623,7 +682,7 @@ namespace UrbanEcho.FileManagement
             if (IsIntersectionsVisible && intersectionLayer != null)
             {
                 myMap?.Layers.Add(intersectionLayer);
-            }*/
+            }
 
             if (vehicleLayer != null)
             {

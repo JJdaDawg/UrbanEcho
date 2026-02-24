@@ -18,7 +18,7 @@ namespace UrbanEcho.Sim
 
         public b2BodyId BodyId;
 
-        private static float defaultSize = 5.0f;
+        private static float defaultSize = 5.0f * Helper.MapCorrection;
 
         public Vector2[]? Points;
 
@@ -42,7 +42,7 @@ namespace UrbanEcho.Sim
             shapeDef.userData = intPtr;
 
             shapeDef.filter.categoryBits = (ulong)ShapeCategories.Intersection;
-            if (parent.Connections.Count > 4)
+            if (parent.Connections.Count > 4 || parent.Connections.Count <= 1)
             {
                 Points = CircleOfPoints();
                 b2Polygon polygon = Helper.CreatePolygon(Points);

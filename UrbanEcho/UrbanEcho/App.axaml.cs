@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
 using UrbanEcho.Services;
 using UrbanEcho.Sim;
+using UrbanEcho.UI;
 using UrbanEcho.ViewModels;
 
 namespace UrbanEcho;
@@ -54,13 +55,13 @@ public partial class App : Application
     {
         try
         {
-            Sim.Sim.Cts.Cancel();
-
-            if (Sim.Sim.SimTask != null)
+            UIUpdate.Cts.Cancel();
+            if (UIUpdate.UITask != null)
             {
-                Sim.Sim.SimTask.Wait();
-                B2Api.b2DestroyWorld(World.WorldId);//Destroy world
+                UIUpdate.UITask.Wait();
             }
+
+            Sim.Sim.Free();
         }
         catch
         {
@@ -68,7 +69,7 @@ public partial class App : Application
         }
         finally
         {
-            Sim.Sim.Cts.Dispose();
+            UIUpdate.Cts.Dispose();
         }
     }
 }

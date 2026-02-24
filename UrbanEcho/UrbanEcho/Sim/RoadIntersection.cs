@@ -22,11 +22,12 @@ namespace UrbanEcho.Sim
 
         public float WaitTime = 5.0f;
 
-        public RoadIntersection(string name, float waitTime)
+        public RoadIntersection(string name, float waitTime, Mapsui.MPoint mPoint)
         {
             this.Name = name;
             Connections = new List<ConnectionData>();
             WaitTime = waitTime;
+            Center = Helpers.Helper.Convert2Box2dWorldPosition(mPoint.X, mPoint.Y);
         }
 
         public void Init()

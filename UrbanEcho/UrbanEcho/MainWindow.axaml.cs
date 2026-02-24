@@ -22,6 +22,7 @@ using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
 using UrbanEcho.Services;
 using UrbanEcho.Sim;
+using UrbanEcho.UI;
 using UrbanEcho.ViewModels;
 using Layer = Mapsui.Layers.Layer;
 
@@ -49,6 +50,7 @@ public partial class MainWindow : AppWindow, IPanelService
         Sim.Sim.SetMainViewModel(vm);
 
         Sim.Sim.SimTask = Task.Factory.StartNew(new Action(Sim.Sim.Run), Sim.Sim.Cts.Token);
+        UIUpdate.UITask = Task.Factory.StartNew(new Action(UIUpdate.Run), UIUpdate.Cts.Token);
     }
 
     public void ToggleConsole(bool open)
@@ -120,7 +122,7 @@ public partial class MainWindow : AppWindow, IPanelService
             row.Height = _lastProjectExplorerHeight;
             if (_propertiesOpen) splitterRow.Height = new GridLength(4);
             PropertiesSplitter.IsVisible = _propertiesOpen;
-            ToggleRightPanel(true); 
+            ToggleRightPanel(true);
         }
         else
         {

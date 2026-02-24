@@ -34,7 +34,7 @@ namespace UrbanEcho.Styles
             {
                 try
                 {
-                    Styles.Add("RedCar", CreateImageStyle(projectName, "RedCar.png", 4.5f, 48));
+                    Styles.Add("RedCar", CreateImageStyle(projectName, "RedCar.png", VehicleSettings.CarLength, 48));
                 }
                 catch (Exception ex)
                 {
