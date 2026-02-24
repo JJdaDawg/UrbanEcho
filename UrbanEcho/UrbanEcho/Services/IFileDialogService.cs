@@ -10,5 +10,6 @@ namespace UrbanEcho.Services
     {
         Task<string?> OpenFileAsync();
         Task<string?> SaveFileAsync();
+        Task<string?> CreateProject();
     }
 }

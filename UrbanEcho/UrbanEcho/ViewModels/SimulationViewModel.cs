@@ -17,9 +17,18 @@ namespace UrbanEcho.ViewModels
 
         public SimulationViewModel() 
         {
+            // Listens for when a project is loaded
             WeakReferenceMessenger.Default.Register<ProjectLoadedMessage>(this, (r, m) =>
             {
                 _hasProject = true;
+                NotifyAllCommands();
+            });
+
+            // Listens for when a project is closed
+            WeakReferenceMessenger.Default.Register<ProjectClosedMessage>(this, (r, m) =>
+            {
+                _hasProject = false;
+                IsRunning = false;
                 NotifyAllCommands();
             });
         }

@@ -42,5 +42,17 @@ namespace UrbanEcho.Services
 
             return file?.Path.LocalPath;
         }
+
+        public async Task<string?> CreateProject()
+        {
+            var file = await _topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Create Project",
+                DefaultExtension = "uep",
+                FileTypeChoices = new[] { FileTypes.ProjectFile }
+            });
+
+            return file?.Path.LocalPath;
+        }
     }
 }
