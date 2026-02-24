@@ -17,11 +17,11 @@ public partial class ConsolePanel : UserControl
     protected override void OnDataContextChanged(EventArgs e)
     {
         base.OnDataContextChanged(e);
-        if (DataContext is ConsoleViewModel cvm)
+        if (DataContext is ConsolePanelViewModel cvm)
         {
             cvm.PropertyChanged += (s, args) =>
             {
-                if (args.PropertyName == nameof(ConsoleViewModel.CurrentLogs))
+                if (args.PropertyName == nameof(ConsolePanelViewModel.CurrentLogs))
                     SubscribeToCollection(cvm.CurrentLogs);
             };
             SubscribeToCollection(cvm.CurrentLogs);

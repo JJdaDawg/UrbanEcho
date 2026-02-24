@@ -1,0 +1,38 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:UrbanEcho.ViewModels.Properties"
+             xmlns:controls="using:UrbanEcho.Views.Controls"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="500"
+             x:Class="UrbanEcho.VehiclePropertiesView"
+             x:DataType="vm:VehiclePropertiesViewModel">
+
+    <StackPanel Spacing="2">
+
+        <Expander Header="Info" IsExpanded="True">
+            <StackPanel Margin="0" Spacing="2">
+                <TextBlock Text="{Binding VehicleId, StringFormat='ID: {0}'}" />
+                <TextBlock Text="{Binding Status, StringFormat='Status: {0}'}" />
+            </StackPanel>
+        </Expander>
+
+        <Expander Header="Navigation" IsExpanded="True">
+            <StackPanel Margin="0" Spacing="2">
+                <Button Content="Highlight Path" Command="{Binding HighlightPathCommand}" HorizontalAlignment="Stretch" />
+                <Button Content="Show Trend" Command="{Binding ShowTrendCommand}" HorizontalAlignment="Stretch" />
+                <Button Content="Track Vehicle" Command="{Binding TrackVehicleCommand}" HorizontalAlignment="Stretch" />
+            </StackPanel>
+        </Expander>
+
+        <Expander Header="Controls" IsExpanded="True" IsVisible="{Binding IsEditMode}">
+            <StackPanel Margin="0" Spacing="2">
+                <Button Content="Change Destination" Command="{Binding ChangeDestinationCommand}" HorizontalAlignment="Stretch" />
+                <Button Content="Start / Stop" Command="{Binding ToggleStartStopCommand}" HorizontalAlignment="Stretch" />
+                <Button Content="De-spawn" Command="{Binding DespawnCommand}" HorizontalAlignment="Stretch" />
+            </StackPanel>
+        </Expander>
+
+    </StackPanel>
+
+</UserControl>

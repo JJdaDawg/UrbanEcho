@@ -1,0 +1,97 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:UrbanEcho.ViewModels.Properties"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="500"
+             x:Class="UrbanEcho.SignalPropertiesView"
+             x:DataType="vm:SignalPropertiesViewModel">
+
+    <StackPanel Spacing="2">
+
+        <!-- Signal Type -->
+        <Expander Header="Signal Type" IsExpanded="True">
+            <StackPanel Margin="0" Spacing="2">
+                <TextBlock Text="{Binding SignalType}" />
+            </StackPanel>
+        </Expander>
+
+        <!-- Status: Traffic Light -->
+        <Expander Header="Signal Status" IsExpanded="True" IsVisible="{Binding IsTrafficLight}">
+            <ItemsControl ItemsSource="{Binding RoadStatuses}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:RoadSignalStatus">
+                        <Grid ColumnDefinitions="*, Auto" Margin="0,4">
+                            <TextBlock Grid.Column="0" Text="{Binding RoadName}" FontWeight="Bold" />
+                            <TextBlock Grid.Column="1" Text="{Binding LightStatus}" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Expander>
+
+        <!-- Status: Stop/Yield Sign -->
+        <Expander Header="Signal Status" IsExpanded="True" IsVisible="{Binding IsStopOrYield}">
+            <StackPanel Margin="0" Spacing="5">
+                <StackPanel Orientation="Horizontal" Spacing="2" IsEnabled="{Binding IsEditMode}">
+                    <ToggleButton Content="4-Way" IsChecked="{Binding IsFourWayStop}" />
+                    <ToggleButton Content="2-Way" IsChecked="{Binding !IsFourWayStop}" />
+                </StackPanel>
+                <TextBlock Text="Crossing Road with Sign" IsVisible="{Binding !IsFourWayStop}" />
+                <ComboBox ItemsSource="{Binding ConnectingRoads}"
+                          SelectedItem="{Binding StopSignRoad}"
+                          IsVisible="{Binding !IsFourWayStop}"
+                          IsEnabled="{Binding IsEditMode}"
+                          HorizontalAlignment="Stretch" />
+            </StackPanel>
+        </Expander>
+
+        <!-- Average Wait Times -->
+        <Expander Header="Average Wait Times" IsExpanded="True">
+            <ItemsControl ItemsSource="{Binding WaitTimes}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:RoadSignalStatus">
+                        <Grid ColumnDefinitions="*, Auto" Margin="0,4">
+                            <TextBlock Grid.Column="0" Text="{Binding RoadName}" FontWeight="Bold" />
+                            <TextBlock Grid.Column="1" Text="{Binding AverageWaitTime, StringFormat='{}{0:F1}s'}" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Expander>
+
+        <!-- Edit: Change Signal Type -->
+        <Expander Header="Change Signal Type" IsExpanded="True" IsVisible="{Binding IsEditMode}">
+            <StackPanel Margin="0" Spacing="6">
+                <StackPanel Orientation="Horizontal" Spacing="2">
+                    <ToggleButton Content="Traffic Light" IsChecked="{Binding IsTrafficLight}" />
+                    <ToggleButton Content="Stop Sign" IsChecked="{Binding IsStopOrYield}" />
+                </StackPanel>
+            </StackPanel>
+        </Expander>
+
+        <!-- Edit: Traffic Light Timing -->
+        <Expander Header="Light Timing" IsExpanded="True"
+                  IsVisible="{Binding IsTrafficLightEditMode}">
+            <ItemsControl ItemsSource="{Binding RoadTimings}"
+                          IsVisible="{Binding IsTrafficLight}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:RoadTimingConfig">
+                        <StackPanel Margin="0,8" Spacing="6">
+                            <TextBlock Text="{Binding RoadName}" FontWeight="Bold"/>
+                            <TextBlock Text="Green Duration (s)" />
+                            <NumericUpDown Value="{Binding GreenDuration}" Minimum="0" Maximum="300" />
+                            <TextBlock Text="Extended Green (s)" />
+                            <NumericUpDown Value="{Binding ExtendedGreenDuration}" Minimum="0" Maximum="300" />
+                            <ToggleButton Content="Turn Lane Restriction"
+                                          IsChecked="{Binding HasTurnLaneRestriction}"
+                                          HorizontalAlignment="Stretch" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Expander>
+
+    </StackPanel>
+
+</UserControl>

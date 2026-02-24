@@ -1,0 +1,68 @@
+<UserControl
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:UrbanEcho"
+    xmlns:vm="using:UrbanEcho.ViewModels"
+    xmlns:propVm="using:UrbanEcho.ViewModels.Properties"
+    x:Class="UrbanEcho.PropertiesPanel"
+    x:DataType="vm:PropertiesPanelViewModel"
+    d:DesignHeight="500"
+    d:DesignWidth="300">
+
+    <Border Classes="focus-indicator" Focusable="True" Padding="0">
+        <Grid RowDefinitions="32, Auto, *">
+
+            <!-- Title bar -->
+            <Border Grid.Row="0">
+                <Grid ColumnDefinitions="*, Auto">
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0" Spacing="5">
+                        <TextBlock Text="{Binding Title}"/>
+                        <TextBlock Text="{Binding Subtitle}"
+                                   IsVisible="{Binding HasSelection}"
+                                   FontSize="11"
+                                   Opacity="0.6"/>
+                    </StackPanel>
+                    <Button Grid.Column="1"
+                            Classes="CloseButtonStyle"
+                            Command="{Binding ToggleCommand}"/>
+                </Grid>
+            </Border>
+
+            <Separator Grid.Row="1" Margin="0" />
+
+            <!-- Content area -->
+            <ScrollViewer Grid.Row="2" Margin="2">
+                <Panel>
+
+                    <!-- Empty state -->
+                    <TextBlock
+                        Text="Select an object on the map"
+                        IsVisible="{Binding !HasSelection}"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Margin="0,20,0,0"
+                        Opacity="0.5"/>
+
+                    <!-- Changeable properties view -->
+                    <ContentControl
+                        Content="{Binding SelectedProperties}"
+                        IsVisible="{Binding HasSelection}">
+                        <ContentControl.DataTemplates>
+                            <DataTemplate DataType="{x:Type propVm:VehiclePropertiesViewModel}">
+                                <local:VehiclePropertiesView/>
+                            </DataTemplate>
+                            <DataTemplate DataType="{x:Type propVm:RoadPropertiesViewModel}">
+                                <local:RoadPropertiesView/>
+                            </DataTemplate>
+                            <DataTemplate DataType="{x:Type propVm:SignalPropertiesViewModel}">
+                                <local:SignalPropertiesView/>
+                            </DataTemplate>
+                        </ContentControl.DataTemplates>
+                    </ContentControl>
+                </Panel>
+            </ScrollViewer>
+
+        </Grid>
+    </Border>
+</UserControl>

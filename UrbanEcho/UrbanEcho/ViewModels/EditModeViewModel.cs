@@ -36,6 +36,11 @@ namespace UrbanEcho.ViewModels
             });
         }
 
+        partial void OnIsEditModeChanged(bool value)
+        {
+            WeakReferenceMessenger.Default.Send(new EditModeChangedMessage(value));
+        }
+
         [RelayCommand(CanExecute = nameof(CanToggleEdit))]
         private void ToggleEditMode() => IsEditMode = !IsEditMode;
 

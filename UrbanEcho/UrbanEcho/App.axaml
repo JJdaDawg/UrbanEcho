@@ -5,6 +5,10 @@
              xmlns:icon="clr-namespace:FluentIcons.Avalonia;assembly=FluentIcons.Avalonia"
              RequestedThemeVariant="Default">
 
+    <Application.Resources>
+		<FontFamily x:Key="DefaultFont">Arial</FontFamily>
+    </Application.Resources>
+
     <Application.Styles>
 
         <sty:FluentAvaloniaTheme />
@@ -67,6 +71,10 @@
         <!-- Highlight when this border or contents it is focused -->
         <Style Selector="Border.focus-indicator:focus-within">
             <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColor}"/>
+        </Style>
+
+        <Style Selector="TextBlock">
+            <Setter Property="FontFamily" Value="Arial" />
         </Style>
 
     </Application.Styles>

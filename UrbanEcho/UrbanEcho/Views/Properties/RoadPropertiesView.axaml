@@ -1,0 +1,67 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:UrbanEcho.ViewModels.Properties"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="500"
+             x:Class="UrbanEcho.RoadPropertiesView"
+             x:DataType="vm:RoadPropertiesViewModel">
+
+    <StackPanel Spacing="2">
+
+        <!-- Info -->
+        <Expander Header="Info" IsExpanded="True">
+            <StackPanel Margin="0" Spacing="2">
+                <TextBlock Text="{Binding RoadName, StringFormat='Road: {0}'}" />
+                <TextBlock Text="{Binding Aadt, StringFormat='AADT: {0}'}" />
+            </StackPanel>
+        </Expander>
+
+        <!-- Road Settings -->
+        <Expander Header="Road Settings" IsExpanded="True">
+            <StackPanel Margin="0" Spacing="6">
+
+                <TextBlock Text="Road Status" />
+                <StackPanel Orientation="Horizontal" Spacing="4" IsEnabled="{Binding IsEditMode}">
+                    <ToggleButton Content="Open" IsChecked="{Binding IsRoadOpen}" />
+                    <ToggleButton Content="Closed" IsChecked="{Binding !IsRoadOpen}" />
+                </StackPanel>
+
+                <TextBlock Text="Speed Limit" />
+                <NumericUpDown Value="{Binding SpeedLimit}"
+                               Minimum="0"
+                               Maximum="130"
+                               IsEnabled="{Binding IsEditMode}" />
+
+                <TextBlock Text="Truck Allowance" />
+                <ToggleButton Content="Trucks Allowed" IsEnabled="{Binding IsEditMode}" IsChecked="{Binding TruckAllowance}" />
+
+            </StackPanel>
+        </Expander>
+
+        <!-- Actions -->
+        <Expander Header="Actions" IsExpanded="True" IsVisible="{Binding IsEditMode}">
+            <StackPanel Margin="0" Spacing="2">
+                <Button Content="Spawn Vehicle"
+                        Command="{Binding SpawnVehicleCommand}"
+                        HorizontalAlignment="Stretch" />
+            </StackPanel>
+        </Expander>
+
+        <!-- Lane Editor -->
+        <Expander Header="Lanes" IsExpanded="True" IsVisible="{Binding IsEditMode}">
+            <StackPanel Margin="0" Spacing="2">
+                <Button Content="Open Lane Editor"
+                        Command="{Binding EditLanesCommand}"
+                        HorizontalAlignment="Stretch" />
+
+                <!-- Lane editor will go here -->
+                <ContentControl IsVisible="{Binding ShowLaneEditor}">
+                    <TextBlock Text="Lane editor here" Opacity="0.5" />
+                </ContentControl>
+            </StackPanel>
+        </Expander>
+
+    </StackPanel>
+
+</UserControl>

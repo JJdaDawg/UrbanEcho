@@ -9,7 +9,7 @@ using UrbanEcho.Models;
 
 namespace UrbanEcho.ViewModels
 {
-    public partial class ConsoleViewModel : ObservableObject
+    public partial class ConsolePanelViewModel : ObservableObject
     {
         private readonly ObservableCollection<string> _mapLogs = new();
         private readonly ObservableCollection<string> _systemLogs = new();
@@ -25,7 +25,7 @@ namespace UrbanEcho.ViewModels
 
         public RelayCommand ToggleCommand { get; }
 
-        public ConsoleViewModel(IPanelService panelService)
+        public ConsolePanelViewModel(IPanelService panelService)
         {
             _panelService = panelService;
             ToggleCommand = new RelayCommand(Toggle);

@@ -8,7 +8,7 @@
              d:DesignHeight="200"
              d:DesignWidth="1620"
              x:Class="UrbanEcho.ConsolePanel"
-             x:DataType="vm:ConsoleViewModel"
+             x:DataType="vm:ConsolePanelViewModel"
              IsVisible="{Binding IsVisible}">
 
     <Border Classes="focus-indicator" Focusable="True" Padding="0">
