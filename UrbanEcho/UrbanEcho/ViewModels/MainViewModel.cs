@@ -19,20 +19,20 @@ namespace UrbanEcho.ViewModels
 {
     public partial class MainViewModel : ObservableObject
     {
-        public ConsoleViewModel Console { get; }
+        public ConsolePanelViewModel Console { get; }
         public MapViewModel Map { get; }
         public SimulationViewModel Simulation { get; }
-        public PropertiesViewModel Properties { get; }
-        public ProjectExplorerViewModel ProjectExplorer { get; }
+        public PropertiesPanelViewModel Properties { get; }
+        public ProjectExplorerPanelViewModel ProjectExplorer { get; }
         public EditModeViewModel EditMode { get; }
         public ProjectViewModel Project { get; }
         public bool IsEditMode => EditMode.IsEditMode;
 
         public MainViewModel(IPanelService panelService, IFileDialogService fileDialogService)
         {
-            Console = new ConsoleViewModel(panelService);
-            Properties = new PropertiesViewModel(panelService);
-            ProjectExplorer = new ProjectExplorerViewModel(panelService);
+            Console = new ConsolePanelViewModel(panelService);
+            Properties = new PropertiesPanelViewModel(panelService);
+            ProjectExplorer = new ProjectExplorerPanelViewModel(panelService);
             Map = new MapViewModel();
             EditMode = new EditModeViewModel();
             Project = new ProjectViewModel(fileDialogService);

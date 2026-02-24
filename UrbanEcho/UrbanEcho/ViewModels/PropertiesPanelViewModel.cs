@@ -9,14 +9,14 @@ using UrbanEcho.Events.UI;
 
 namespace UrbanEcho.ViewModels
 {
-    public partial class ProjectExplorerViewModel : ObservableObject
+    public partial class PropertiesPanelViewModel : ObservableObject
     {
         private readonly IPanelService _panelService;
         private bool _isOpen = true;
 
         public RelayCommand ToggleCommand { get; }
 
-        public ProjectExplorerViewModel(IPanelService panelService)
+        public PropertiesPanelViewModel(IPanelService panelService)
         {
             _panelService = panelService;
             ToggleCommand = new RelayCommand(Toggle);
@@ -25,7 +25,7 @@ namespace UrbanEcho.ViewModels
         public void Toggle()
         {
             _isOpen = !_isOpen;
-            _panelService.ToggleProjectExplorer(_isOpen);
+            _panelService.ToggleProperties(_isOpen);
         }
     }
 }
