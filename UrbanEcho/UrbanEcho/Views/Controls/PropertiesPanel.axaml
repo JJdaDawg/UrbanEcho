@@ -32,7 +32,7 @@
             <Separator Grid.Row="1" Margin="0" />
 
             <!-- Content area -->
-            <ScrollViewer Grid.Row="2">
+            <ScrollViewer Grid.Row="2" Margin="2">
                 <Panel>
 
                     <!-- Empty state -->
