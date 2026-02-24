@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using UrbanEcho.Events.UI;
 using UrbanEcho.ViewModels.Properties;
+using static UrbanEcho.Models.TrafficSignal;
 
 namespace UrbanEcho.ViewModels
 {
@@ -27,14 +28,51 @@ namespace UrbanEcho.ViewModels
             _panelService = panelService;
             ToggleCommand = new RelayCommand(Toggle);
 
-            SelectedProperties = new RoadPropertiesViewModel
+            var signal = new SignalPropertiesViewModel
             {
-                RoadName = "Main St",
-                Aadt = "12500 vehicles/day",
-                SpeedLimit = 50,
-                IsRoadOpen = true,
-                TruckAllowance = false
+                SignalType = SignalType.StopSign,
+                IsFourWayStop = false,
+                StopSignRoad = "Elm St"
             };
+
+            signal.ConnectingRoads.Add("Main St");
+            signal.ConnectingRoads.Add("Elm St");
+            signal.WaitTimes.Add(new RoadSignalStatus { RoadName = "Main St", AverageWaitTime = 15.0 });
+            signal.WaitTimes.Add(new RoadSignalStatus { RoadName = "Elm St", AverageWaitTime = 6.0 });
+
+            SelectedProperties = signal;
+
+
+
+
+            //var signal = new SignalPropertiesViewModel
+            //{
+            //    SignalType = SignalType.Light,
+            //};
+
+            //signal.RoadStatuses.Add(new RoadSignalStatus { RoadName = "Main St", LightStatus = LightStatus.Green, AverageWaitTime = 12.5 });
+            //signal.RoadStatuses.Add(new RoadSignalStatus { RoadName = "Elm St", LightStatus = LightStatus.Red, AverageWaitTime = 8.3 });
+
+            //signal.WaitTimes.Add(new RoadSignalStatus { RoadName = "Main St", AverageWaitTime = 12.5 });
+            //signal.WaitTimes.Add(new RoadSignalStatus { RoadName = "Elm St", AverageWaitTime = 8.3 });
+
+            //signal.RoadTimings.Add(new RoadTimingConfig { RoadName = "Main St", GreenDuration = 30, ExtendedGreenDuration = 10 });
+            //signal.RoadTimings.Add(new RoadTimingConfig { RoadName = "Elm St", GreenDuration = 25, ExtendedGreenDuration = 5 });
+
+            //SelectedProperties = signal;
+
+
+
+            //SelectedProperties = new RoadPropertiesViewModel
+            //{
+            //    RoadName = "Main St",
+            //    Aadt = "12500 vehicles/day",
+            //    SpeedLimit = 50,
+            //    IsRoadOpen = true,
+            //    TruckAllowance = false
+            //};
+
+
 
             //SelectedProperties = new VehiclePropertiesViewModel
             //{

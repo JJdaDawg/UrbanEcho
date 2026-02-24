@@ -6,7 +6,21 @@ using System.Threading.Tasks;
 
 namespace UrbanEcho.Models
 {
-    internal class TrafficSignal
+    public class TrafficSignal
     {
+        public enum SignalType
+        {
+            Light,
+            StopSign,
+            YieldSign
+        }
+
+        public enum LightStatus
+        {
+            Red,
+            Green,
+            ExtendedGreen,
+            Yellow
+        }
     }
 }

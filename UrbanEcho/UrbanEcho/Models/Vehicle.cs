@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace UrbanEcho.Models
 {
-    internal class Vehicle
+    public class Vehicle
     {
     }
 }
