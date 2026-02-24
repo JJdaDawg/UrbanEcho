@@ -202,7 +202,7 @@ namespace UrbanEcho.Sim
                         }
                         //move start and end so car is using
                         //right hand lane
-                        Vector2 laneOffset = new Vector2(MathF.Cos(angleToDest + Helper.Deg2Rad(-90.0f)) * Helper.DefaultLaneWidth / 2.0f, +MathF.Sin(angleToDest + Helper.Deg2Rad(-90.0f)) * Helper.DefaultLaneWidth / 2.0f);
+                        Vector2 laneOffset = new Vector2(MathF.Cos(angleToDest + Helper.Deg2Rad(-90.0f - 45.0f)) * Helper.DefaultLaneWidth, +MathF.Sin(angleToDest + Helper.Deg2Rad(-90.0f - 45.0f)) * Helper.DefaultLaneWidth);
 
                         startPos = new Vector2(startPos.X + laneOffset.X, startPos.Y + laneOffset.Y);
                         initialStartPos = startPos;
@@ -308,8 +308,8 @@ namespace UrbanEcho.Sim
                     angleForLaneOffset = 0;
 
                 Vector2 laneOffset = new Vector2(
-                    MathF.Cos(angleForLaneOffset + Helper.Deg2Rad(-90.0f)) * Helper.DefaultLaneWidth / 2.0f,
-                    MathF.Sin(angleForLaneOffset + Helper.Deg2Rad(-90.0f)) * Helper.DefaultLaneWidth / 2.0f);
+                    MathF.Cos(angleForLaneOffset + Helper.Deg2Rad(-90.0f - 45.0f)) * Helper.DefaultLaneWidth,
+                    MathF.Sin(angleForLaneOffset + Helper.Deg2Rad(-90.0f - 45.0f)) * Helper.DefaultLaneWidth);
 
                 startPos = new Vector2(startPosRoad.X + laneOffset.X, startPosRoad.Y + laneOffset.Y);
                 initialStartPos = startPosRoad;
@@ -619,8 +619,8 @@ namespace UrbanEcho.Sim
                 angleForLaneOffset = 0;
 
             Vector2 laneOffset = new Vector2(
-                MathF.Cos(angleForLaneOffset + Helper.Deg2Rad(-90.0f)) * Helper.DefaultLaneWidth / 2.0f,
-                MathF.Sin(angleForLaneOffset + Helper.Deg2Rad(-90.0f)) * Helper.DefaultLaneWidth / 2.0f);
+                MathF.Cos(angleForLaneOffset + Helper.Deg2Rad(-90.0f - 45.0f)) * Helper.DefaultLaneWidth,
+                MathF.Sin(angleForLaneOffset + Helper.Deg2Rad(-90.0f - 45.0f)) * Helper.DefaultLaneWidth);
 
             startPos = new Vector2(startPosRoad.X + laneOffset.X, startPosRoad.Y + laneOffset.Y);
             initialStartPos = startPosRoad;
