@@ -20,9 +20,18 @@ namespace UrbanEcho.ViewModels
 
         public EditModeViewModel()
         {
+            // Listens for when a project is laoded
             WeakReferenceMessenger.Default.Register<ProjectLoadedMessage>(this, (r, m) =>
             {
                 _hasProject = true;
+                NotifyEditCommands();
+            });
+
+            // Listens for when a project is closed
+            WeakReferenceMessenger.Default.Register<ProjectClosedMessage>(this, (r, m) =>
+            {
+                _hasProject = false;
+                _hasProject = false;
                 NotifyEditCommands();
             });
         }

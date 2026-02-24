@@ -63,7 +63,7 @@ namespace UrbanEcho.ViewModels
         [RelayCommand]
         private async Task CreateProject()
         {
-            var path = await _fileDialogService.SaveFileAsync();
+            var path = await _fileDialogService.CreateProject();
             if (path is null) return;
 
             _currentProject = new ProjectFile();
@@ -74,10 +74,14 @@ namespace UrbanEcho.ViewModels
             WeakReferenceMessenger.Default.Send(new LogMessage($"Project successfully created '{path}'", LogSource.System));
         }
 
-        [RelayCommand(CanExecute = nameof(CanClose))] 
+        [RelayCommand(CanExecute = nameof(CanClose))]
         private void CloseProject()
         {
-            // TODO: Implement close project
+            // TODO: Check to see if user wants to save changes before nulling the project
+            _currentProject = null;
+            HasProject = false;
+            NotifyProjectCommands();
+            WeakReferenceMessenger.Default.Send(new ProjectClosedMessage());
             WeakReferenceMessenger.Default.Send(new LogMessage("Project successfully closed", LogSource.System));
         }
 

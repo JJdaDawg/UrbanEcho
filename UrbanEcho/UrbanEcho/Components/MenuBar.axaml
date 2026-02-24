@@ -21,7 +21,7 @@
 							<icon:SymbolIcon Symbol="FolderOpen"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="_New Project">
+                    <MenuItem Header="_New Project" Command="{Binding Project.CreateProjectCommand}">
                         <MenuItem.Icon>
 							<icon:SymbolIcon Symbol="AddSquare"/>
                         </MenuItem.Icon>
