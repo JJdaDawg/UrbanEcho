@@ -12,6 +12,8 @@ using System.Numerics;
 using UrbanEcho.Events.UI;
 using UrbanEcho.Graph;
 using UrbanEcho.Helpers;
+using UrbanEcho.Models;
+using UrbanEcho.Physics;
 using Point = NetTopologySuite.Geometries.Point;
 
 namespace UrbanEcho.Sim
@@ -79,7 +81,7 @@ namespace UrbanEcho.Sim
         private RoadNode? nodeFrom;
         private RoadNode? nodeTo;
 
-        private GeometryFeature? currentRoad;
+        private RoadEdge currentRoadEdge;
 
         public bool IsCreated = false;
 
@@ -105,13 +107,14 @@ namespace UrbanEcho.Sim
 
         private int vehicleInFrontCount = 0;
 
-        public Vehicle(PointFeature feature, RoadNode roadNodeFrom, RoadNode roadNodeTo, RoadEdge currentRoad, string carType, int updateGroup)
+        public Vehicle(PointFeature feature, RoadNode roadNodeFrom, RoadNode roadNodeTo, RoadEdge currentRoadEdge, string carType, int updateGroup)
         {
             settings = new VehicleSettings(carType);
             nodeFrom = roadNodeFrom;
             nodeTo = roadNodeTo;
+            this.currentRoadEdge = currentRoadEdge;
 
-            if (currentRoad == null)
+            if (currentRoadEdge == null)
             {
                 EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Failed Adding Car with From Node{nodeFrom.X:F2},{nodeFrom.Y:F2} and To Node {nodeTo.X:F2}, {nodeTo.Y:F2} Road Edge passed was null"));
                 return;
@@ -127,10 +130,9 @@ namespace UrbanEcho.Sim
             this.updateGroup = updateGroup;
 
             bool foundStartAndEnd = false;
-            if (currentRoad.Feature is GeometryFeature theRoad)
+            if (currentRoadEdge.Feature is GeometryFeature theRoad)
             {
-                this.currentRoad = theRoad;
-                indexingForwardThroughLineString = currentRoad.IsFromStartOfLineString;
+                indexingForwardThroughLineString = currentRoadEdge.IsFromStartOfLineString;
                 if (theRoad is GeometryFeature g)
                 {
                     if (g.Geometry is LineString lineString)
@@ -283,7 +285,7 @@ namespace UrbanEcho.Sim
 
             if (nextEdge.Feature is GeometryFeature theRoad && theRoad.Geometry is LineString newLineString)
             {
-                currentRoad = theRoad;
+                currentRoadEdge = nextEdge;
                 lineString = newLineString;
                 indexingForwardThroughLineString = nextEdge.IsFromStartOfLineString;
 
@@ -365,13 +367,6 @@ namespace UrbanEcho.Sim
         public void Update()
         {
             Pos = B2Api.b2Body_GetPosition(body.BodyId);
-            /*
-            if (Vector2.Distance(startPos, Pos) >= distanceToTravel)
-            {
-                b2Rot rot = b2Rot.FromAngle(angleToDest);
-                B2Api.b2Body_SetTransform(body.BodyId, startPos, rot);
-                Pos = B2Api.b2Body_GetPosition(body.BodyId);
-            }*/
 
             float distanceToTarget = Vector2.Distance(Pos, endPos);
 
@@ -382,10 +377,15 @@ namespace UrbanEcho.Sim
 
                 UpdateEndPos(currentFloatAngle);
             }
-
-            feature.Point.X = (double)Pos.X + World.Offset.X;
-            feature.Point.Y = (double)Pos.Y + World.Offset.Y;
-
+            try
+            {
+                feature.Point.X = (double)Pos.X + World.Offset.X;
+                feature.Point.Y = (double)Pos.Y + World.Offset.Y;
+            }
+            catch
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Feature that is assigned to the vehicle is null"));
+            }
             if (Sim.GroupToUpdate == updateGroup)
             {
                 currentAngle = B2Api.b2Body_GetRotation(body.BodyId);
@@ -513,7 +513,7 @@ namespace UrbanEcho.Sim
 
                     if (vehicleInFrontElaspedTime > vehicleInFrontThresholdWaitTime)
                     {
-                        resetVehicleToNewPos();
+                        ResetVehicleToNewPos();
                     }
                 }
                 else
@@ -524,7 +524,7 @@ namespace UrbanEcho.Sim
             }
         }
 
-        private void resetVehicleToNewPos()
+        public void ResetVehicleToNewPos()
         {
             int goalNode;
             int startNode;
@@ -541,13 +541,18 @@ namespace UrbanEcho.Sim
                 SetPath(graph, path);
                 PathSet = true;
 
-                Vector2 startingPos = Helpers.Helper.Convert2Box2dWorldPosition(Sim.roadGraph.Nodes[path[0]].X, Sim.roadGraph.Nodes[path[0]].Y);
+                Vector2 startingPos = Helpers.Helper.Convert2Box2dWorldPosition(Sim.RoadGraph.Nodes[path[0]].X, Sim.RoadGraph.Nodes[path[0]].Y);
 
                 b2Rot rot = b2Rot.FromAngle(0);
                 B2Api.b2Body_SetTransform(body.BodyId, startingPos, rot);
                 Pos = B2Api.b2Body_GetPosition(body.BodyId);
                 B2Api.b2Body_SetAngularVelocity(body.BodyId, 0.0f);
                 AdvanceToNextRoad();
+            }
+            else
+            {
+                //Else try and reset it to a new position again
+                ResetVehicleToNewPos();
             }
         }
 

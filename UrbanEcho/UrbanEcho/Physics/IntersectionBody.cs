@@ -8,9 +8,10 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.Helpers;
+using UrbanEcho.Sim;
 using static Box2dNet.Interop.B2Api;
 
-namespace UrbanEcho.Sim
+namespace UrbanEcho.Physics
 {
     public class IntersectionBody : IDisposable
     {
@@ -18,41 +19,41 @@ namespace UrbanEcho.Sim
 
         public b2BodyId BodyId;
 
-        private static float defaultSize = 5.0f * Helper.MapCorrection;
+        private static float defaultSize = 6.0f * Helper.MapCorrection;
 
         public Vector2[]? Points;
 
         private RoadIntersection parent;
 
-        private IntPtr intPtr;
+        private nint intPtr;
 
-        public IntersectionBody(RoadIntersection parent)
+        public IntersectionBody(RoadIntersection parent, List<Vector2> connectingPoints)
         {
             this.parent = parent;
-            // Define the car body.
+            // Define the intersection body.
             b2BodyDef bodyDef = b2DefaultBodyDef();
             bodyDef.position = parent.Center;
             bodyDef.type = b2BodyType.b2_staticBody;
 
             BodyId = b2CreateBody(World.WorldId, bodyDef);
-            b2ShapeDef shapeDef = B2Api.b2DefaultShapeDef();
+            b2ShapeDef shapeDef = b2DefaultShapeDef();
             shapeDef.isSensor = true;
 
             intPtr = NativeHandle.Alloc(parent);
             shapeDef.userData = intPtr;
 
             shapeDef.filter.categoryBits = (ulong)ShapeCategories.Intersection;
-            if (parent.Connections.Count > 4 || parent.Connections.Count <= 1)
+            if (connectingPoints.Count > 4 || connectingPoints.Count <= 1)
             {
                 Points = CircleOfPoints();
                 b2Polygon polygon = Helper.CreatePolygon(Points);
-                ShapeId = B2Api.b2CreatePolygonShape(BodyId, in shapeDef, in polygon);
+                ShapeId = b2CreatePolygonShape(BodyId, in shapeDef, in polygon);
             }
             else
             {
-                Points = PointsFromRoadConnections();
+                Points = PointsFromRoadConnections(connectingPoints);
                 b2Polygon polygon = Helper.CreatePolygon(Points);
-                ShapeId = B2Api.b2CreatePolygonShape(BodyId, in shapeDef, in polygon);
+                ShapeId = b2CreatePolygonShape(BodyId, in shapeDef, in polygon);
             }
         }
 
@@ -63,20 +64,20 @@ namespace UrbanEcho.Sim
             for (int i = 0; i < 8; i++)
             {
                 b2Rot angle = b2Rot.FromAngle(Helper.Deg2Rad(0));
-                points[i].X = MathF.Cos(Helper.Deg2Rad((float)(i) * 360.0f / 8.0f)) * defaultSize;
-                points[i].Y = MathF.Sin(Helper.Deg2Rad((float)(i) * 360.0f / 8.0f)) * defaultSize;
+                points[i].X = MathF.Cos(Helper.Deg2Rad(i * 360.0f / 8.0f)) * defaultSize;
+                points[i].Y = MathF.Sin(Helper.Deg2Rad(i * 360.0f / 8.0f)) * defaultSize;
             }
 
             return points;
         }
 
-        private Vector2[] PointsFromRoadConnections()
+        private Vector2[] PointsFromRoadConnections(List<Vector2> connectingPoints)
         {
-            Vector2[] points = new Vector2[parent.Connections.Count * 2];
+            Vector2[] points = new Vector2[connectingPoints.Count * 2];
             int pointsAdded = 0;
-            foreach (ConnectionData connection in parent.Connections)
+            foreach (Vector2 connection in connectingPoints)
             {
-                Vector2 startPoint = (connection.IndexValue == 0) ? connection.RoadSegment.Pos[1] : connection.RoadSegment.Pos[0];
+                Vector2 startPoint = connection;
                 Vector2 endPoint = parent.Center;
                 Vector2 direction = endPoint - startPoint;
 
@@ -97,7 +98,7 @@ namespace UrbanEcho.Sim
 
         public void Dispose()
         {
-            if (intPtr != IntPtr.Zero)
+            if (intPtr != nint.Zero)
             {
                 NativeHandle.Free(intPtr);
             }

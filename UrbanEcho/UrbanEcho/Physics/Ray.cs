@@ -5,7 +5,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace UrbanEcho.Sim
+namespace UrbanEcho.Physics
 {
     public class Ray
     {

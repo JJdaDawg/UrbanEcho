@@ -1,15 +1,8 @@
-﻿using Avalonia.Threading;
-using Box2dNet.Interop;
+﻿using Box2dNet.Interop;
 using Mapsui;
-using Mapsui.Layers;
-using Mapsui.Nts.Providers.Shapefile;
-using Mapsui.Styles;
-using Mapsui.Tiling.Layers;
-using Mapsui.UI.Avalonia;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,10 +11,9 @@ using UrbanEcho.Events.UI;
 using UrbanEcho.FileManagement;
 using UrbanEcho.Graph;
 using UrbanEcho.Helpers;
+using UrbanEcho.Physics;
 using UrbanEcho.ViewModels;
-using static Mapsui.MapBuilder;
 using static UrbanEcho.FileManagement.FileTypes;
-using Layer = Mapsui.Layers.Layer;
 
 namespace UrbanEcho.Sim
 {
@@ -39,7 +31,7 @@ namespace UrbanEcho.Sim
 
         public static List<RoadIntersection> RoadIntersections = new List<RoadIntersection>();
 
-        public static RoadGraph? roadGraph;
+        public static RoadGraph? RoadGraph;
 
         public static float SimTime = 0;
 
@@ -50,7 +42,8 @@ namespace UrbanEcho.Sim
         public static AStarPathfinder? pathfinder;
         public static List<int>? nodes;
 
-        private static bool showedPathsLoaded = false;
+        private static bool vehiclePathsLoaded = false;
+        private static bool intersectionBodiesCreated = false;
 
         public static void SetMainViewModel(MainViewModel setMainViewModel)
         {
@@ -118,6 +111,11 @@ namespace UrbanEcho.Sim
 
             if (World.Created)
             {
+                if (!(intersectionBodiesCreated))
+                {
+                    intersectionBodiesCreated = ProjectLayers.CreateRoadIntersections();
+                    EventQueueForUI.Instance.Add(new LogToConsole(mainViewModel, "Done adding intersection bodies"));
+                }
                 B2Api.b2World_Step(World.WorldId, 1 / 60.0f, 1);
 
                 Sim.SimTime += 1 / 60.0f;
@@ -139,18 +137,18 @@ namespace UrbanEcho.Sim
 
                 if (!aPathNotLoaded)
                 {
-                    if (!showedPathsLoaded)
+                    if (!vehiclePathsLoaded)
                     {
-                        showedPathsLoaded = true;
+                        vehiclePathsLoaded = true;
                         EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), "All vehicle paths loaded"));
                     }
                 }
+            }
 
-                //Only update vehicle layer if ui queue is empty
-                if (EventQueueForUI.Instance.IsEmpty())
-                {
-                    ProjectLayers.UpdateVehicleLayer(true, MyMap);
-                }
+            //Only update vehicle layer if ui queue is empty
+            if (EventQueueForUI.Instance.IsEmpty())
+            {
+                ProjectLayers.UpdateVehicleLayer(true, MyMap);
             }
         }
 
@@ -164,17 +162,17 @@ namespace UrbanEcho.Sim
 
         public static void InitializeGraph()
         {
-            if (roadGraph == null || roadGraph.Nodes.Count < 2)
+            if (RoadGraph == null || RoadGraph.Nodes.Count < 2)
                 return;
 
-            pathfinder = new AStarPathfinder(roadGraph);
-            nodes = roadGraph.Nodes.Keys.ToList();
+            pathfinder = new AStarPathfinder(RoadGraph);
+            nodes = RoadGraph.Nodes.Keys.ToList();
         }
 
         public static void InitializeVehiclePath(Vehicle v)
         {
             int? startNodeId = v.NodeToId;
-            if (startNodeId == null || nodes == null || pathfinder == null || roadGraph == null) return;
+            if (startNodeId == null || nodes == null || pathfinder == null || RoadGraph == null) return;
 
             int goalNode;
             do
@@ -186,8 +184,12 @@ namespace UrbanEcho.Sim
 
             if (path.Count > 1)
             {
-                v.SetPath(roadGraph, path);
+                v.SetPath(RoadGraph, path);
                 v.PathSet = true;
+            }
+            else
+            {
+                v.ResetVehicleToNewPos();
             }
         }
 

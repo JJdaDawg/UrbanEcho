@@ -23,6 +23,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
 using UrbanEcho.Helpers;
+using UrbanEcho.Physics;
 using UrbanEcho.Sim;
 using UrbanEcho.Styles;
 using UrbanEcho.ViewModels;
@@ -157,7 +158,7 @@ namespace UrbanEcho.FileManagement
                         roadLayerSecondPass = new RasterizingLayer(CreateRoadLayer(roadNetwork, "Roads", false, true));
 
                         RoadFeatures = Helpers.Helper.GetFeatures(roadLayer.DataSource);
-                        Sim.Sim.roadGraph = UrbanTrafficSim.Core.IO.RoadGraphLoader.LoadFromFeatures(Helpers.Helper.GetFeatures(roadLayer.DataSource));
+                        Sim.Sim.RoadGraph = UrbanTrafficSim.Core.IO.RoadGraphLoader.LoadFromFeatures(Helpers.Helper.GetFeatures(roadLayer.DataSource));
                     }
                     catch (Exception ex)
                     {
@@ -214,6 +215,11 @@ namespace UrbanEcho.FileManagement
             }
 
             return addLayer;
+        }
+
+        public static bool IsIntersectionsCreated()
+        {
+            return intersectionLoaded;
         }
 
         //https://github.com/BruTile/BruTile
@@ -295,8 +301,6 @@ namespace UrbanEcho.FileManagement
                     return null;
                 }
 
-                CreateRoadIntersections(layer.DataSource);
-
                 IntersectionStyles intersectionsStyle = new IntersectionStyles();
 
                 layer.Style = intersectionsStyle.CreateThemeStyle();
@@ -310,9 +314,27 @@ namespace UrbanEcho.FileManagement
             return layer;
         }
 
-        public static void CreateRoadIntersections(IProvider dataSource)
+        public static bool CreateRoadIntersections()
         {
-            List<IFeature> features = Helpers.Helper.GetFeatures(dataSource);
+            if (intersectionLayer is null)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Intersections layer was not added before trying to add intersection bodies"));
+                return false;
+            }
+
+            IProvider? intersectionDatasource = intersectionLayer.DataSource;
+            if (intersectionDatasource is null)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Datasource used for adding intersection bodies was null"));
+                return false;
+            }
+            List<IFeature> features = Helpers.Helper.GetFeatures(intersectionDatasource);
+
+            if (Sim.Sim.RoadGraph is null)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Intersections can not be added before road graph"));
+                return false;
+            }
 
             for (int i = 0; i < features.Count; i++)
             {
@@ -330,62 +352,17 @@ namespace UrbanEcho.FileManagement
                     {
                         if (intersectGF.Geometry is Point p)
                         {
-                            RoadIntersection r = new RoadIntersection(name, 3.0f, new MPoint(p.X, p.Y));
+                            RoadIntersection r = new RoadIntersection(name, 3.0f, feature, Sim.Sim.RoadGraph);
 
-                            if (RoadFeatures.Count > 0)
+                            if (r.IsBodySet())
                             {
-                                for (int roadIndex = 0; roadIndex < RoadFeatures.Count; roadIndex++)
-                                {
-                                    IFeature roadFeature = RoadFeatures[roadIndex];
-
-                                    if (roadFeature is GeometryFeature gf)
-                                        if (gf.Geometry is LineString lineString)
-                                        {
-                                            if (lineString.Count > 1)
-                                            {
-                                                bool connectionHasBeenAdded = CheckIfAddConnection(0, true);
-                                                if (!connectionHasBeenAdded)
-                                                {
-                                                    connectionHasBeenAdded = CheckIfAddConnection(lineString.Count - 1, false);
-                                                }
-
-                                                bool CheckIfAddConnection(int startIndex, bool forwardDirection)
-                                                {
-                                                    float threshold = 5.0f;
-                                                    Vector2 roadFeaturePos = Helpers.Helper.Convert2Box2dWorldPosition(lineString.Coordinates[startIndex].X, lineString.Coordinates[startIndex].Y);
-                                                    bool connectionAdded = false;
-                                                    if (Vector2.Distance(r.Center, roadFeaturePos) < threshold)
-                                                    {
-                                                        Vector2 start = r.Center;
-                                                        int nextIndexForSegment = (forwardDirection) ? startIndex + 1 : startIndex - 1;
-                                                        Vector2 end = Helpers.Helper.Convert2Box2dWorldPosition(lineString.Coordinates[nextIndexForSegment].X, lineString.Coordinates[nextIndexForSegment].Y);
-
-                                                        RoadSegment roadSegment = new RoadSegment(start, end);
-                                                        ConnectionData connectionData = new ConnectionData(roadSegment);
-                                                        r.Connections.Add(connectionData);
-                                                        connectionAdded = true;
-                                                    }
-                                                    return connectionAdded;
-                                                }
-                                            }
-                                        }
-                                }
-                                //Connections added to the intersection so add body for it
-                                if (r.Connections.Count > 0)
-                                {
-                                    r.Init();
-                                    Sim.Sim.RoadIntersections.Add(r);
-                                }
-                            }
-                            else
-                            {
-                                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Road features need to be loaded before creating intersection points"));
-                                return;
+                                Sim.Sim.RoadIntersections.Add(r);
                             }
                         }
                     }
                 }
             }
+            return true;
         }
 
         public static Layer? CreateRoadLayer(IProvider source, string name, bool doOutline, bool showAADT)
@@ -469,11 +446,11 @@ namespace UrbanEcho.FileManagement
                 int vehiclesAdded = 0;
                 Random random = new Random();
                 // Spawning at each road graph From Edge point
-                for (int i = 0; i < Sim.Sim.roadGraph?.Edges.Count; i++)
+                for (int i = 0; i < Sim.Sim.RoadGraph?.Edges.Count; i++)
                 {
-                    if (Sim.Sim.roadGraph.Nodes.TryGetValue(Sim.Sim.roadGraph.Edges[i].From, out RoadNode? roadNodeFrom))
+                    if (Sim.Sim.RoadGraph.Nodes.TryGetValue(Sim.Sim.RoadGraph.Edges[i].From, out RoadNode? roadNodeFrom))
                     {
-                        if (Sim.Sim.roadGraph.Nodes.TryGetValue(Sim.Sim.roadGraph.Edges[i].To, out RoadNode? roadNodeTo))
+                        if (Sim.Sim.RoadGraph.Nodes.TryGetValue(Sim.Sim.RoadGraph.Edges[i].To, out RoadNode? roadNodeTo))
                         {
                             if (roadNodeFrom != null && roadNodeTo != null)
                             {
@@ -485,7 +462,7 @@ namespace UrbanEcho.FileManagement
                                 pf["Angle"] = 0.0f;
                                 //Vehicle groups used so we don't raycast and update velocities every frame (was slowing down fps)
                                 //currently vehicle groups just set as 1 so vehicle groups is bypassed
-                                Vehicle vehicle = new Vehicle(pf, roadNodeFrom, roadNodeTo, Sim.Sim.roadGraph?.Edges[i], "RegularCar", vehiclesAdded % Helper.NumberOfVehicleGroups);
+                                Vehicle vehicle = new Vehicle(pf, roadNodeFrom, roadNodeTo, Sim.Sim.RoadGraph?.Edges[i], "RegularCar", vehiclesAdded % Helper.NumberOfVehicleGroups);
                                 vehiclesAdded++;
                                 if (vehicle.IsCreated)
                                 {
@@ -540,14 +517,14 @@ namespace UrbanEcho.FileManagement
                     GraphLayerFeatures.Add(pf);
                 }*/
 
-                for (int i = 0; i < Sim.Sim.roadGraph.Edges.Count; i++)
+                for (int i = 0; i < Sim.Sim.RoadGraph.Edges.Count; i++)
                 {
-                    int fromNodeIndex = Sim.Sim.roadGraph.Edges[i].From;
-                    int toNodeIndex = Sim.Sim.roadGraph.Edges[i].To;
+                    int fromNodeIndex = Sim.Sim.RoadGraph.Edges[i].From;
+                    int toNodeIndex = Sim.Sim.RoadGraph.Edges[i].To;
 
-                    if (Sim.Sim.roadGraph.Nodes.TryGetValue(fromNodeIndex, out RoadNode? fromNodeValue))
+                    if (Sim.Sim.RoadGraph.Nodes.TryGetValue(fromNodeIndex, out RoadNode? fromNodeValue))
                     {
-                        if (Sim.Sim.roadGraph.Nodes.TryGetValue(toNodeIndex, out RoadNode? toNodeValue))
+                        if (Sim.Sim.RoadGraph.Nodes.TryGetValue(toNodeIndex, out RoadNode? toNodeValue))
                         {
                             GeometryFeature feature = new GeometryFeature();
                             Coordinate[] coordinates = new Coordinate[2];

@@ -13,7 +13,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
-using UrbanEcho.Sim;
+using UrbanEcho.Physics;
 
 namespace UrbanEcho.Helpers
 {
@@ -78,6 +78,22 @@ namespace UrbanEcho.Helpers
         {
             double worldPosX = x - World.Offset.X;
             double worldPosY = y - World.Offset.Y;
+
+            return new Vector2((float)worldPosX, (float)worldPosY);
+        }
+
+        public static Vector2 Convert2Box2dWorldPosition(MPoint mPoint)
+        {
+            double worldPosX = mPoint.X - World.Offset.X;
+            double worldPosY = mPoint.Y - World.Offset.Y;
+
+            return new Vector2((float)worldPosX, (float)worldPosY);
+        }
+
+        public static Vector2 Convert2Box2dWorldPosition(Point point)
+        {
+            double worldPosX = point.X - World.Offset.X;
+            double worldPosY = point.Y - World.Offset.Y;
 
             return new Vector2((float)worldPosX, (float)worldPosY);
         }
