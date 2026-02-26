@@ -7,9 +7,10 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.Helpers;
+using UrbanEcho.Models;
 using static Box2dNet.Interop.B2Api;
 
-namespace UrbanEcho.Sim
+namespace UrbanEcho.Physics
 {
     public class VehicleBody
     {
@@ -28,12 +29,12 @@ namespace UrbanEcho.Sim
 
             bodyDef.angularDamping = 0.01f;
             BodyId = b2CreateBody(World.WorldId, bodyDef);
-            b2ShapeDef shapeDef = B2Api.b2DefaultShapeDef();
+            b2ShapeDef shapeDef = b2DefaultShapeDef();
             b2Polygon polygon = Helper.CreatePolygon([new(-rect.Width / 2, -rect.Height / 2), new(-rect.Width / 2, rect.Height / 2), new(rect.Width / 2, rect.Height / 2), new(rect.Width / 2, -rect.Height / 2)]);
             shapeDef.isSensor = true;
             shapeDef.filter.categoryBits = (ulong)ShapeCategories.Vehicle;
 
-            ShapeId = B2Api.b2CreatePolygonShape(BodyId, in shapeDef, in polygon);
+            ShapeId = b2CreatePolygonShape(BodyId, in shapeDef, in polygon);
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using UrbanEcho.Helpers;
 
-namespace UrbanEcho.Sim
+namespace UrbanEcho.Models
 {
     public class VehicleSettings
     {

@@ -12,7 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
 using UrbanEcho.Helpers;
-using UrbanEcho.Sim;
+using UrbanEcho.Models;
 using static Mapsui.Rendering.Skia.Functions.ClippingFunctions;
 
 namespace UrbanEcho.Styles
@@ -22,7 +22,7 @@ namespace UrbanEcho.Styles
         private Dictionary<string, IStyle> Styles = new Dictionary<string, IStyle>();
 
         private Random random = new Random();
-        public static int NumberOFCarColors = 20;
+        public static int NumberOFCarColors = 10;
 
         public VehicleStyles()
         {

@@ -1,23 +1,8 @@
-﻿using BruTile.MbTiles;
-using Mapsui;
-using Mapsui.Layers;
-using Mapsui.Nts.Providers.Shapefile;
-using Mapsui.Providers;
+﻿using Mapsui;
 using Mapsui.Rendering.Skia;
 using Mapsui.Styles;
-using Mapsui.Tiling.Layers;
-using Mapsui.UI;
-using Mapsui.UI.Avalonia;
-using Mapsui.Widgets;
-using Mapsui.Widgets.InfoWidgets;
-using SQLite;
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UrbanEcho.Events.UI;
 using UrbanEcho.FileManagement;
 using UrbanEcho.Styles;
 

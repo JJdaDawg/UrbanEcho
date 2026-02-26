@@ -1,15 +1,7 @@
-﻿using Avalonia.Threading;
-using Box2dNet.Interop;
+﻿using Box2dNet.Interop;
 using Mapsui;
-using Mapsui.Layers;
-using Mapsui.Nts.Providers.Shapefile;
-using Mapsui.Styles;
-using Mapsui.Tiling.Layers;
-using Mapsui.UI.Avalonia;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,10 +10,9 @@ using UrbanEcho.Events.UI;
 using UrbanEcho.FileManagement;
 using UrbanEcho.Graph;
 using UrbanEcho.Helpers;
+using UrbanEcho.Physics;
 using UrbanEcho.ViewModels;
-using static Mapsui.MapBuilder;
 using static UrbanEcho.FileManagement.FileTypes;
-using Layer = Mapsui.Layers.Layer;
 
 namespace UrbanEcho.Sim
 {
@@ -39,7 +30,7 @@ namespace UrbanEcho.Sim
 
         public static List<RoadIntersection> RoadIntersections = new List<RoadIntersection>();
 
-        public static RoadGraph? roadGraph;
+        public static RoadGraph? RoadGraph;
 
         public static float SimTime = 0;
 
@@ -50,7 +41,8 @@ namespace UrbanEcho.Sim
         public static AStarPathfinder? pathfinder;
         public static List<int>? nodes;
 
-        private static bool showedPathsLoaded = false;
+        private static bool vehiclePathsLoaded = false;
+        private static bool intersectionBodiesCreated = false;
 
         public static void SetMainViewModel(MainViewModel setMainViewModel)
         {
@@ -77,21 +69,10 @@ namespace UrbanEcho.Sim
             LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/ProjectFiles/myFile.Json", mainViewModel.Map.MyMap);
             EventQueueForSim.Instance.Add(loadProjectEvent); //will usually happen from UI
 
-            FrameTimer frameTimer = new FrameTimer(false);
+            FrameTimer frameTimer = new FrameTimer(true);
 
             while (Cts.IsCancellationRequested == false)
-            {/*Moved to UI update class
-                if (!EventQueueForUI.Instance.IsEmpty())
-                {
-                    if (!EventQueueForUI.Instance.IsEmpty())
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            while (!EventQueueForUI.Instance.IsEmpty())
-                            {
-                                EventQueueForUI.Instance.Read()?.Run();
-                            }
-                        });
-                }*/
+            {
                 frameTimer.Update();
                 simulationLoop();
                 readQueue();
@@ -113,11 +94,16 @@ namespace UrbanEcho.Sim
 
         private static void simulationLoop()
         {
-            //simulate doing stuff
-            //Thread.SpinWait(100000);
-
             if (World.Created)
             {
+                if (!(intersectionBodiesCreated))
+                {
+                    if (ProjectLayers.CreateRoadIntersections())
+                    {
+                        SetIntersectionBodiesCreated();
+                    }
+                    EventQueueForUI.Instance.Add(new LogToConsole(mainViewModel, "Done adding intersection bodies"));
+                }
                 B2Api.b2World_Step(World.WorldId, 1 / 60.0f, 1);
 
                 Sim.SimTime += 1 / 60.0f;
@@ -128,29 +114,31 @@ namespace UrbanEcho.Sim
                 bool aPathNotLoaded = false;
                 foreach (Vehicle v in Vehicles)
                 {
-                    if (!v.PathSet)
+                    if (!v.GraphSet)
                     {
                         aPathNotLoaded = true;
-                        InitializeVehiclePath(v);
+                        InitializeVehicle(v);
                     }
-
-                    v.Update();
+                    else
+                    {
+                        v.Update();
+                    }
                 }
 
                 if (!aPathNotLoaded)
                 {
-                    if (!showedPathsLoaded)
+                    if (!vehiclePathsLoaded)
                     {
-                        showedPathsLoaded = true;
+                        vehiclePathsLoaded = true;
                         EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), "All vehicle paths loaded"));
                     }
                 }
+            }
 
-                //Only update vehicle layer if ui queue is empty
-                if (EventQueueForUI.Instance.IsEmpty())
-                {
-                    ProjectLayers.UpdateVehicleLayer(true, MyMap);
-                }
+            //Only update vehicle layer if ui queue is empty
+            if (EventQueueForUI.Instance.IsEmpty())
+            {
+                ProjectLayers.UpdateVehicleLayer(true, MyMap);
             }
         }
 
@@ -162,32 +150,25 @@ namespace UrbanEcho.Sim
             }
         }
 
-        public static void InitializeGraph()
+        public static void SetIntersectionBodiesCreated()
         {
-            if (roadGraph == null || roadGraph.Nodes.Count < 2)
-                return;
-
-            pathfinder = new AStarPathfinder(roadGraph);
-            nodes = roadGraph.Nodes.Keys.ToList();
+            intersectionBodiesCreated = true;
         }
 
-        public static void InitializeVehiclePath(Vehicle v)
+        public static void InitializeGraph()
         {
-            int? startNodeId = v.NodeToId;
-            if (startNodeId == null || nodes == null || pathfinder == null || roadGraph == null) return;
+            if (RoadGraph == null || RoadGraph.Nodes.Count < 2)
+                return;
 
-            int goalNode;
-            do
+            pathfinder = new AStarPathfinder(RoadGraph);
+            nodes = RoadGraph.Nodes.Keys.ToList();
+        }
+
+        public static void InitializeVehicle(Vehicle v)
+        {
+            if (RoadGraph is not null)
             {
-                goalNode = nodes[Random.Shared.Next(nodes.Count)];
-            } while (goalNode == startNodeId.Value && nodes.Count > 1);
-
-            var path = pathfinder.FindPath(startNodeId.Value, goalNode).ToList();
-
-            if (path.Count > 1)
-            {
-                v.SetPath(roadGraph, path);
-                v.PathSet = true;
+                v.SetGraph(RoadGraph);
             }
         }
 

@@ -6,10 +6,9 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
-
 using static Box2dNet.Interop.B2Api;
 
-namespace UrbanEcho.Sim
+namespace UrbanEcho.Physics
 {
     public enum ShapeCategories
     {
@@ -34,7 +33,7 @@ namespace UrbanEcho.Sim
             // Construct a world object, which will hold all the shapes and box2d bodies.
             b2WorldDef worldDef = b2DefaultWorldDef();
             worldDef.gravity = gravity;
-            WorldId = B2Api.b2CreateWorld(worldDef);
+            WorldId = b2CreateWorld(worldDef);
             Created = true;
         }
     }
