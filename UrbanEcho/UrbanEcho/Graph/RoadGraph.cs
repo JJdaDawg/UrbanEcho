@@ -9,6 +9,8 @@ public sealed class RoadGraph
 
     private readonly Dictionary<int, List<RoadEdge>> _adjacency;
 
+    private readonly Dictionary<int, List<RoadEdge>> _adjacencyForEdgeTo;
+
     public RoadGraph(
         Dictionary<int, RoadNode> nodes,
         List<RoadEdge> edges)
@@ -17,6 +19,7 @@ public sealed class RoadGraph
         Edges = edges;
 
         _adjacency = new Dictionary<int, List<RoadEdge>>();
+        _adjacencyForEdgeTo = new Dictionary<int, List<RoadEdge>>();
 
         foreach (var edge in edges)
         {
@@ -27,10 +30,25 @@ public sealed class RoadGraph
             }
 
             list.Add(edge);
+
+            if (!_adjacencyForEdgeTo.TryGetValue(edge.To, out var listEdgeTo))
+            {
+                listEdgeTo = new List<RoadEdge>();
+                _adjacencyForEdgeTo[edge.To] = listEdgeTo;
+            }
+
+            listEdgeTo.Add(edge);
         }
     }
 
     public IReadOnlyList<RoadEdge> GetOutgoingEdges(int nodeId)
+    {
+        return _adjacency.TryGetValue(nodeId, out var edges)
+            ? edges
+            : Array.Empty<RoadEdge>();
+    }
+
+    public IReadOnlyList<RoadEdge> GetIncomingEdges(int nodeId)
     {
         return _adjacency.TryGetValue(nodeId, out var edges)
             ? edges
@@ -54,6 +72,7 @@ public sealed class RoadGraph
 
         return closest!;
     }
+
     public IReadOnlyList<RoadNode> GetNeighbors(int nodeId)
     {
         var neighbors = new List<RoadNode>();

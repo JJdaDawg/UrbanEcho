@@ -42,7 +42,7 @@ namespace UrbanEcho.Sim
 
         private Rectangle vehicleRectImage = new Rectangle(0, 0, 48, 24);
 
-        private VehicleBody? body;
+        public VehicleBody? Body;
 
         private Vector2 startPos = Vector2.Zero;
 
@@ -101,7 +101,7 @@ namespace UrbanEcho.Sim
         {
             settings = new VehicleSettings(carType);
 
-            this.currentRoadEdge = currentRoadEdge;
+            this.currentRoadEdge = SetCurrentRoadEdge(currentRoadEdge);
 
             if (!settings.IsValid())
             {
@@ -127,27 +127,15 @@ namespace UrbanEcho.Sim
                         queryFilter.categoryBits = 0xFFFF;
                         queryFilter.maskBits = 0xFFFF;
 
-                        body = new VehicleBody(rect);
+                        Body = new VehicleBody(this, rect);
 
                         b2Rot rot = b2Rot.FromAngle(0);
-                        B2Api.b2Body_SetTransform(body.BodyId, startPos, rot);
+                        B2Api.b2Body_SetTransform(Body.BodyId, startPos, rot);
 
                         IsCreated = true;
                     }
                 }
             }
-        }
-
-        public int? GetFromNode()
-        {
-            int? value = null;
-
-            if (currentRoadEdge is not null)
-            {
-                value = currentRoadEdge.From;
-            }
-
-            return value;
         }
 
         public void SetGraph(RoadGraph graph)
@@ -162,7 +150,7 @@ namespace UrbanEcho.Sim
 
         private void AdvanceToNextRoad()
         {
-            if (path == null || graph == null || body == null)
+            if (path == null || graph == null || Body == null)
             {
                 EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Could not run advance to next road"));
                 return;
@@ -179,7 +167,8 @@ namespace UrbanEcho.Sim
 
         private void setNewPath(int currentNodeId)
         {
-            if (graph == null || body == null)
+            pathSegmentIndex = 0;
+            if (graph == null || Body == null)
             {
                 EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Could not run advance to next road"));
                 return;
@@ -206,7 +195,6 @@ namespace UrbanEcho.Sim
                 return;
             }
             path = newPath;
-            pathSegmentIndex = 0;
         }
 
         private void stepThroughPath(List<int> path)
@@ -238,7 +226,7 @@ namespace UrbanEcho.Sim
 
             if (nextEdge.Feature is GeometryFeature theRoad && theRoad.Geometry is LineString newLineString)
             {
-                currentRoadEdge = nextEdge;
+                currentRoadEdge = SetCurrentRoadEdge(nextEdge);
 
                 StepThroughLineString(true);
 
@@ -276,15 +264,55 @@ namespace UrbanEcho.Sim
             }
         }
 
-        public void SetVehicleInFrontCount(float howFar)
+        public void SetVehicleInFrontCount(b2ShapeId shapeId, float howFar)
         {
-            metersFromCarInFront = rayDistance * howFar;
+            IntPtr intPtr = B2Api.b2Shape_GetUserData(shapeId);
 
-            if (!vehicleInFront)
+            Vehicle otherVehicle = NativeHandle.GetObject<Vehicle>(intPtr);
+
+            if (IsCollidedVehicleSameEdgeOrIntersection(otherVehicle.currentRoadEdge))
             {
-                vehicleInFrontStartTime = Sim.SimTime;
+                metersFromCarInFront = rayDistance * howFar;
+
+                if (!vehicleInFront)
+                {
+                    vehicleInFrontStartTime = Sim.SimTime;
+                }
+                vehicleInFrontCount++;
             }
-            vehicleInFrontCount++;
+        }
+
+        private bool IsCollidedVehicleSameEdgeOrIntersection(RoadEdge otherVehicleEdge)
+        {
+            if (graph is not null)
+            {
+                IReadOnlyList<RoadEdge> otherOutGoingEdges = graph.GetOutgoingEdges(otherVehicleEdge.To);
+
+                if (otherOutGoingEdges.Contains(currentRoadEdge))
+                {
+                    return true;
+                }
+                IReadOnlyList<RoadEdge> otherIncomingEdges = graph.GetIncomingEdges(otherVehicleEdge.To);
+
+                if (otherIncomingEdges.Contains(currentRoadEdge))
+                {
+                    return true;
+                }
+
+                IReadOnlyList<RoadEdge> otherOutGoingFromEdges = graph.GetOutgoingEdges(otherVehicleEdge.From);
+
+                if (otherOutGoingFromEdges.Contains(currentRoadEdge))
+                {
+                    return true;
+                }
+                IReadOnlyList<RoadEdge> otherIncomingFromEdges = graph.GetIncomingEdges(otherVehicleEdge.From);
+
+                if (otherIncomingFromEdges.Contains(currentRoadEdge))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         public void ResetVehicleInFrontCount()
@@ -294,13 +322,13 @@ namespace UrbanEcho.Sim
 
         public void Update()
         {
-            Pos = B2Api.b2Body_GetPosition(body.BodyId);
+            Pos = B2Api.b2Body_GetPosition(Body.BodyId);
 
             float distanceToTarget = Vector2.Distance(Pos, endPos);
 
             if (distanceToTarget <= distanceThresholdReachedTarget)
             {
-                currentAngle = B2Api.b2Body_GetRotation(body.BodyId);
+                currentAngle = B2Api.b2Body_GetRotation(Body.BodyId);
                 float currentFloatAngle = currentAngle.GetAngle();
 
                 StepThroughLineString(false);
@@ -316,7 +344,7 @@ namespace UrbanEcho.Sim
             }
             if (Sim.GroupToUpdate == updateGroup)
             {
-                currentAngle = B2Api.b2Body_GetRotation(body.BodyId);
+                currentAngle = B2Api.b2Body_GetRotation(Body.BodyId);
                 float currentFloatAngle = currentAngle.GetAngle();
 
                 SetAngle(currentFloatAngle);
@@ -376,14 +404,14 @@ namespace UrbanEcho.Sim
                     float speedToUseMs = Helper.Kmh2Ms(updateToSpeed);
                     Vector2 velocityToSetMs = new Vector2(currentAngle.c * speedToUseMs, currentAngle.s * speedToUseMs);
 
-                    B2Api.b2Body_SetLinearVelocity(body.BodyId, velocityToSetMs);
+                    B2Api.b2Body_SetLinearVelocity(Body.BodyId, velocityToSetMs);
                 }
                 else
                 {
-                    B2Api.b2Body_SetLinearVelocity(body.BodyId, Vector2.Zero);
+                    B2Api.b2Body_SetLinearVelocity(Body.BodyId, Vector2.Zero);
                 }
 
-                kmh = Helper.MS2Kmh(Vector2.Dot(B2Api.b2Body_GetLinearVelocity(body.BodyId), new Vector2(currentAngle.c, currentAngle.s)));
+                kmh = Helper.MS2Kmh(Vector2.Dot(B2Api.b2Body_GetLinearVelocity(Body.BodyId), new Vector2(currentAngle.c, currentAngle.s)));
                 if (float.IsNaN(kmh))
                 {
                     kmh = 0;
@@ -478,10 +506,10 @@ namespace UrbanEcho.Sim
             {
                 ResetVehicleToNewPos();
             }
-            B2Api.b2Body_SetLinearVelocity(body.BodyId, Vector2.Zero);
-            B2Api.b2Body_SetAngularVelocity(body.BodyId, 0);
+            B2Api.b2Body_SetLinearVelocity(Body.BodyId, Vector2.Zero);
+            B2Api.b2Body_SetAngularVelocity(Body.BodyId, 0);
             b2Rot rot = b2Rot.FromAngle(GetTargetAngle());
-            B2Api.b2Body_SetTransform(body.BodyId, startPos, rot);
+            B2Api.b2Body_SetTransform(Body.BodyId, startPos, rot);
         }
 
         private float GetTargetAngle()
@@ -620,7 +648,7 @@ namespace UrbanEcho.Sim
                 //https://phaser.io/tutorials/box2d-tutorials/rotate-to-angle#:~:text=This%20topic%20covers%20rotating%20a%20body%20to,directly%20setting%20the%20angle%20or%20using%20torque/
                 angle = (float)(((angle + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI);
 
-                B2Api.b2Body_SetAngularVelocity(body.BodyId, angle * settings.GetTurnSpeed());
+                B2Api.b2Body_SetAngularVelocity(Body.BodyId, angle * settings.GetTurnSpeed());
 
                 if (Math.Abs(angle) >= angleThresholdToDecelerate)
                 {
@@ -642,11 +670,23 @@ namespace UrbanEcho.Sim
             }
             if (filter.categoryBits == (ulong)ShapeCategories.Vehicle && fraction != 0)
             {
-                SetVehicleInFrontCount(fraction);
+                SetVehicleInFrontCount(shapeId, fraction);
             }
 
             return -1.0f;//-1.0f means keep doing raycasting if hit any other object
                          //see above declaration public b2CastResultFcn? rayCastDelegate; for details
+        }
+
+        private RoadEdge SetCurrentRoadEdge(RoadEdge updatedRoadEdge)
+        {
+            float newSpeedLimit = Helper.TryGetFeatureKVPToFloat(updatedRoadEdge.Feature, "SPEED_LIMI", speedLimit);
+            if (newSpeedLimit < 30.0f)
+            {
+                newSpeedLimit = 30.0f;
+            }
+            speedLimit = Helper.DoMapCorrection(newSpeedLimit);
+
+            return updatedRoadEdge;
         }
     }
 }
