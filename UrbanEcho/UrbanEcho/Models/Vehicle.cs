@@ -85,9 +85,6 @@ namespace UrbanEcho.Sim
 
         private List<int>? path;
 
-        private Vector2 oldPos;
-        private List<int>? oldPath;
-
         private int pathSegmentIndex = 0;
         private RoadGraph? graph;
 
@@ -600,10 +597,8 @@ namespace UrbanEcho.Sim
                             MathF.Cos(angleForLaneOffset + Helper.Deg2Rad(-90.0f - 45.0f)) * Helper.DefaultLaneWidth,
                             MathF.Sin(angleForLaneOffset + Helper.Deg2Rad(-90.0f - 45.0f)) * Helper.DefaultLaneWidth);
 
-                        oldPos = startPos;
-                        oldPath = path;
                         startPos = new Vector2(startPosRoad.X + laneOffset.X, startPosRoad.Y + laneOffset.Y);
-                        //initialStartPos = startPosRoad;
+
                         endPos = new Vector2(endPosRoad.X + laneOffset.X, endPosRoad.Y + laneOffset.Y);
                     }
                 }
