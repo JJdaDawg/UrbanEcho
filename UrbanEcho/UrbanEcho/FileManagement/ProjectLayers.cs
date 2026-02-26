@@ -44,7 +44,7 @@ namespace UrbanEcho.FileManagement
         private static MemoryLayer? vehicleLayer;
 
         //private static MemoryProvider? vehicleProvider;
-        private static RasterizingLayer? graphLayer;
+        private static RasterizingLayer? debugLayer;
 
         private static bool backgroundRequiresLoading = false;
         private static bool roadRequiresLoading = false;
@@ -67,7 +67,7 @@ namespace UrbanEcho.FileManagement
 
         public static List<IFeature> VehicleFeatures = new List<IFeature>();
 
-        public static List<IFeature> GraphLayerFeatures = new List<IFeature>();
+        public static List<IFeature> DebugLayerFeatures = new List<IFeature>();
 
         public static MPoint CenterOfMap = new MPoint();
 
@@ -195,15 +195,15 @@ namespace UrbanEcho.FileManagement
 
                 if (vehicleRequiresLoading && intersectionLoaded && roadLoaded)
                 {
-                    MemoryLayer tempGraphLayer = CreateGraphLayer();
-
+                    //MemoryLayer tempDebugLayer = CreateDebugLayer();//use this layer for testing
+                    //tempDebugLayer.Features = DebugLayerFeatures;
+                    //debugLayer = new RasterizingLayer(tempGraphLayer);
                     //TODO: if we are going to load new road network we should probably destroy box
                     ///2d world and dispose any handles created in the
                     ///IntersectionBody file. Then create a new world and make new shapes again
 
                     vehicleLayer = CreateVehicleLayer();
-                    tempGraphLayer.Features = GraphLayerFeatures;
-                    graphLayer = new RasterizingLayer(tempGraphLayer);
+
                     vehicleRequiresLoading = false;
                     EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Initialize Graph"));
                     Sim.Sim.InitializeGraph();
@@ -354,10 +354,7 @@ namespace UrbanEcho.FileManagement
                         {
                             RoadIntersection r = new RoadIntersection(name, 3.0f, feature, Sim.Sim.RoadGraph);
 
-                            if (r.IsBodySet())
-                            {
-                                Sim.Sim.RoadIntersections.Add(r);
-                            }
+                            Sim.Sim.RoadIntersections.Add(r);
                         }
                     }
                 }
@@ -446,7 +443,7 @@ namespace UrbanEcho.FileManagement
                 int vehiclesAdded = 0;
                 Random random = new Random();
                 // Spawning at each road graph From Edge point
-                for (int i = 0; i < Sim.Sim.RoadGraph?.Edges.Count; i++)
+                for (int i = 0; i < Sim.Sim.RoadGraph?.Edges.Count / 2; i++)
                 {
                     if (Sim.Sim.RoadGraph.Nodes.TryGetValue(Sim.Sim.RoadGraph.Edges[i].From, out RoadNode? roadNodeFrom))
                     {
@@ -462,7 +459,7 @@ namespace UrbanEcho.FileManagement
                                 pf["Angle"] = 0.0f;
                                 //Vehicle groups used so we don't raycast and update velocities every frame (was slowing down fps)
                                 //currently vehicle groups just set as 1 so vehicle groups is bypassed
-                                Vehicle vehicle = new Vehicle(pf, roadNodeFrom, roadNodeTo, Sim.Sim.RoadGraph?.Edges[i], "RegularCar", vehiclesAdded % Helper.NumberOfVehicleGroups);
+                                Vehicle vehicle = new Vehicle(pf, Sim.Sim.RoadGraph?.Edges[i], "RegularCar", vehiclesAdded % Helper.NumberOfVehicleGroups);
                                 vehiclesAdded++;
                                 if (vehicle.IsCreated)
                                 {
@@ -473,7 +470,7 @@ namespace UrbanEcho.FileManagement
                                 {
                                     PointFeature pfFailed = new PointFeature(mPoint);
 
-                                    GraphLayerFeatures.Add(pfFailed);
+                                    DebugLayerFeatures.Add(pfFailed);
                                 }
                             }
                         }
@@ -500,13 +497,13 @@ namespace UrbanEcho.FileManagement
             return layer;
         }
 
-        public static MemoryLayer? CreateGraphLayer()
+        public static MemoryLayer? CreateDebugLayer()
         {
             MemoryLayer? layer = null;
 
             try
             {
-                layer = new MemoryLayer("Graph");
+                layer = new MemoryLayer("Debug");
                 /*
                 foreach (KeyValuePair<int, RoadNode> kvp in Sim.Sim.roadGraph.Nodes)
                 {
@@ -517,35 +514,66 @@ namespace UrbanEcho.FileManagement
                     GraphLayerFeatures.Add(pf);
                 }*/
 
-                for (int i = 0; i < Sim.Sim.RoadGraph.Edges.Count; i++)
+                if (ProjectLayers.CreateRoadIntersections())
                 {
-                    int fromNodeIndex = Sim.Sim.RoadGraph.Edges[i].From;
-                    int toNodeIndex = Sim.Sim.RoadGraph.Edges[i].To;
+                    Sim.Sim.SetIntersectionBodiesCreated();
+                }
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), "Done adding intersection bodies"));
 
-                    if (Sim.Sim.RoadGraph.Nodes.TryGetValue(fromNodeIndex, out RoadNode? fromNodeValue))
+                foreach (RoadIntersection r in Sim.Sim.RoadIntersections)
+                {
+                    if (r.IsBodySet())
                     {
-                        if (Sim.Sim.RoadGraph.Nodes.TryGetValue(toNodeIndex, out RoadNode? toNodeValue))
+                        if (r.Body != null)
                         {
-                            GeometryFeature feature = new GeometryFeature();
-                            Coordinate[] coordinates = new Coordinate[2];
+                            for (int i = 0; i < r.Body.polygon.count; i++)
+                            {
+                                Vector2 p0 = r.Body.polygon.vertices(i);
+                                Vector2 p1 = r.Body.polygon.vertices((i + 1) % r.Body.polygon.count);
+                                GeometryFeature feature = new GeometryFeature();
+                                Coordinate[] coordinates = new Coordinate[2];
 
-                            coordinates[0] = new Coordinate(fromNodeValue.X, fromNodeValue.Y);
-                            coordinates[1] = new Coordinate(toNodeValue.X, toNodeValue.Y);
+                                coordinates[0] = new Coordinate(World.Offset.X + (double)(p0.X + r.Center.X), World.Offset.Y + (double)(p0.Y + r.Center.Y));
+                                coordinates[1] = new Coordinate(World.Offset.X + (double)(p1.X + r.Center.X), World.Offset.Y + (double)(p1.Y + r.Center.Y));
 
-                            feature.Geometry = new LineString(coordinates);
+                                feature.Geometry = new LineString(coordinates);
 
-                            GraphLayerFeatures.Add(feature);
+                                DebugLayerFeatures.Add(feature);
+                            }
                         }
-                        else
-                        {
-                            EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to get to Node"));
-                        }
+                    }
+                }
+
+                /*show graph
+            for (int i = 0; i < Sim.Sim.RoadGraph.Edges.Count; i++)
+            {
+                int fromNodeIndex = Sim.Sim.RoadGraph.Edges[i].From;
+                int toNodeIndex = Sim.Sim.RoadGraph.Edges[i].To;
+
+                if (Sim.Sim.RoadGraph.Nodes.TryGetValue(fromNodeIndex, out RoadNode? fromNodeValue))
+                {
+                    if (Sim.Sim.RoadGraph.Nodes.TryGetValue(toNodeIndex, out RoadNode? toNodeValue))
+                    {
+                        GeometryFeature feature = new GeometryFeature();
+                        Coordinate[] coordinates = new Coordinate[2];
+
+                        coordinates[0] = new Coordinate(fromNodeValue.X, fromNodeValue.Y);
+                        coordinates[1] = new Coordinate(toNodeValue.X, toNodeValue.Y);
+
+                        feature.Geometry = new LineString(coordinates);
+
+                        DebugLayerFeatures.Add(feature);
                     }
                     else
                     {
-                        EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to get from Node"));
+                        EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to get to Node"));
                     }
                 }
+                else
+                {
+                    EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to get from Node"));
+                }
+            }*/
 
                 layer.Opacity = 1.0f;
 
@@ -667,9 +695,9 @@ namespace UrbanEcho.FileManagement
                 myMap?.Layers.Add(vehicleLayer);
             }
             /*
-            if (graphLayer != null)
+            if (debugLayer != null)
             {
-                myMap?.Layers.Add(graphLayer);
+                myMap?.Layers.Add(debugLayer);
             }*/
         }
 

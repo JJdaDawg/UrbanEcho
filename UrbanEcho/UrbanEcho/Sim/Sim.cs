@@ -1,6 +1,5 @@
 ﻿using Box2dNet.Interop;
 using Mapsui;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -70,21 +69,10 @@ namespace UrbanEcho.Sim
             LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/ProjectFiles/myFile.Json", mainViewModel.Map.MyMap);
             EventQueueForSim.Instance.Add(loadProjectEvent); //will usually happen from UI
 
-            FrameTimer frameTimer = new FrameTimer(false);
+            FrameTimer frameTimer = new FrameTimer(true);
 
             while (Cts.IsCancellationRequested == false)
-            {/*Moved to UI update class
-                if (!EventQueueForUI.Instance.IsEmpty())
-                {
-                    if (!EventQueueForUI.Instance.IsEmpty())
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            while (!EventQueueForUI.Instance.IsEmpty())
-                            {
-                                EventQueueForUI.Instance.Read()?.Run();
-                            }
-                        });
-                }*/
+            {
                 frameTimer.Update();
                 simulationLoop();
                 readQueue();
@@ -106,14 +94,14 @@ namespace UrbanEcho.Sim
 
         private static void simulationLoop()
         {
-            //simulate doing stuff
-            //Thread.SpinWait(100000);
-
             if (World.Created)
             {
                 if (!(intersectionBodiesCreated))
                 {
-                    intersectionBodiesCreated = ProjectLayers.CreateRoadIntersections();
+                    if (ProjectLayers.CreateRoadIntersections())
+                    {
+                        SetIntersectionBodiesCreated();
+                    }
                     EventQueueForUI.Instance.Add(new LogToConsole(mainViewModel, "Done adding intersection bodies"));
                 }
                 B2Api.b2World_Step(World.WorldId, 1 / 60.0f, 1);
@@ -126,13 +114,15 @@ namespace UrbanEcho.Sim
                 bool aPathNotLoaded = false;
                 foreach (Vehicle v in Vehicles)
                 {
-                    if (!v.PathSet)
+                    if (!v.GraphSet)
                     {
                         aPathNotLoaded = true;
-                        InitializeVehiclePath(v);
+                        InitializeVehicle(v);
                     }
-
-                    v.Update();
+                    else
+                    {
+                        v.Update();
+                    }
                 }
 
                 if (!aPathNotLoaded)
@@ -160,6 +150,11 @@ namespace UrbanEcho.Sim
             }
         }
 
+        public static void SetIntersectionBodiesCreated()
+        {
+            intersectionBodiesCreated = true;
+        }
+
         public static void InitializeGraph()
         {
             if (RoadGraph == null || RoadGraph.Nodes.Count < 2)
@@ -169,27 +164,11 @@ namespace UrbanEcho.Sim
             nodes = RoadGraph.Nodes.Keys.ToList();
         }
 
-        public static void InitializeVehiclePath(Vehicle v)
+        public static void InitializeVehicle(Vehicle v)
         {
-            int? startNodeId = v.NodeToId;
-            if (startNodeId == null || nodes == null || pathfinder == null || RoadGraph == null) return;
-
-            int goalNode;
-            do
+            if (RoadGraph is not null)
             {
-                goalNode = nodes[Random.Shared.Next(nodes.Count)];
-            } while (goalNode == startNodeId.Value && nodes.Count > 1);
-
-            var path = pathfinder.FindPath(startNodeId.Value, goalNode).ToList();
-
-            if (path.Count > 1)
-            {
-                v.SetPath(RoadGraph, path);
-                v.PathSet = true;
-            }
-            else
-            {
-                v.ResetVehicleToNewPos();
+                v.SetGraph(RoadGraph);
             }
         }
 

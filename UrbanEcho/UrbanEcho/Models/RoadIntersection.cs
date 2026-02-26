@@ -50,12 +50,10 @@ namespace UrbanEcho.Sim
 
             if (isCenterSet)
             {
-                List<Vector2> connectionsForBody = setConnections(graph);
+                List<(Vector2 direction, float width)> connectionsForBody = setConnections(graph);
 
-                if (connectionsForBody.Count > 0)
-                {
-                    Body = new IntersectionBody(this, connectionsForBody);
-                }
+                Body = new IntersectionBody(this, connectionsForBody);
+                isBodySet = true;
             }
         }
 
@@ -64,9 +62,9 @@ namespace UrbanEcho.Sim
             return isBodySet;
         }
 
-        private List<Vector2> setConnections(RoadGraph graph)
+        private List<(Vector2 pos, float width)> setConnections(RoadGraph graph)
         {
-            List<Vector2> connectingPoints = new List<Vector2>();
+            List<(Vector2 pos, float width)> connectingPoints = new List<(Vector2 pos, float width)>();
 
             for (int edgeIndex = 0; edgeIndex < graph.Edges.Count; edgeIndex++)
             {
@@ -80,15 +78,14 @@ namespace UrbanEcho.Sim
                         {
                             //Add incoming connections
                             bool forwardDirection = roadEdge.IsFromStartOfLineString;
-                            bool checkingOutgoing = true;
-                            bool connectionHasBeenAdded = CheckIfAddConnection(checkingOutgoing);
+
+                            bool connectionHasBeenAdded = CheckIfAddConnection(true);
 
                             //If that edge was not a outgoing edge check if it is a incoming
                             //edge by flipping direction and checking the from end
                             if (!(connectionHasBeenAdded))
                             {
-                                checkingOutgoing = false;
-                                connectionHasBeenAdded = CheckIfAddConnection(checkingOutgoing);
+                                connectionHasBeenAdded = CheckIfAddConnection(false);
                             }
 
                             bool CheckIfAddConnection(bool checkingOutGoing)
@@ -99,27 +96,37 @@ namespace UrbanEcho.Sim
                                 {
                                     startIndex = lineString.Count - 1;
                                 }
-                                float threshold = 5.0f;
+                                float threshold = 15.0f;
                                 Vector2 roadFeaturePos = Helpers.Helper.Convert2Box2dWorldPosition(lineString.Coordinates[startIndex].X, lineString.Coordinates[startIndex].Y);
                                 bool connectionAdded = false;
                                 if (Vector2.Distance(Center, roadFeaturePos) < threshold)
                                 {
                                     int nextIndexForSegment = (directionToUse) ? startIndex + 1 : startIndex - 1;
                                     Vector2 end = Helpers.Helper.Convert2Box2dWorldPosition(lineString.Coordinates[nextIndexForSegment].X, lineString.Coordinates[nextIndexForSegment].Y);
+                                    //TODO: update key value and minWidth to not be hardcoded here
+                                    float minPavementWidth = 8.0f;
+                                    float width = Helpers.Helper.DoMapCorrection(Helpers.Helper.TryGetFeatureKVPToFloat(roadFeature, "PAVEMENT_W", minPavementWidth));
+
+                                    if (width < minPavementWidth)
+                                    {
+                                        width = minPavementWidth;
+                                    }
+
+                                    width *= 1.25f;//Add bit of width just incase intersection is not centered
                                     if (checkingOutGoing)
                                     {
                                         EdgesOut.Add(roadEdge);
-                                        if (!(connectingPoints.Contains(end)))
+                                        if (!(connectingPoints.Any(point => point.pos == end)))
                                         {
-                                            connectingPoints.Add(end);
+                                            connectingPoints.Add((end, width));
                                         }
                                     }
                                     else
                                     {
                                         EdgesInto.Add(roadEdge);
-                                        if (!(connectingPoints.Contains(end)))
+                                        if (!(connectingPoints.Any(point => point.pos == end)))
                                         {
-                                            connectingPoints.Add(end);
+                                            connectingPoints.Add((end, width));
                                         }
                                     }
                                     connectionAdded = true;

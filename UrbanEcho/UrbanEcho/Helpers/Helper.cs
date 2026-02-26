@@ -114,6 +114,42 @@ namespace UrbanEcho.Helpers
             return featureList;
         }
 
+        public static double TryGetFeatureKVPToDouble(IFeature feature, string key, double defaultValue)
+        {
+            double value = defaultValue;
+
+            if (feature is GeometryFeature gf)
+            {
+                if (gf.Fields.Contains(key))
+                {
+                    if (double.TryParse(gf[key]?.ToString(), out double valueOut))
+                    {
+                        value = valueOut;
+                    }
+                }
+            }
+
+            return value;
+        }
+
+        public static float TryGetFeatureKVPToFloat(IFeature feature, string key, float defaultValue)
+        {
+            float value = defaultValue;
+
+            if (feature is GeometryFeature gf)
+            {
+                if (gf.Fields.Contains(key))
+                {
+                    if (float.TryParse(gf[key]?.ToString(), out float valueOut))
+                    {
+                        value = valueOut;
+                    }
+                }
+            }
+
+            return value;
+        }
+
         public static b2Polygon CreatePolygon(Vector2[] corners)
         {
             if (corners.Length is < 3 or > 8) throw new Exception($"Corner count ({corners.Length}) must be within [3,8].");

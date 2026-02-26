@@ -22,7 +22,7 @@ namespace UrbanEcho.Styles
         private Dictionary<string, IStyle> Styles = new Dictionary<string, IStyle>();
 
         private Random random = new Random();
-        public static int NumberOFCarColors = 20;
+        public static int NumberOFCarColors = 10;
 
         public VehicleStyles()
         {
