@@ -26,7 +26,7 @@ namespace UrbanEcho.Helpers
         public const float MapCorrection = 1.37748f;
 
         public const float DefaultLaneWidth = 3.5f * MapCorrection;//in meters
-        public const int NumberOfVehicleGroups = 1; //spread out the updates so we can have better fps
+        public const int NumberOfVehicleGroups = 4; //spread out the updates so we can have better fps
 
         public static Point MakePrecisePoint(
         Point p,
