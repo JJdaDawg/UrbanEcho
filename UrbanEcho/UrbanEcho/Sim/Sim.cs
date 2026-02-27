@@ -189,6 +189,14 @@ namespace UrbanEcho.Sim
                         }
                     }
 
+                    foreach (Vehicle v in Sim.Vehicles)
+                    {
+                        if (v.Body != null)
+                        {
+                            v.Body.Dispose();
+                        }
+                    }
+
                     B2Api.b2DestroyWorld(World.WorldId);//Destroy world
                 }
             }

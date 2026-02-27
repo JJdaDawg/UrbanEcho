@@ -198,7 +198,7 @@ namespace UrbanEcho.FileManagement
                 {
                     //MemoryLayer tempDebugLayer = CreateDebugLayer();//use this layer for testing
                     //tempDebugLayer.Features = DebugLayerFeatures;
-                    //debugLayer = new RasterizingLayer(tempGraphLayer);
+                    //debugLayer = new RasterizingLayer(tempDebugLayer);
                     //TODO: if we are going to load new road network we should probably destroy box
                     ///2d world and dispose any handles created in the
                     ///IntersectionBody file. Then create a new world and make new shapes again
