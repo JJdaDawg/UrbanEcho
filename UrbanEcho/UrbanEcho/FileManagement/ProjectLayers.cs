@@ -22,6 +22,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
+using UrbanEcho.Graph;
 using UrbanEcho.Helpers;
 using UrbanEcho.Physics;
 using UrbanEcho.Sim;
@@ -207,6 +208,11 @@ namespace UrbanEcho.FileManagement
                     vehicleRequiresLoading = false;
                     EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Initialize Graph"));
                     Sim.Sim.InitializeGraph();
+
+                    if (Sim.Sim.RoadGraph != null)
+                    {
+                        TrafficVolumeLoader.AssignToGraph(Sim.Sim.RoadGraph);
+                    }
                 }
             }
             else
@@ -442,24 +448,38 @@ namespace UrbanEcho.FileManagement
 
                 int vehiclesAdded = 0;
                 Random random = new Random();
-                // Spawning at each road graph From Edge point
-                for (int i = 0; i < Sim.Sim.RoadGraph?.Edges.Count / 2; i++)
+
+                // Build a weighted spawn list so high-AADT edges get more vehicles
+                var weightedEdgeIndices = Sim.Sim.RoadGraph != null
+                    ? TrafficVolumeLoader.BuildWeightedEdgeSpawnList(Sim.Sim.RoadGraph)
+                    : new List<int>();
+
+                int spawnCount = Sim.Sim.RoadGraph?.Edges.Count / 2 ?? 0;
+
+                for (int v = 0; v < spawnCount; v++)
                 {
-                    if (Sim.Sim.RoadGraph.Nodes.TryGetValue(Sim.Sim.RoadGraph.Edges[i].From, out RoadNode? roadNodeFrom))
+                    // Pick an edge index from the weighted list
+                    int edgeIdx = weightedEdgeIndices.Count > 0
+                        ? weightedEdgeIndices[random.Next(weightedEdgeIndices.Count)]
+                        : v;
+
+                    var edge = Sim.Sim.RoadGraph!.Edges[edgeIdx];
+
+                    if (Sim.Sim.RoadGraph.Nodes.TryGetValue(edge.From, out RoadNode? roadNodeFrom))
                     {
-                        if (Sim.Sim.RoadGraph.Nodes.TryGetValue(Sim.Sim.RoadGraph.Edges[i].To, out RoadNode? roadNodeTo))
+                        if (Sim.Sim.RoadGraph.Nodes.TryGetValue(edge.To, out RoadNode? roadNodeTo))
                         {
                             if (roadNodeFrom != null && roadNodeTo != null)
                             {
                                 MPoint mPoint = new MPoint(roadNodeFrom.X, roadNodeFrom.Y);
                                 PointFeature pf = new PointFeature(mPoint);
-                                pf["VehicleNumber"] = i;
+                                pf["VehicleNumber"] = v;
                                 pf["VehicleType"] = "Car" + random.Next(0, VehicleStyles.NumberOFCarColors);
                                 pf["Hidden"] = false;
                                 pf["Angle"] = 0.0f;
                                 //Vehicle groups used so we don't raycast and update velocities every frame (was slowing down fps)
                                 //currently vehicle groups just set as 1 so vehicle groups is bypassed
-                                Vehicle vehicle = new Vehicle(pf, Sim.Sim.RoadGraph?.Edges[i], "RegularCar", vehiclesAdded % Helper.NumberOfVehicleGroups);
+                                Vehicle vehicle = new Vehicle(pf, edge, "RegularCar", vehiclesAdded % Helper.NumberOfVehicleGroups);
                                 vehiclesAdded++;
                                 if (vehicle.IsCreated)
                                 {

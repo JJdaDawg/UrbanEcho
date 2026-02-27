@@ -193,11 +193,7 @@ namespace UrbanEcho.Sim
                 return;
             }
             var pathfinder = new AStarPathfinder(graph);
-            int goalNode;
-            do
-            {
-                goalNode = nodes[Random.Shared.Next(nodes.Count)];
-            } while (goalNode == currentNodeId);
+            int goalNode = TrafficVolumeLoader.PickWeightedDestination(graph, currentNodeId);
 
             var newPath = pathfinder.FindPath(currentNodeId, goalNode).ToList();
             if (newPath.Count < 2)
@@ -462,11 +458,8 @@ namespace UrbanEcho.Sim
                 EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Tried to set path when graph was null"));
                 return;
             }
-            do
-            {
-                goalNode = Sim.nodes[Random.Shared.Next(Sim.nodes.Count)];
-                startNode = Sim.nodes[Random.Shared.Next(Sim.nodes.Count)];
-            } while (goalNode == startNode && Sim.nodes.Count > 1);
+            startNode = TrafficVolumeLoader.PickWeightedDestination(graph, -1);
+            goalNode = TrafficVolumeLoader.PickWeightedDestination(graph, startNode); //  we donmt use goal node here but it is needed to call pick weighted destination which also sets the path for the vehicle
 
             setNewPath(startNode);
             if (path is not null)

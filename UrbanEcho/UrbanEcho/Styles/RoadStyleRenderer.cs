@@ -85,7 +85,7 @@ namespace UrbanEcho.Styles
                     roadStyle.Line.Color = Color.Grey;
                     //TODO: make AADT not hardcoded
                     //Add logic to turn off show volumes
-                    /*
+                    
                     if (gf.Fields.Contains("AADT"))
                     {
                         if (double.TryParse(gf["AADT"]?.ToString(), out double aadtValue))
@@ -111,7 +111,7 @@ namespace UrbanEcho.Styles
                     else
                     {
                         roadStyle.Line.Color = Color.Grey;
-                    }*/
+                    }
                 }
 
                 void DrawGeometry(Geometry? geometry, int position = 0)

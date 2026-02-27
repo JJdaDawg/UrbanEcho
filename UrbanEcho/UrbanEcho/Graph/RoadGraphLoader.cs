@@ -223,7 +223,12 @@ public static class RoadGraphLoader
 
             SpeedLimit = speedKmh / 3.6,
             OneWay = oneWay,
-            FromToFlowDirection = fromTo
+            FromToFlowDirection = fromTo,
+            TrafficVolume = f.Fields.Contains("AADT")
+                && f["AADT"] != null
+                && double.TryParse(f["AADT"].ToString(), out var aadtVal)
+                ? aadtVal
+                : 0
         };
     }
 
