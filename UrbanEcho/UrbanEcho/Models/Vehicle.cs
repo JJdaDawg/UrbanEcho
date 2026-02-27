@@ -99,6 +99,9 @@ namespace UrbanEcho.Sim
 
         private bool insideAnotherVehicle = false;
 
+        private int intersectionInFrontCount = 0;
+        private bool hasClearedIntersection = true;
+
         public Vehicle(PointFeature feature, RoadEdge currentRoadEdge, string carType, int updateGroup)
         {
             settings = new VehicleSettings(carType);
@@ -251,15 +254,17 @@ namespace UrbanEcho.Sim
             else
             {
                 //If it isn't same shape again get the shapes userdata
-                if (intersectionShapeLastAt != shapeId)
+                if (intersectionShapeLastAt != shapeId && hasClearedIntersection == true)
                 {
                     intersectionShapeLastAt = shapeId;
                     IntPtr intPtr = B2Api.b2Shape_GetUserData(shapeId);
                     intersectionLastAt = NativeHandle.GetObject<RoadIntersection>(intPtr);
                     whenToStopWaiting = Sim.SimTime + intersectionLastAt.WaitTime;
                     isWaiting = true;
+                    hasClearedIntersection = false;
                 }
             }
+            intersectionInFrontCount++;
         }
 
         public bool SetVehicleInFrontCount(b2ShapeId shapeId, float howFar)
@@ -463,9 +468,16 @@ namespace UrbanEcho.Sim
 
                 ray = new Ray(calcRayStart, new Vector2(currentAngle.c * rayDistance, currentAngle.s * rayDistance));
                 ResetVehicleInFrontCount();//Has to be before the raycast else will always be false
-
+                intersectionInFrontCount = 0;
                 B2Api.b2World_CastRay(World.WorldId, ray.Start, ray.Translation, queryFilter, rayCastDelegate, 1);
-
+                if (intersectionInFrontCount == 0)
+                {
+                    hasClearedIntersection = true;
+                }
+                else
+                {
+                    hasClearedIntersection = false;
+                }
                 if (vehicleInFrontCount > 0)
                 {
                     vehicleInFront = true;
