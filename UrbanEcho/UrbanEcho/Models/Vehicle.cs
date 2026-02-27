@@ -97,6 +97,8 @@ namespace UrbanEcho.Sim
 
         private int vehicleInFrontCount = 0;
 
+        private bool insideAnotherVehicle = false;
+
         public Vehicle(PointFeature feature, RoadEdge currentRoadEdge, string carType, int updateGroup)
         {
             settings = new VehicleSettings(carType);
@@ -260,50 +262,53 @@ namespace UrbanEcho.Sim
             }
         }
 
-        public void SetVehicleInFrontCount(b2ShapeId shapeId, float howFar)
+        public bool SetVehicleInFrontCount(b2ShapeId shapeId, float howFar)
         {
-            IntPtr intPtr = B2Api.b2Shape_GetUserData(shapeId);
-
-            Vehicle otherVehicle = NativeHandle.GetObject<Vehicle>(intPtr);
-
-            if (IsCollidedVehicleSameEdgeOrIntersection(otherVehicle.currentRoadEdge))
+            bool counted = false;
+            if (shapeId != Body.ShapeId)
             {
-                metersFromCarInFront = rayDistance * howFar;
+                IntPtr intPtr = B2Api.b2Shape_GetUserData(shapeId);
 
-                if (!vehicleInFront)
+                Vehicle otherVehicle = NativeHandle.GetObject<Vehicle>(intPtr);
+
+                if (IsCollidedVehicleSameEdgeOrIntersection(otherVehicle.currentRoadEdge))
                 {
-                    vehicleInFrontStartTime = Sim.SimTime;
+                    metersFromCarInFront = rayDistance * howFar;
+
+                    if (!vehicleInFront)
+                    {
+                        vehicleInFrontStartTime = Sim.SimTime;
+                    }
+                    vehicleInFrontCount++;
+                    counted = true;
+
+                    if (Vector2.Distance(Pos, otherVehicle.Pos) <= 3.0f)
+                    {
+                        insideAnotherVehicle = true;
+                    }
                 }
-                vehicleInFrontCount++;
             }
+            return counted;
         }
 
         private bool IsCollidedVehicleSameEdgeOrIntersection(RoadEdge otherVehicleEdge)
         {
+            if (currentRoadEdge == otherVehicleEdge)
+            {
+                return true;
+            }
             if (graph is not null)
             {
-                IReadOnlyList<RoadEdge> otherOutGoingEdges = graph.GetOutgoingEdges(otherVehicleEdge.To);
+                IReadOnlyList<RoadEdge> otherOutGoingFrom = graph.GetOutgoingEdges(otherVehicleEdge.From);
 
-                if (otherOutGoingEdges.Contains(currentRoadEdge))
-                {
-                    return true;
-                }
-                IReadOnlyList<RoadEdge> otherIncomingEdges = graph.GetIncomingEdges(otherVehicleEdge.To);
-
-                if (otherIncomingEdges.Contains(currentRoadEdge))
+                if (otherOutGoingFrom.Contains(currentRoadEdge))
                 {
                     return true;
                 }
 
-                IReadOnlyList<RoadEdge> otherOutGoingFromEdges = graph.GetOutgoingEdges(otherVehicleEdge.From);
+                IReadOnlyList<RoadEdge> outGoingFrom = graph.GetOutgoingEdges(currentRoadEdge.From);
 
-                if (otherOutGoingFromEdges.Contains(currentRoadEdge))
-                {
-                    return true;
-                }
-                IReadOnlyList<RoadEdge> otherIncomingFromEdges = graph.GetIncomingEdges(otherVehicleEdge.From);
-
-                if (otherIncomingFromEdges.Contains(currentRoadEdge))
+                if (outGoingFrom.Contains(otherVehicleEdge))
                 {
                     return true;
                 }
@@ -324,9 +329,6 @@ namespace UrbanEcho.Sim
 
             if (distanceToTarget <= distanceThresholdReachedTarget)
             {
-                currentAngle = B2Api.b2Body_GetRotation(Body.BodyId);
-                float currentFloatAngle = currentAngle.GetAngle();
-
                 StepThroughLineString(false);
             }
             try
@@ -338,124 +340,130 @@ namespace UrbanEcho.Sim
             {
                 EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Feature that is assigned to the vehicle is null"));
             }
-            if (Sim.GroupToUpdate == updateGroup)
+
+            currentAngle = B2Api.b2Body_GetRotation(Body.BodyId);
+            float currentFloatAngle = currentAngle.GetAngle();
+
+            SetAngle(currentFloatAngle);
+            try
             {
-                currentAngle = B2Api.b2Body_GetRotation(Body.BodyId);
-                float currentFloatAngle = currentAngle.GetAngle();
+                feature["Angle"] = Helper.Rad2Deg(currentFloatAngle);
+            }
+            catch (Exception ex)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Vehicle missing angle feature + {ex.ToString()}"));
+            }
 
-                SetAngle(currentFloatAngle);
-                try
+            if (isWaiting)
+            {
+                if (Sim.SimTime < whenToStopWaiting)
                 {
-                    feature["Angle"] = Helper.Rad2Deg(currentFloatAngle);
-                }
-                catch (Exception ex)
-                {
-                    EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Vehicle missing angle feature + {ex.ToString()}"));
-                }
-
-                if (isWaiting)
-                {
-                    if (Sim.SimTime < whenToStopWaiting)
-                    {
-                        waitingOnIntersection = true;
-                    }
-                    else
-                    {
-                        waitingOnIntersection = false;
-                        isWaiting = false;
-                    }
+                    waitingOnIntersection = true;
                 }
                 else
                 {
                     waitingOnIntersection = false;
+                    isWaiting = false;
                 }
+            }
+            else
+            {
+                waitingOnIntersection = false;
+            }
 
-                if (waitingOnIntersection == true)
+            if (waitingOnIntersection == true)
+            {
+                targetSpeed = 0;
+            }
+            else
+            {
+                targetSpeed = speedLimit;
+            }
+
+            float updateToSpeed = kmh;
+
+            if (state == VehicleStates.Accelerating)
+            {
+                updateToSpeed = Math.Clamp(updateToSpeed + settings.GetAcceleration(), 0, speedLimit);
+            }
+            if (state == VehicleStates.Decelerating)
+            {
+                updateToSpeed = Math.Clamp(updateToSpeed - settings.GetDeceleration(), 0, speedLimit);
+            }
+
+            if (state == VehicleStates.SlowDownForTurn)
+            {
+                updateToSpeed = Math.Clamp(updateToSpeed - settings.GetDeceleration() * settings.GetSlowDownfactor(), 0, speedLimit);
+            }
+
+            if (updateToSpeed > 0)
+            {
+                float speedToUseMs = Helper.Kmh2Ms(updateToSpeed);
+                Vector2 velocityToSetMs = new Vector2(currentAngle.c * speedToUseMs, currentAngle.s * speedToUseMs);
+
+                B2Api.b2Body_SetLinearVelocity(Body.BodyId, velocityToSetMs);
+            }
+            else
+            {
+                B2Api.b2Body_SetLinearVelocity(Body.BodyId, Vector2.Zero);
+            }
+
+            kmh = Helper.MS2Kmh(Vector2.Dot(B2Api.b2Body_GetLinearVelocity(Body.BodyId), new Vector2(currentAngle.c, currentAngle.s)));
+            if (float.IsNaN(kmh))
+            {
+                kmh = 0;
+            }
+            if (vehicleInFront == false)
+            {
+                if (kmh <= 0 && targetSpeed == 0)
                 {
-                    targetSpeed = 0;
+                    state = VehicleStates.Stopped;
                 }
                 else
                 {
-                    targetSpeed = speedLimit;
-                }
-
-                float updateToSpeed = kmh;
-
-                if (state == VehicleStates.Accelerating)
-                {
-                    updateToSpeed = Math.Clamp(updateToSpeed + settings.GetAcceleration(), 0, speedLimit);
-                }
-                if (state == VehicleStates.Decelerating)
-                {
-                    updateToSpeed = Math.Clamp(updateToSpeed - settings.GetDeceleration(), 0, speedLimit);
-                }
-
-                if (state == VehicleStates.SlowDownForTurn)
-                {
-                    updateToSpeed = Math.Clamp(updateToSpeed - settings.GetDeceleration() * settings.GetSlowDownfactor(), 0, speedLimit);
-                }
-
-                if (updateToSpeed > 0)
-                {
-                    float speedToUseMs = Helper.Kmh2Ms(updateToSpeed);
-                    Vector2 velocityToSetMs = new Vector2(currentAngle.c * speedToUseMs, currentAngle.s * speedToUseMs);
-
-                    B2Api.b2Body_SetLinearVelocity(Body.BodyId, velocityToSetMs);
-                }
-                else
-                {
-                    B2Api.b2Body_SetLinearVelocity(Body.BodyId, Vector2.Zero);
-                }
-
-                kmh = Helper.MS2Kmh(Vector2.Dot(B2Api.b2Body_GetLinearVelocity(Body.BodyId), new Vector2(currentAngle.c, currentAngle.s)));
-                if (float.IsNaN(kmh))
-                {
-                    kmh = 0;
-                }
-                if (vehicleInFront == false)
-                {
-                    if (kmh <= 0 && targetSpeed == 0)
+                    if (kmh >= targetSpeed && targetSpeed != 0)
                     {
-                        state = VehicleStates.Stopped;
+                        state = VehicleStates.AtTargetSpeed;
                     }
                     else
                     {
-                        if (kmh >= targetSpeed && targetSpeed != 0)
+                        if (kmh < targetSpeed)
                         {
-                            state = VehicleStates.AtTargetSpeed;
+                            state = VehicleStates.Accelerating;
                         }
                         else
                         {
-                            if (kmh < targetSpeed)
-                            {
-                                state = VehicleStates.Accelerating;
-                            }
-                            else
-                            {
-                                state = VehicleStates.Decelerating;
-                            }
-                        }
-
-                        if (angleAboveThreshold && (!(state == VehicleStates.Decelerating || state == VehicleStates.Stopped)))
-                        {
-                            state = VehicleStates.SlowDownForTurn;
+                            state = VehicleStates.Decelerating;
                         }
                     }
+
+                    if (angleAboveThreshold && (!(state == VehicleStates.Decelerating || state == VehicleStates.Stopped)))
+                    {
+                        state = VehicleStates.SlowDownForTurn;
+                    }
+                }
+            }
+            else
+            {
+                if (kmh <= 0 && targetSpeed == 0)
+                {
+                    state = VehicleStates.Stopped;
                 }
                 else
                 {
-                    if (kmh <= 0 && targetSpeed == 0)
-                    {
-                        state = VehicleStates.Stopped;
-                    }
-                    else
-                    {
-                        state = VehicleStates.Decelerating;
-                    }
+                    state = VehicleStates.Decelerating;
                 }
+            }
+            if (Sim.GroupToUpdate == updateGroup)
+            {
+                //Start raycast from back of car, this helps prevent cars on top of eachother
+                // Vector2 calcRayStart = new Vector2(Pos.X - (settings.GetLength() / 2.0f) * currentAngle.c,
+                //     Pos.Y - (settings.GetLength() / 2.0f) * currentAngle.s);
+                Vector2 calcRayStart = new Vector2(Pos.X, Pos.Y);
 
-                ray = new Ray(Pos, new Vector2(currentAngle.c * rayDistance, currentAngle.s * rayDistance));
+                ray = new Ray(calcRayStart, new Vector2(currentAngle.c * rayDistance, currentAngle.s * rayDistance));
                 ResetVehicleInFrontCount();//Has to be before the raycast else will always be false
+
                 B2Api.b2World_CastRay(World.WorldId, ray.Start, ray.Translation, queryFilter, rayCastDelegate, 1);
 
                 if (vehicleInFrontCount > 0)
@@ -472,6 +480,12 @@ namespace UrbanEcho.Sim
                 {
                     vehicleInFront = false;
                     vehicleInFrontElaspedTime = 0;
+                }
+
+                if (insideAnotherVehicle)
+                {
+                    ResetVehicleToNewPos();
+                    insideAnotherVehicle = false;
                 }
             }
         }
@@ -490,10 +504,10 @@ namespace UrbanEcho.Sim
             goalNode = TrafficVolumeLoader.PickWeightedDestination(graph, startNode); //  we donmt use goal node here but it is needed to call pick weighted destination which also sets the path for the vehicle
 
             setNewPath(startNode);
+            pathSegmentIndex = 0;
             if (path is not null)
             {
-                stepThroughPath(path);
-                StepThroughLineString(true);
+                AdvanceToNextRoad();
             }
             else
             {
@@ -502,7 +516,37 @@ namespace UrbanEcho.Sim
             B2Api.b2Body_SetLinearVelocity(Body.BodyId, Vector2.Zero);
             B2Api.b2Body_SetAngularVelocity(Body.BodyId, 0);
             b2Rot rot = b2Rot.FromAngle(GetTargetAngle());
-            B2Api.b2Body_SetTransform(Body.BodyId, startPos, rot);
+            Vector2 initialPosition = GetRandomOffsetFromRoad();
+            B2Api.b2Body_SetTransform(Body.BodyId, initialPosition, rot);
+        }
+
+        private Vector2 GetRandomOffsetFromRoad()
+        {
+            Vector2 returnValue = startPos;
+            if (currentRoadEdge.Feature is GeometryFeature theRoad)
+            {
+                if (theRoad is GeometryFeature g)
+                {
+                    if (g.Geometry is LineString lineString)
+                    {
+                        Vector2 startPosRoad = Helper.Convert2Box2dWorldPosition(lineString.Coordinates[prevIndexLineString].X, lineString.Coordinates[prevIndexLineString].Y);
+                        Vector2 endPosRoad = Helper.Convert2Box2dWorldPosition(lineString.Coordinates[indexLineString].X, lineString.Coordinates[indexLineString].Y);
+
+                        Vector2 roadDirectionNormalized = Vector2.Normalize(new Vector2(endPosRoad.X - startPosRoad.X, endPosRoad.Y - startPosRoad.Y));
+                        float angleForLaneOffset = MathF.Atan2(roadDirectionNormalized.Y, roadDirectionNormalized.X);
+                        if (float.IsNaN(angleForLaneOffset))
+                            angleForLaneOffset = 0;
+
+                        Vector2 laneOffset = new Vector2(
+                            MathF.Cos(angleForLaneOffset + Helper.Deg2Rad(-90.0f - 45.0f)) * Helper.DefaultLaneWidth,
+                            MathF.Sin(angleForLaneOffset + Helper.Deg2Rad(-90.0f - 45.0f)) * Helper.DefaultLaneWidth);
+
+                        returnValue = new Vector2(startPosRoad.X + laneOffset.X * (float)(5.0f + 10.0f * Random.Shared.NextDouble()), startPosRoad.Y + laneOffset.Y * (float)(5.0f + 10.0f * Random.Shared.NextDouble()));
+                    }
+                }
+            }
+
+            return returnValue;
         }
 
         private float GetTargetAngle()
@@ -656,18 +700,27 @@ namespace UrbanEcho.Sim
 
         private float RayCastCallback(b2ShapeId shapeId, Vector2 point, Vector2 normal, float fraction, nint context)
         {
-            b2Filter filter = B2Api.b2Shape_GetFilter(shapeId);
-            if (filter.categoryBits == (ulong)ShapeCategories.Intersection && fraction != 0)
+            float returnValue = -1.0f;//-1.0f means keep doing raycasting if hit any other object
+                                      //see above declaration public b2CastResultFcn? rayCastDelegate; for details
+                                      //ignore raycasts against self
+            if (shapeId != Body.ShapeId)
             {
-                SetIntersectionLastAt(shapeId);
-            }
-            if (filter.categoryBits == (ulong)ShapeCategories.Vehicle && fraction != 0)
-            {
-                SetVehicleInFrontCount(shapeId, fraction);
+                b2Filter filter = B2Api.b2Shape_GetFilter(shapeId);
+                if (filter.categoryBits == (ulong)ShapeCategories.Intersection && fraction != 0)
+                {
+                    SetIntersectionLastAt(shapeId);
+                }
+                if (filter.categoryBits == (ulong)ShapeCategories.Vehicle)
+                {
+                    bool counted = SetVehicleInFrontCount(shapeId, fraction);
+                    if (counted && fraction == 0)
+                    {
+                        insideAnotherVehicle = true;
+                    }
+                }
             }
 
-            return -1.0f;//-1.0f means keep doing raycasting if hit any other object
-                         //see above declaration public b2CastResultFcn? rayCastDelegate; for details
+            return returnValue;
         }
 
         private RoadEdge SetCurrentRoadEdge(RoadEdge updatedRoadEdge)
