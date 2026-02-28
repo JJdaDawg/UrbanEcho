@@ -69,7 +69,7 @@ namespace UrbanEcho.Sim
             LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/ProjectFiles/myFile.Json", mainViewModel.Map.MyMap);
             EventQueueForSim.Instance.Add(loadProjectEvent); //will usually happen from UI
 
-            FrameTimer frameTimer = new FrameTimer(true);
+            FrameTimer frameTimer = new FrameTimer(false);
 
             while (Cts.IsCancellationRequested == false)
             {
@@ -135,8 +135,8 @@ namespace UrbanEcho.Sim
                 }
             }
 
-            //Only update vehicle layer if ui queue is empty
-            if (EventQueueForUI.Instance.IsEmpty())
+            //Only update vehicle layer if ui queue is empty and do it every few frames
+            if (EventQueueForUI.Instance.IsEmpty() && Sim.SimFrames % 2 == 0)
             {
                 ProjectLayers.UpdateVehicleLayer(true, MyMap);
             }

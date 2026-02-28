@@ -196,9 +196,9 @@ namespace UrbanEcho.FileManagement
 
                 if (vehicleRequiresLoading && intersectionLoaded && roadLoaded)
                 {
-                    //MemoryLayer tempDebugLayer = CreateDebugLayer();//use this layer for testing
-                    //tempDebugLayer.Features = DebugLayerFeatures;
-                    //debugLayer = new RasterizingLayer(tempDebugLayer);
+                    MemoryLayer tempDebugLayer = CreateDebugLayer();//use this layer for testing
+                    tempDebugLayer.Features = DebugLayerFeatures;
+                    debugLayer = new RasterizingLayer(tempDebugLayer);
                     //TODO: if we are going to load new road network we should probably destroy box
                     ///2d world and dispose any handles created in the
                     ///IntersectionBody file. Then create a new world and make new shapes again
@@ -454,7 +454,7 @@ namespace UrbanEcho.FileManagement
                     ? TrafficVolumeLoader.BuildWeightedEdgeSpawnList(Sim.Sim.RoadGraph)
                     : new List<int>();
 
-                int spawnCount = Sim.Sim.RoadGraph?.Edges.Count / 2 ?? 0;
+                int spawnCount = 10000;// Sim.Sim.RoadGraph?.Edges.Count / 2 ?? 0;
 
                 for (int v = 0; v < spawnCount; v++)
                 {
@@ -533,7 +533,7 @@ namespace UrbanEcho.FileManagement
 
                     GraphLayerFeatures.Add(pf);
                 }*/
-
+                /*
                 if (ProjectLayers.CreateRoadIntersections())
                 {
                     Sim.Sim.SetIntersectionBodiesCreated();
@@ -563,37 +563,37 @@ namespace UrbanEcho.FileManagement
                         }
                     }
                 }
-
-                /*show graph
-            for (int i = 0; i < Sim.Sim.RoadGraph.Edges.Count; i++)
-            {
-                int fromNodeIndex = Sim.Sim.RoadGraph.Edges[i].From;
-                int toNodeIndex = Sim.Sim.RoadGraph.Edges[i].To;
-
-                if (Sim.Sim.RoadGraph.Nodes.TryGetValue(fromNodeIndex, out RoadNode? fromNodeValue))
+                */
+                /*show graph*/
+                for (int i = 0; i < Sim.Sim.RoadGraph.Edges.Count; i++)
                 {
-                    if (Sim.Sim.RoadGraph.Nodes.TryGetValue(toNodeIndex, out RoadNode? toNodeValue))
+                    int fromNodeIndex = Sim.Sim.RoadGraph.Edges[i].From;
+                    int toNodeIndex = Sim.Sim.RoadGraph.Edges[i].To;
+
+                    if (Sim.Sim.RoadGraph.Nodes.TryGetValue(fromNodeIndex, out RoadNode? fromNodeValue))
                     {
-                        GeometryFeature feature = new GeometryFeature();
-                        Coordinate[] coordinates = new Coordinate[2];
+                        if (Sim.Sim.RoadGraph.Nodes.TryGetValue(toNodeIndex, out RoadNode? toNodeValue))
+                        {
+                            GeometryFeature feature = new GeometryFeature();
+                            Coordinate[] coordinates = new Coordinate[2];
 
-                        coordinates[0] = new Coordinate(fromNodeValue.X, fromNodeValue.Y);
-                        coordinates[1] = new Coordinate(toNodeValue.X, toNodeValue.Y);
+                            coordinates[0] = new Coordinate(fromNodeValue.X, fromNodeValue.Y);
+                            coordinates[1] = new Coordinate(toNodeValue.X, toNodeValue.Y);
 
-                        feature.Geometry = new LineString(coordinates);
+                            feature.Geometry = new LineString(coordinates);
 
-                        DebugLayerFeatures.Add(feature);
+                            DebugLayerFeatures.Add(feature);
+                        }
+                        else
+                        {
+                            EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to get to Node"));
+                        }
                     }
                     else
                     {
-                        EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to get to Node"));
+                        EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to get from Node"));
                     }
                 }
-                else
-                {
-                    EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to get from Node"));
-                }
-            }*/
 
                 layer.Opacity = 1.0f;
 
@@ -714,11 +714,11 @@ namespace UrbanEcho.FileManagement
             {
                 myMap?.Layers.Add(vehicleLayer);
             }
-            /*
+
             if (debugLayer != null)
             {
                 myMap?.Layers.Add(debugLayer);
-            }*/
+            }
         }
 
         public static void UpdateVehicleLayer(bool fullClone, Map? map)

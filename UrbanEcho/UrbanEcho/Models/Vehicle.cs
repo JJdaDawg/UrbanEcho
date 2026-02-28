@@ -3,6 +3,7 @@ using Box2dNet.Interop;
 using ExCSS;
 using Mapsui.Layers;
 using Mapsui.Nts;
+using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
@@ -117,28 +118,25 @@ namespace UrbanEcho.Sim
             this.feature = feature;
             this.updateGroup = updateGroup;
 
-            if (currentRoadEdge.Feature is GeometryFeature theRoad)
+            if (this.currentRoadEdge.Feature is GeometryFeature g)
             {
-                if (theRoad is GeometryFeature g)
+                if (g.Geometry is LineString lineString)
                 {
-                    if (g.Geometry is LineString lineString)
-                    {
-                        StepThroughLineString(true);
+                    StepThroughLineString(true);
 
-                        FRect rect = new FRect(startPos.X - settings.GetLength() / 2, startPos.Y - settings.GetWidth() / 2, settings.GetLength(), settings.GetWidth());
+                    FRect rect = new FRect(startPos.X - settings.GetLength() / 2, startPos.Y - settings.GetWidth() / 2, settings.GetLength(), settings.GetWidth());
 
-                        rayCastDelegate = RayCastCallback;
+                    rayCastDelegate = RayCastCallback;
 
-                        queryFilter.categoryBits = 0xFFFF;
-                        queryFilter.maskBits = 0xFFFF;
+                    queryFilter.categoryBits = 0xFFFF;
+                    queryFilter.maskBits = 0xFFFF;
 
-                        Body = new VehicleBody(this, rect);
+                    Body = new VehicleBody(this, rect);
 
-                        b2Rot rot = b2Rot.FromAngle(0);
-                        B2Api.b2Body_SetTransform(Body.BodyId, startPos, rot);
+                    b2Rot rot = b2Rot.FromAngle(0);
+                    B2Api.b2Body_SetTransform(Body.BodyId, startPos, rot);
 
-                        IsCreated = true;
-                    }
+                    IsCreated = true;
                 }
             }
         }
@@ -208,19 +206,39 @@ namespace UrbanEcho.Sim
                 EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Could not step through path"));
                 return;
             }
-
+            int count = 0;
             RoadEdge? nextEdge = null;
             foreach (var edge in graph.GetOutgoingEdges(fromId))
             {
                 if (edge.To == toId)
                 {
                     nextEdge = edge;
-                    break;
+                    //break;
+                    count++;
+                }
+                if (count > 1)
+                {
+                    bool bbbb = false;
+                }
+            }
+
+            if (nextEdge != null)
+            {
+                if (nextEdge.Feature is GeometryFeature gf)
+                {
+                    if (Int32.TryParse(gf["OBJECTID"]?.ToString(), out int id))
+                        if (id == 59022)
+                        {
+                            bool breakhere = true;
+
+                            string s = gf["FLOW_DIREC"]?.ToString();
+                        }
                 }
             }
 
             if (nextEdge == null)
             {
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Could not find next edge for path"));
                 ResetVehicleToNewPos();
                 return;
             }
@@ -287,7 +305,7 @@ namespace UrbanEcho.Sim
                     vehicleInFrontCount++;
                     counted = true;
 
-                    if (Vector2.Distance(Pos, otherVehicle.Pos) <= 3.0f)
+                    if (/*B2Api.b2di */Vector2.Distance(Pos, otherVehicle.Pos) <= 3.0f)
                     {
                         insideAnotherVehicle = true;
                     }
@@ -517,6 +535,7 @@ namespace UrbanEcho.Sim
 
             setNewPath(startNode);
             pathSegmentIndex = 0;
+
             if (path is not null)
             {
                 AdvanceToNextRoad();
@@ -535,26 +554,23 @@ namespace UrbanEcho.Sim
         private Vector2 GetRandomOffsetFromRoad()
         {
             Vector2 returnValue = startPos;
-            if (currentRoadEdge.Feature is GeometryFeature theRoad)
+            if (currentRoadEdge.Feature is GeometryFeature gf)
             {
-                if (theRoad is GeometryFeature g)
+                if (gf.Geometry is LineString lineString)
                 {
-                    if (g.Geometry is LineString lineString)
-                    {
-                        Vector2 startPosRoad = Helper.Convert2Box2dWorldPosition(lineString.Coordinates[prevIndexLineString].X, lineString.Coordinates[prevIndexLineString].Y);
-                        Vector2 endPosRoad = Helper.Convert2Box2dWorldPosition(lineString.Coordinates[indexLineString].X, lineString.Coordinates[indexLineString].Y);
+                    Vector2 startPosRoad = Helper.Convert2Box2dWorldPosition(lineString.Coordinates[prevIndexLineString].X, lineString.Coordinates[prevIndexLineString].Y);
+                    Vector2 endPosRoad = Helper.Convert2Box2dWorldPosition(lineString.Coordinates[indexLineString].X, lineString.Coordinates[indexLineString].Y);
 
-                        Vector2 roadDirectionNormalized = Vector2.Normalize(new Vector2(endPosRoad.X - startPosRoad.X, endPosRoad.Y - startPosRoad.Y));
-                        float angleForLaneOffset = MathF.Atan2(roadDirectionNormalized.Y, roadDirectionNormalized.X);
-                        if (float.IsNaN(angleForLaneOffset))
-                            angleForLaneOffset = 0;
+                    Vector2 roadDirectionNormalized = Vector2.Normalize(new Vector2(endPosRoad.X - startPosRoad.X, endPosRoad.Y - startPosRoad.Y));
+                    float angleForLaneOffset = MathF.Atan2(roadDirectionNormalized.Y, roadDirectionNormalized.X);
+                    if (float.IsNaN(angleForLaneOffset))
+                        angleForLaneOffset = 0;
 
-                        Vector2 laneOffset = new Vector2(
-                            MathF.Cos(angleForLaneOffset + Helper.Deg2Rad(-90.0f - 45.0f)) * Helper.DefaultLaneWidth,
-                            MathF.Sin(angleForLaneOffset + Helper.Deg2Rad(-90.0f - 45.0f)) * Helper.DefaultLaneWidth);
+                    Vector2 laneOffset = new Vector2(
+                        MathF.Cos(angleForLaneOffset + Helper.Deg2Rad(-90.0f - 45.0f)) * Helper.DefaultLaneWidth,
+                        MathF.Sin(angleForLaneOffset + Helper.Deg2Rad(-90.0f - 45.0f)) * Helper.DefaultLaneWidth);
 
-                        returnValue = new Vector2(startPosRoad.X + laneOffset.X * (float)(5.0f + 10.0f * Random.Shared.NextDouble()), startPosRoad.Y + laneOffset.Y * (float)(5.0f + 10.0f * Random.Shared.NextDouble()));
-                    }
+                    returnValue = new Vector2(startPosRoad.X + laneOffset.X * (float)(5.0f + 10.0f * Random.Shared.NextDouble()), startPosRoad.Y + laneOffset.Y * (float)(5.0f + 10.0f * Random.Shared.NextDouble()));
                 }
             }
 
@@ -603,81 +619,75 @@ namespace UrbanEcho.Sim
 
         private void StepThroughLineString(bool isNewRoad)
         {
-            if (currentRoadEdge.Feature is GeometryFeature theRoad)
+            if (currentRoadEdge.Feature is GeometryFeature g)
             {
-                if (theRoad is GeometryFeature g)
+                if (g.Geometry is LineString lineString)
                 {
-                    if (g.Geometry is LineString lineString)
+                    if (isNewRoad)
                     {
-                        if (isNewRoad)
+                        if (lineString.Count >= 2)
                         {
-                            if (lineString.Count >= 2)
+                            prevIndexLineString = currentRoadEdge.IsFromStartOfLineString ? 0 : lineString.Count - 1;
+                            indexLineString = currentRoadEdge.IsFromStartOfLineString ? 1 : lineString.Count - 2;
+                        }
+                        else
+                        {
+                            EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"A line string was less than 2 points"));
+                        }
+                    }
+                    else
+                    {
+                        if (currentRoadEdge.IsFromStartOfLineString)
+                        {
+                            if (indexLineString + 1 < lineString.Count)
                             {
-                                prevIndexLineString = currentRoadEdge.IsFromStartOfLineString ? 0 : lineString.Count - 1;
-                                indexLineString = currentRoadEdge.IsFromStartOfLineString ? 1 : lineString.Count - 2;
+                                prevIndexLineString = indexLineString;
+                                indexLineString++;
                             }
                             else
                             {
-                                EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"A line string was less than 2 points"));
+                                AdvanceToNextRoad();
                             }
                         }
                         else
                         {
-                            if (currentRoadEdge.IsFromStartOfLineString)
+                            if (indexLineString - 1 >= 0 && lineString.Count >= 1)
                             {
-                                if (indexLineString + 1 < lineString.Count)
-                                {
-                                    prevIndexLineString = indexLineString;
-                                    indexLineString++;
-                                }
-                                else
-                                {
-                                    AdvanceToNextRoad();
-                                }
+                                prevIndexLineString = indexLineString;
+                                indexLineString--;
                             }
                             else
                             {
-                                if (indexLineString - 1 >= 0 && lineString.Count >= 1)
-                                {
-                                    prevIndexLineString = indexLineString;
-                                    indexLineString--;
-                                }
-                                else
-                                {
-                                    AdvanceToNextRoad();
-                                }
+                                AdvanceToNextRoad();
                             }
                         }
-                        UpdateEndPos();
                     }
+                    UpdateEndPos();
                 }
             }
         }
 
         private void UpdateEndPos()
         {
-            if (currentRoadEdge.Feature is GeometryFeature theRoad)
+            if (currentRoadEdge.Feature is GeometryFeature gf)
             {
-                if (theRoad is GeometryFeature g)
+                if (gf.Geometry is LineString lineString)
                 {
-                    if (g.Geometry is LineString lineString)
-                    {
-                        Vector2 startPosRoad = Helper.Convert2Box2dWorldPosition(lineString.Coordinates[prevIndexLineString].X, lineString.Coordinates[prevIndexLineString].Y);
-                        Vector2 endPosRoad = Helper.Convert2Box2dWorldPosition(lineString.Coordinates[indexLineString].X, lineString.Coordinates[indexLineString].Y);
+                    Vector2 startPosRoad = Helper.Convert2Box2dWorldPosition(lineString.Coordinates[prevIndexLineString].X, lineString.Coordinates[prevIndexLineString].Y);
+                    Vector2 endPosRoad = Helper.Convert2Box2dWorldPosition(lineString.Coordinates[indexLineString].X, lineString.Coordinates[indexLineString].Y);
 
-                        Vector2 roadDirectionNormalized = Vector2.Normalize(new Vector2(endPosRoad.X - startPosRoad.X, endPosRoad.Y - startPosRoad.Y));
-                        float angleForLaneOffset = MathF.Atan2(roadDirectionNormalized.Y, roadDirectionNormalized.X);
-                        if (float.IsNaN(angleForLaneOffset))
-                            angleForLaneOffset = 0;
+                    Vector2 roadDirectionNormalized = Vector2.Normalize(new Vector2(endPosRoad.X - startPosRoad.X, endPosRoad.Y - startPosRoad.Y));
+                    float angleForLaneOffset = MathF.Atan2(roadDirectionNormalized.Y, roadDirectionNormalized.X);
+                    if (float.IsNaN(angleForLaneOffset))
+                        angleForLaneOffset = 0;
 
-                        Vector2 laneOffset = new Vector2(
-                            MathF.Cos(angleForLaneOffset + Helper.Deg2Rad(-90.0f - 45.0f)) * Helper.DefaultLaneWidth,
-                            MathF.Sin(angleForLaneOffset + Helper.Deg2Rad(-90.0f - 45.0f)) * Helper.DefaultLaneWidth);
+                    Vector2 laneOffset = new Vector2(
+                        MathF.Cos(angleForLaneOffset + Helper.Deg2Rad(-90.0f - 45.0f)) * Helper.DefaultLaneWidth,
+                        MathF.Sin(angleForLaneOffset + Helper.Deg2Rad(-90.0f - 45.0f)) * Helper.DefaultLaneWidth);
 
-                        startPos = new Vector2(startPosRoad.X + laneOffset.X, startPosRoad.Y + laneOffset.Y);
+                    startPos = new Vector2(startPosRoad.X + laneOffset.X, startPosRoad.Y + laneOffset.Y);
 
-                        endPos = new Vector2(endPosRoad.X + laneOffset.X, endPosRoad.Y + laneOffset.Y);
-                    }
+                    endPos = new Vector2(endPosRoad.X + laneOffset.X, endPosRoad.Y + laneOffset.Y);
                 }
             }
         }
@@ -743,6 +753,18 @@ namespace UrbanEcho.Sim
                 newSpeedLimit = 30.0f;
             }
             speedLimit = Helper.DoMapCorrection(newSpeedLimit);
+
+            if (updatedRoadEdge.Feature is GeometryFeature g)
+            {
+                if (g.Geometry is LineString lineString)
+                {
+                    if (lineString.Count >= 2)
+                    {
+                        prevIndexLineString = updatedRoadEdge.IsFromStartOfLineString ? 0 : lineString.Count - 1;
+                        indexLineString = updatedRoadEdge.IsFromStartOfLineString ? 1 : lineString.Count - 2;
+                    }
+                }
+            }
 
             return updatedRoadEdge;
         }
