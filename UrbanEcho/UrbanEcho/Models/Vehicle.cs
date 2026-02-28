@@ -84,6 +84,7 @@ namespace UrbanEcho.Sim
         private int updateGroup = 0;
 
         private List<int>? path;
+        private List<RoadEdge>? pathEdges;
 
         private int pathSegmentIndex = 0;
         private RoadGraph? graph;
@@ -155,19 +156,20 @@ namespace UrbanEcho.Sim
 
         private void AdvanceToNextRoad()
         {
-            if (path == null || graph == null || Body == null)
+            if (path == null || pathEdges == null || graph == null || Body == null)
             {
                 EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Could not run advance to next road"));
                 return;
             }
 
-            if (pathSegmentIndex >= path.Count - 1)
+            if (pathSegmentIndex >= pathEdges.Count)
             {
                 int currentNodeId = path[path.Count - 1];
                 setNewPath(currentNodeId);
             }
 
-            stepThroughPath(path);
+            stepThroughPath();
+            // Old: stepThroughPath(path);
         }
 
         private void setNewPath(int currentNodeId)
@@ -189,41 +191,30 @@ namespace UrbanEcho.Sim
             var pathfinder = new AStarPathfinder(graph);
             int goalNode = TrafficVolumeLoader.PickWeightedDestination(graph, currentNodeId);
 
-            var newPath = pathfinder.FindPath(currentNodeId, goalNode).ToList();
-            if (newPath.Count < 2)
+            var newPathEdges = pathfinder.FindPathEdges(currentNodeId, goalNode);
+            if (newPathEdges.Count < 1)
             {
                 ResetVehicleToNewPos();
                 return;
             }
-            path = newPath;
+            pathEdges = new List<RoadEdge>(newPathEdges);
+            path = new List<int> { newPathEdges[0].From };
+            for (int i = 0; i < newPathEdges.Count; i++)
+                path.Add(newPathEdges[i].To);
+            // Old: var newPath = pathfinder.FindPath(currentNodeId, goalNode).ToList();
+            // Old: if (newPath.Count < 2) { ResetVehicleToNewPos(); return; }
+            // Old: path = newPath;
         }
 
-        private void stepThroughPath(List<int> path)
+        private void stepThroughPath()
         {
-            int fromId = path[pathSegmentIndex];
-            int toId = path[pathSegmentIndex + 1];
-
-            if (graph is null)
-            {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Could not step through path"));
-                return;
-            }
-
-            RoadEdge? nextEdge = null;
-            foreach (var edge in graph.GetOutgoingEdges(fromId))
-            {
-                if (edge.To == toId)
-                {
-                    nextEdge = edge;
-                    break;
-                }
-            }
-
-            if (nextEdge == null)
+            if (pathEdges == null || pathSegmentIndex >= pathEdges.Count)
             {
                 ResetVehicleToNewPos();
                 return;
             }
+
+            RoadEdge nextEdge = pathEdges[pathSegmentIndex];
 
             if (nextEdge.Feature is GeometryFeature theRoad && theRoad.Geometry is LineString newLineString)
             {
@@ -240,6 +231,26 @@ namespace UrbanEcho.Sim
                 return;
             }
         }
+
+        // Old stepThroughPath that searched by node IDs (could pick wrong parallel edge):
+        // private void stepThroughPath(List<int> path)
+        // {
+        //     int fromId = path[pathSegmentIndex];
+        //     int toId = path[pathSegmentIndex + 1];
+        //     if (graph is null) { return; }
+        //     RoadEdge? nextEdge = null;
+        //     foreach (var edge in graph.GetOutgoingEdges(fromId))
+        //     {
+        //         if (edge.To == toId) { nextEdge = edge; break; }
+        //     }
+        //     if (nextEdge == null) { ResetVehicleToNewPos(); return; }
+        //     if (nextEdge.Feature is GeometryFeature theRoad && theRoad.Geometry is LineString newLineString)
+        //     {
+        //         currentRoadEdge = SetCurrentRoadEdge(nextEdge);
+        //         StepThroughLineString(true);
+        //         pathSegmentIndex++;
+        //     }
+        // }
 
         public void SetIntersectionLastAt(b2ShapeId shapeId)
         {
