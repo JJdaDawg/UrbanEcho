@@ -98,7 +98,7 @@ namespace UrbanEcho.Sim
 
         public bool GraphSet = false;
 
-        private float vehicleInFrontThresholdWaitTime = 30.0f;
+        private float vehicleInFrontThresholdWaitTime = 120.0f;//Set long so we know it isn't just a light
 
         private float vehicleInFrontStartTime = 0;
         private float vehicleInFrontElaspedTime = 0;
@@ -503,7 +503,7 @@ namespace UrbanEcho.Sim
             {
                 updateToSpeed = Math.Clamp(updateToSpeed + settings.GetAcceleration(), 0, speedLimit);
             }
-            if (state == VehicleStates.Decelerating)
+            if (state == VehicleStates.Decelerating || state == VehicleStates.Stopped)//Stopped case added here to ensure vehicle doesn't slowly creep if very close to zero speed
             {
                 updateToSpeed = Math.Clamp(updateToSpeed - settings.GetDeceleration(), 0, speedLimit);
             }

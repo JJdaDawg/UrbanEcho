@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Numerics;
+using UrbanEcho.Events.UI;
 using UrbanEcho.Physics;
 using UrbanEcho.Sim;
 
@@ -22,8 +23,6 @@ namespace UrbanEcho.Models
 
         public string Name = "test123";
 
-        //public float WaitTime = 5.0f;
-
         public IFeature Feature;
 
         private bool isBodySet = false;
@@ -31,6 +30,16 @@ namespace UrbanEcho.Models
         public TrafficRule FallBackTrafficRule;//Used if intersection has no connecting edges
 
         public SignalType TheSignalType = SignalType.Uncontrolled;
+
+        private List<PairedTrafficRule> pairedRoads;
+
+        private float aadtSumEdgesInto = 0;
+        private float ratioForSignal = 0;//Ratio for how long first paired roads allow traffic
+
+        //Seconds on is trafficLightCycleTime * ratio
+        private float trafficLightCycleTime = 60.0f;//Time for a traffic light cycle
+
+        private float offsetTime = 0;//Add a random offset so everything doesn't seem like its running on same time
 
         public enum SignalType
         {
@@ -64,8 +73,10 @@ namespace UrbanEcho.Models
             Feature = feature;
             EdgesInto = new List<EdgeTrafficRule>();
             EdgesOut = new List<RoadEdge>();
-            //WaitTime = waitTime;
+            pairedRoads = new List<PairedTrafficRule>();
             bool isCenterSet = false;
+
+            offsetTime = 5.0f + (float)Random.Shared.NextDouble() * 10.0f;
 
             if (feature is GeometryFeature intersectGF)
             {
@@ -76,12 +87,17 @@ namespace UrbanEcho.Models
                 }
             }
 
+            List<(Vector2 direction, float width)> connectionsForBody = setConnections(graph);
+
+            Body = new IntersectionBody(this, connectionsForBody);
+
             if (isCenterSet && graph is not null)
             {
-                List<(Vector2 direction, float width)> connectionsForBody = setConnections(graph);
-
-                Body = new IntersectionBody(this, connectionsForBody);
                 isBodySet = true;
+            }
+            else
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to add a intersection"));
             }
             FallBackTrafficRule = TrafficRule.SetDefaultTrafficRule();
             SetStaticTrafficRules();
@@ -90,26 +106,172 @@ namespace UrbanEcho.Models
         private void SetStaticTrafficRules()
         {
             TheSignalType = SetSignalType();
+
             if (TheSignalType == SignalType.AllWayStop || TheSignalType == SignalType.TwoWayStop)
             {
-                FallBackTrafficRule = TrafficRule.SetStopSignTrafficRule();
+                SetStaticTrafficRulesStopSign();
             }
             else if (TheSignalType == SignalType.FullSignal)
             {
-                FallBackTrafficRule = TrafficRule.SetDefaultTrafficRule();
+                SetStaticTrafficRulesFullSignal();
             }
-
-            foreach (EdgeTrafficRule edgeTrafficRule in EdgesInto)
+            else
             {
-                if (TheSignalType == SignalType.AllWayStop || TheSignalType == SignalType.TwoWayStop)
-                {
-                    edgeTrafficRule.TrafficRule = TrafficRule.SetStopSignTrafficRule();
-                }
-                else
+                FallBackTrafficRule = TrafficRule.SetDefaultTrafficRule();
+
+                foreach (EdgeTrafficRule edgeTrafficRule in EdgesInto)
                 {
                     edgeTrafficRule.TrafficRule = TrafficRule.SetDefaultTrafficRule();
                 }
             }
+        }
+
+        private void SetStaticTrafficRulesFullSignal()
+        {
+            FallBackTrafficRule = TrafficRule.SetDefaultTrafficRule();
+
+            foreach (EdgeTrafficRule edgeTrafficRule in EdgesInto)
+            {
+                edgeTrafficRule.TrafficRule = TrafficRule.SetDefaultTrafficRule();
+            }
+            //If there are only two edges in set then set the two as a pair
+            if (EdgesInto.Count <= 2)
+            {
+                PairedTrafficRule pairedTrafficRule = new PairedTrafficRule(EdgesInto);
+                pairedRoads.Add(pairedTrafficRule);
+            }
+            if (EdgesInto.Count > 2)
+            {
+                List<EdgeTrafficRule> firstPairedEdges = new List<EdgeTrafficRule>();
+
+                foreach (EdgeTrafficRule edgeTrafficRule1 in EdgesInto)
+                {
+                    if (firstPairedEdges.Count > 0)
+                    {
+                        break;//Found first paired edges so stop
+                    }
+                    string? roadName1 = edgeTrafficRule1.RoadEdge.Feature["STREET"]?.ToString();
+
+                    foreach (EdgeTrafficRule edgeTrafficRule2 in EdgesInto)
+                    {
+                        if (edgeTrafficRule1 == edgeTrafficRule2)
+                        {
+                            continue;
+                        }
+
+                        string? roadName2 = edgeTrafficRule2.RoadEdge.Feature["STREET"]?.ToString();
+
+                        if (roadName1 == roadName2)
+                        {
+                            if (!firstPairedEdges.Contains(edgeTrafficRule1))
+                            {
+                                firstPairedEdges.Add(edgeTrafficRule1);
+                            }
+                            if (!firstPairedEdges.Contains(edgeTrafficRule2))
+                            {
+                                firstPairedEdges.Add(edgeTrafficRule2);
+                            }
+                        }
+                    }
+                }
+                //no pairs found try matching by using closest aadt values
+                if (firstPairedEdges.Count == 0)
+                {
+                    foreach (EdgeTrafficRule edgeTrafficRule1 in EdgesInto)
+                    {
+                        float aadtValue1 = Helpers.Helper.TryGetFeatureKVPToFloat(edgeTrafficRule1.RoadEdge.Feature, "AADT", 0);
+                        bool oneMatch = false;
+                        float closestMatch = 0;
+                        EdgeTrafficRule closestRule = EdgesInto[1];//This cannot be null and should get overwritten with correct value
+                        float difference = 0;
+                        foreach (EdgeTrafficRule edgeTrafficRule2 in EdgesInto)
+                        {
+                            if (edgeTrafficRule1 == edgeTrafficRule2)
+                            {
+                                continue;
+                            }
+                            float aadtValue2 = Helpers.Helper.TryGetFeatureKVPToFloat(edgeTrafficRule2.RoadEdge.Feature, "AADT", 0);
+                            if (oneMatch == false)
+                            {
+                                closestRule = edgeTrafficRule2;
+                                oneMatch = true;
+                                difference = Math.Abs(aadtValue1 - aadtValue2);
+                                closestMatch = difference;
+                            }
+                            else
+                            {
+                                difference = Math.Abs(aadtValue1 - aadtValue2);
+                                if (difference < closestMatch)
+                                {
+                                    closestRule = edgeTrafficRule2;
+                                    closestMatch = difference;
+                                }
+                            }
+                        }
+
+                        if (!firstPairedEdges.Contains(edgeTrafficRule1))
+                        {
+                            firstPairedEdges.Add(edgeTrafficRule1);
+                        }
+                        if (!firstPairedEdges.Contains(closestRule))
+                        {
+                            firstPairedEdges.Add(closestRule);
+                        }
+
+                        if (firstPairedEdges.Count != 0)
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                if (firstPairedEdges.Count == 0)
+                {
+                    PairedTrafficRule pairedTrafficRule = new PairedTrafficRule(EdgesInto);
+                    pairedRoads.Add(pairedTrafficRule);
+                }
+                else
+                {
+                    PairedTrafficRule pairedTrafficRule1 = new PairedTrafficRule(firstPairedEdges);
+                    pairedRoads.Add(pairedTrafficRule1);
+
+                    List<EdgeTrafficRule> secondPairedEdges = new List<EdgeTrafficRule>();
+
+                    foreach (EdgeTrafficRule edgeTrafficRule in EdgesInto)
+                    {
+                        if (!firstPairedEdges.Contains(edgeTrafficRule))
+                        {
+                            secondPairedEdges.Add(edgeTrafficRule);
+                        }
+                    }
+                    if (secondPairedEdges.Count != 0)
+                    {
+                        PairedTrafficRule pairedTrafficRule2 = new PairedTrafficRule(secondPairedEdges);
+                        pairedRoads.Add(pairedTrafficRule2);
+                    }
+                }
+            }
+
+            if (pairedRoads.Count > 1)
+            {
+                float computeRatioForSignal = 1.0f;
+                if (aadtSumEdgesInto != 0)
+                {
+                    computeRatioForSignal = pairedRoads[0].combinedAADT / aadtSumEdgesInto;
+                }
+
+                ratioForSignal = Math.Clamp(computeRatioForSignal, 0.2f, 0.8f);
+            }
+        }
+
+        private void SetStaticTrafficRulesStopSign()
+        {
+            FallBackTrafficRule = TrafficRule.SetStopSignTrafficRule();
+            foreach (EdgeTrafficRule edgeTrafficRule in EdgesInto)
+            {
+                edgeTrafficRule.TrafficRule = TrafficRule.SetStopSignTrafficRule();
+            }
+
             if (TheSignalType == SignalType.TwoWayStop)
             {
                 if (EdgesInto.Count == 0)
@@ -217,81 +379,90 @@ namespace UrbanEcho.Models
         {
             List<(Vector2 pos, float width)> connectingPoints = new List<(Vector2 pos, float width)>();
 
-            for (int edgeIndex = 0; edgeIndex < graph.Edges.Count; edgeIndex++)
+            if (graph is null)
             {
-                IFeature roadFeature = graph.Edges[edgeIndex].Feature;
-                RoadEdge roadEdge = graph.Edges[edgeIndex];
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Graph was null when trying to add intersection"));
+            }
+            else
+            {
+                for (int edgeIndex = 0; edgeIndex < graph.Edges.Count; edgeIndex++)
+                {
+                    IFeature roadFeature = graph.Edges[edgeIndex].Feature;
+                    RoadEdge roadEdge = graph.Edges[edgeIndex];
 
-                if (roadFeature is GeometryFeature gf)
-                    if (gf.Geometry is LineString lineString)
-                    {
-                        if (lineString.Length < 10.0f)
+                    if (roadFeature is GeometryFeature gf)
+                        if (gf.Geometry is LineString lineString)
                         {
-                            continue;//Do not include very short roads that may start and end within the intersection
-                        }
-                        if (lineString.Count > 1)
-                        {
-                            //Add incoming connections
-                            bool forwardDirection = roadEdge.IsFromStartOfLineString;
-
-                            bool connectionHasBeenAdded = CheckIfAddConnection(true);
-
-                            //If that edge was not a outgoing edge check if it is a incoming
-                            //edge by flipping direction and checking the from end
-                            if (!(connectionHasBeenAdded))
+                            if (lineString.Length < 10.0f)
                             {
-                                connectionHasBeenAdded = CheckIfAddConnection(false);
+                                continue;//Do not include very short roads that may start and end within the intersection
                             }
-
-                            bool CheckIfAddConnection(bool checkingOutGoing)
+                            if (lineString.Count > 1)
                             {
-                                bool directionToUse = (checkingOutGoing) ? forwardDirection : !forwardDirection;
-                                int startIndex = 0;
-                                if (!directionToUse)
+                                //Add incoming connections
+                                bool forwardDirection = roadEdge.IsFromStartOfLineString;
+
+                                bool connectionHasBeenAdded = CheckIfAddConnection(true);
+
+                                //If that edge was not a outgoing edge check if it is a incoming
+                                //edge by flipping direction and checking the from end
+                                if (!(connectionHasBeenAdded))
                                 {
-                                    startIndex = lineString.Count - 1;
+                                    connectionHasBeenAdded = CheckIfAddConnection(false);
                                 }
-                                float threshold = 15.0f;
-                                Vector2 roadFeaturePos = Helpers.Helper.Convert2Box2dWorldPosition(lineString.Coordinates[startIndex].X, lineString.Coordinates[startIndex].Y);
-                                bool connectionAdded = false;
-                                if (Vector2.Distance(Center, roadFeaturePos) < threshold)
+
+                                bool CheckIfAddConnection(bool checkingOutGoing)
                                 {
-                                    int nextIndexForSegment = (directionToUse) ? startIndex + 1 : startIndex - 1;
-                                    Vector2 end = Helpers.Helper.Convert2Box2dWorldPosition(lineString.Coordinates[nextIndexForSegment].X, lineString.Coordinates[nextIndexForSegment].Y);
-                                    //TODO: update key value and minWidth to not be hardcoded here
-                                    float minPavementWidth = 8.0f;
-                                    float width = Helpers.Helper.DoMapCorrection(Helpers.Helper.TryGetFeatureKVPToFloat(roadFeature, "PAVEMENT_W", minPavementWidth));
-
-                                    if (width < minPavementWidth)
+                                    bool directionToUse = (checkingOutGoing) ? forwardDirection : !forwardDirection;
+                                    int startIndex = 0;
+                                    if (!directionToUse)
                                     {
-                                        width = minPavementWidth;
+                                        startIndex = lineString.Count - 1;
                                     }
-
-                                    width *= 1.25f;//Add bit of width just incase intersection is not centered
-                                    if (checkingOutGoing)
+                                    float threshold = 15.0f;
+                                    Vector2 roadFeaturePos = Helpers.Helper.Convert2Box2dWorldPosition(lineString.Coordinates[startIndex].X, lineString.Coordinates[startIndex].Y);
+                                    bool connectionAdded = false;
+                                    if (Vector2.Distance(Center, roadFeaturePos) < threshold)
                                     {
-                                        EdgesOut.Add(roadEdge);
-                                        if (!(connectingPoints.Any(point => point.pos == end)))
+                                        int nextIndexForSegment = (directionToUse) ? startIndex + 1 : startIndex - 1;
+                                        Vector2 end = Helpers.Helper.Convert2Box2dWorldPosition(lineString.Coordinates[nextIndexForSegment].X, lineString.Coordinates[nextIndexForSegment].Y);
+                                        //TODO: update key value and minWidth to not be hardcoded here
+                                        float minPavementWidth = 8.0f;
+                                        float width = Helpers.Helper.DoMapCorrection(Helpers.Helper.TryGetFeatureKVPToFloat(roadFeature, "PAVEMENT_W", minPavementWidth));
+
+                                        if (width < minPavementWidth)
                                         {
-                                            connectingPoints.Add((end, width));
+                                            width = minPavementWidth;
                                         }
-                                    }
-                                    else
-                                    {
-                                        TrafficRule trafficRule = TrafficRule.SetDefaultTrafficRule();
 
-                                        EdgesInto.Add(new EdgeTrafficRule(roadEdge, trafficRule));
-                                        if (!(connectingPoints.Any(point => point.pos == end)))
+                                        width *= 1.25f;//Add bit of width just incase intersection is not centered
+                                        if (checkingOutGoing)
                                         {
-                                            connectingPoints.Add((end, width));
+                                            EdgesOut.Add(roadEdge);
+                                            if (!(connectingPoints.Any(point => point.pos == end)))
+                                            {
+                                                connectingPoints.Add((end, width));
+                                            }
                                         }
+                                        else
+                                        {
+                                            TrafficRule trafficRule = TrafficRule.SetDefaultTrafficRule();
+
+                                            EdgesInto.Add(new EdgeTrafficRule(roadEdge, trafficRule));
+                                            aadtSumEdgesInto += Helpers.Helper.TryGetFeatureKVPToFloat(roadEdge.Feature, "AADT", 0);
+
+                                            if (!(connectingPoints.Any(point => point.pos == end)))
+                                            {
+                                                connectingPoints.Add((end, width));
+                                            }
+                                        }
+                                        connectionAdded = true;
                                     }
-                                    connectionAdded = true;
+                                    return connectionAdded;
                                 }
-                                return connectionAdded;
                             }
                         }
-                    }
+                }
             }
             return connectingPoints;
         }
@@ -302,16 +473,60 @@ namespace UrbanEcho.Models
             {
                 UpdateStopSignRule();
             }
+            if (TheSignalType == SignalType.FullSignal)
+            {
+                UpdateFullSignalRule();
+            }
+            /* else
+             {
+                 if (EdgesInto.Count != 0)
+                 {
+                     for (int i = 0; i < EdgesInto.Count; i++)
+                     {
+                         EdgesInto[i].TrafficRule.SetBlock(false);
+                     }
+                 }
+                 FallBackTrafficRule.SetBlock(false);
+             }*/
+        }
+
+        private void UpdateFullSignalRule()
+        {
+            if (pairedRoads.Count < 2)
+            {
+                //Just keep signals unblocked all the time and do nothing
+            }
             else
             {
-                if (EdgesInto.Count != 0)
+                //gives a 0 to 1 value for where in traffic light cycle it is in
+                float cyclePostion = ((offsetTime + Sim.Sim.GetSimTime()) % trafficLightCycleTime) / trafficLightCycleTime;
+
+                //Choose what pair of roads unblock traffic
+                foreach (EdgeTrafficRule edgeTrafficRule in EdgesInto)
                 {
-                    for (int i = 0; i < EdgesInto.Count; i++)
+                    if (pairedRoads[0].TrafficRules.Contains(edgeTrafficRule))
                     {
-                        EdgesInto[i].TrafficRule.SetBlock(false);
+                        if (cyclePostion <= ratioForSignal)
+                        {
+                            edgeTrafficRule.TrafficRule.SetBlock(false);
+                        }
+                        else
+                        {
+                            edgeTrafficRule.TrafficRule.SetBlock(true);
+                        }
+                    }
+                    else //if edge isn't in first road pair list apply opposite blocking rules
+                    {
+                        if (cyclePostion <= ratioForSignal)
+                        {
+                            edgeTrafficRule.TrafficRule.SetBlock(true);
+                        }
+                        else
+                        {
+                            edgeTrafficRule.TrafficRule.SetBlock(false);
+                        }
                     }
                 }
-                FallBackTrafficRule.SetBlock(false);
             }
         }
 
@@ -320,7 +535,7 @@ namespace UrbanEcho.Models
             if (EdgesInto.Count != 0)
             {
                 //allow one incoming to unblock at a time every 2 seconds
-                int every2Seconds = (int)(Sim.Sim.GetSimTime() * 0.5f);
+                int every2Seconds = (int)((offsetTime + Sim.Sim.GetSimTime()) * 0.5f);
                 int edgeToUnblock = every2Seconds % (EdgesInto.Count);
                 if (edgeToUnblock > 0)
                 {
@@ -348,7 +563,7 @@ namespace UrbanEcho.Models
 
             if (FallBackTrafficRule.IsNeverBlockingTraffic() == false)
             {
-                int every2Seconds = (int)(Sim.Sim.GetSimTime() * 0.5f);
+                int every2Seconds = (int)((offsetTime + Sim.Sim.GetSimTime()) * 0.5f);
                 int fallBackBlocking = (every2Seconds) % 2;
                 if (fallBackBlocking == 0)
                 {
