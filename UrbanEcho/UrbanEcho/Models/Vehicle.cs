@@ -56,7 +56,7 @@ namespace UrbanEcho.Sim
 
         private Vector2 endPos = Vector2.Zero;
 
-        private float distanceThresholdReachedTarget = 5.0f;
+        private float distanceThresholdReachedTarget = 10.0f;
 
         private b2QueryFilter queryFilter = B2Api.b2DefaultQueryFilter();
 
@@ -113,6 +113,9 @@ namespace UrbanEcho.Sim
 
         private int lanePicked = 1;
         private float calculatedOffsetForLane = 0.5f;
+
+        private float lastTimeCheckedOverlap = 0;
+        private float overlapTestFrequency = 5.0f;//Check for overlap every five seconds
 
         public Vehicle(PointFeature feature, RoadEdge currentRoadEdge, string carType, int updateGroup)
         {
@@ -533,8 +536,12 @@ namespace UrbanEcho.Sim
                 b2ShapeProxy b2ShapeProxy = B2Api.b2MakeOffsetProxy(vertices, vertices.Length, 0.0f, Pos, currentAngle);
 
                 queryFilter.maskBits = (ulong)ShapeCategories.Vehicle;
-                B2Api.b2World_OverlapShape(World.WorldId, b2ShapeProxy, queryFilter, overlapDelegateVehicle, 1);
-
+                if (Sim.GetSimTime() > lastTimeCheckedOverlap + overlapTestFrequency)
+                {
+                    B2Api.b2World_OverlapShape(World.WorldId, b2ShapeProxy, queryFilter, overlapDelegateVehicle, 1);
+                    lastTimeCheckedOverlap = Sim.GetSimTime() + (float)Random.Shared.NextDouble();//add a 1 second random offset so not all vehicles
+                                                                                                  //do this at same time
+                }
                 if (!(insideAnotherVehicle))
                 {
                     //Start raycast from front of car, so ray is not against self

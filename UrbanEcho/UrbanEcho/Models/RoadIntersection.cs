@@ -40,6 +40,12 @@ namespace UrbanEcho.Models
         private float trafficLightCycleTime = 60.0f;//Time for a traffic light cycle
 
         private float offsetTime = 0;//Add a random offset so everything doesn't seem like its running on same time
+        private bool wasFirstPartOfCycle = true;
+        private float timeWhenStartedCurrentPartOfCycle = 0.0f;
+        private float amountOfTimeForAllRed = 2.0f;
+        private bool didSetCurrentCycleValues = true;
+        private bool didSetBlockedForAllRed = false;
+        private bool firstCycleInitialized = false;
 
         public enum SignalType
         {
@@ -513,31 +519,58 @@ namespace UrbanEcho.Models
             {
                 //gives a 0 to 1 value for where in traffic light cycle it is in
                 float cyclePostion = ((offsetTime + Sim.Sim.GetSimTime()) % trafficLightCycleTime) / trafficLightCycleTime;
-
-                //Choose what pair of roads unblock traffic
-                foreach (EdgeTrafficRule edgeTrafficRule in EdgesInto)
+                bool isFirstPartOfCycle = (cyclePostion <= ratioForSignal);
+                if (isFirstPartOfCycle != wasFirstPartOfCycle || !firstCycleInitialized)
                 {
-                    if (pairedRoads[0].TrafficRules.Contains(edgeTrafficRule))
+                    firstCycleInitialized = true;
+                    didSetBlockedForAllRed = false;
+                    didSetCurrentCycleValues = false;
+                    wasFirstPartOfCycle = isFirstPartOfCycle;
+                    timeWhenStartedCurrentPartOfCycle = Sim.Sim.GetSimTime();
+                }
+
+                if (timeWhenStartedCurrentPartOfCycle + amountOfTimeForAllRed > Sim.Sim.GetSimTime())
+                {
+                    if (!didSetBlockedForAllRed)
                     {
-                        if (cyclePostion <= ratioForSignal)
-                        {
-                            edgeTrafficRule.TrafficRule.SetBlock(false);
-                        }
-                        else
+                        foreach (EdgeTrafficRule edgeTrafficRule in EdgesInto)//Set all as blocked if during all red part of cycle
                         {
                             edgeTrafficRule.TrafficRule.SetBlock(true);
                         }
+                        didSetBlockedForAllRed = true;
                     }
-                    else //if edge isn't in first road pair list apply opposite blocking rules
+                }
+                else
+                {
+                    if (!didSetCurrentCycleValues)
                     {
-                        if (cyclePostion <= ratioForSignal)
+                        //Choose what pair of roads unblock traffic this only needs to be done once after the all red part of cycle
+                        foreach (EdgeTrafficRule edgeTrafficRule in EdgesInto)
                         {
-                            edgeTrafficRule.TrafficRule.SetBlock(true);
+                            if (pairedRoads[0].TrafficRules.Contains(edgeTrafficRule))
+                            {
+                                if (cyclePostion <= ratioForSignal)
+                                {
+                                    edgeTrafficRule.TrafficRule.SetBlock(false);
+                                }
+                                else
+                                {
+                                    edgeTrafficRule.TrafficRule.SetBlock(true);
+                                }
+                            }
+                            else //if edge isn't in first road pair list apply opposite blocking rules
+                            {
+                                if (cyclePostion <= ratioForSignal)
+                                {
+                                    edgeTrafficRule.TrafficRule.SetBlock(true);
+                                }
+                                else
+                                {
+                                    edgeTrafficRule.TrafficRule.SetBlock(false);
+                                }
+                            }
                         }
-                        else
-                        {
-                            edgeTrafficRule.TrafficRule.SetBlock(false);
-                        }
+                        didSetCurrentCycleValues = true;
                     }
                 }
             }
@@ -550,10 +583,7 @@ namespace UrbanEcho.Models
                 //allow one incoming to unblock at a time every 2 seconds
                 int every2Seconds = (int)((offsetTime + Sim.Sim.GetSimTime()) * 0.5f);
                 int edgeToUnblock = every2Seconds % (EdgesInto.Count);
-                if (edgeToUnblock > 0)
-                {
-                    bool value = false;
-                }
+
                 for (int i = 0; i < EdgesInto.Count; i++)
                 {
                     if (EdgesInto[i].TrafficRule.IsNeverBlockingTraffic() == false)
