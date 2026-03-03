@@ -32,6 +32,8 @@ namespace UrbanEcho.Sim
 
         public static RoadGraph? RoadGraph;
 
+        public static CensusSpawnManager? CensusSpawn;
+
         public static float SimTime = 0;
 
         public static long SimFrames = 0;
@@ -69,7 +71,7 @@ namespace UrbanEcho.Sim
             LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/ProjectFiles/myFile.Json", mainViewModel.Map.MyMap);
             EventQueueForSim.Instance.Add(loadProjectEvent); //will usually happen from UI
 
-            FrameTimer frameTimer = new FrameTimer(true);
+            FrameTimer frameTimer = new FrameTimer(false);
 
             while (Cts.IsCancellationRequested == false)
             {
@@ -162,6 +164,26 @@ namespace UrbanEcho.Sim
 
             pathfinder = new AStarPathfinder(RoadGraph);
             nodes = RoadGraph.Nodes.Keys.ToList();
+        }
+
+        /// <summary>
+        /// Load census data and create the census-aware spawn manager.
+        /// Call after InitializeGraph().
+        /// </summary>
+        public static void InitializeCensusSpawning(string censusShapefilePath)
+        {
+            if (RoadGraph == null)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(mainViewModel,
+                    "[Census] Cannot load census data before road graph"));
+                return;
+            }
+
+            var zones = CensusDataLoader.Load(censusShapefilePath, RoadGraph);
+            CensusSpawn = new CensusSpawnManager(zones, RoadGraph);
+
+            EventQueueForUI.Instance.Add(new LogToConsole(mainViewModel,
+                $"[Census] Spawn manager ready: {(CensusSpawn.IsLoaded ? "OK" : "FALLBACK MODE")}"));
         }
 
         public static void InitializeVehicle(Vehicle v)

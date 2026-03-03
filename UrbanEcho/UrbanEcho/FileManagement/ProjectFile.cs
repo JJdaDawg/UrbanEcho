@@ -17,6 +17,7 @@ namespace UrbanEcho.FileManagement
         public string BackgroundLayerPath = "";
         public string RoadLayerPath = "";
         public string IntersectionLayerPath = "";
+        public string CensusLayerPath = "";
 
         public ProjectFile()
         {

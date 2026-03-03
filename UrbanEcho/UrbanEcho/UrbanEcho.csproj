@@ -48,6 +48,7 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="FluentAvaloniaUI" Version="2.1.0" />
     <PackageReference Include="FluentIcons.Avalonia" Version="2.0.318" />
+    <PackageReference Include="DotSpatial.Projections" Version="4.0.656" />
     <PackageReference Include="Mapsui.Avalonia" Version="5.0.2" />
     <PackageReference Include="Mapsui.Extensions" Version="5.0.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
@@ -58,6 +59,7 @@
   <ItemGroup>
     <Folder Include="Resources\ProjectFiles\" />
     <Folder Include="Resources\ShapeFiles\intersections_kitchener\" />
+    <Folder Include="Resources\ShapeFiles\Census_2021_Work_Commuting\" />
   </ItemGroup>
 
   <ItemGroup>
@@ -131,6 +133,21 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Resources\ShapeFiles\Road_Network\Road_Network.shx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\ShapeFiles\Census_2021_Work_Commuting\GIS_DATA_CENSUS_2021_WORK_COMMUTING.cpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\ShapeFiles\Census_2021_Work_Commuting\GIS_DATA_CENSUS_2021_WORK_COMMUTING.dbf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\ShapeFiles\Census_2021_Work_Commuting\GIS_DATA_CENSUS_2021_WORK_COMMUTING.prj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\ShapeFiles\Census_2021_Work_Commuting\GIS_DATA_CENSUS_2021_WORK_COMMUTING.shp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\ShapeFiles\Census_2021_Work_Commuting\GIS_DATA_CENSUS_2021_WORK_COMMUTING.shx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Resources\ShapeFiles\Traffic_Volumes\Traffic_Volumes.cpg">
