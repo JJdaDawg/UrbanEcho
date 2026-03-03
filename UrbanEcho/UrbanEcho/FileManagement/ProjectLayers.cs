@@ -359,9 +359,12 @@ namespace UrbanEcho.FileManagement
                     {
                         if (intersectGF.Geometry is Point p)
                         {
-                            RoadIntersection r = new RoadIntersection(name, 3.0f, feature, Sim.Sim.RoadGraph);
+                            RoadIntersection? r = RoadIntersection.Create(name, feature, Sim.Sim.RoadGraph);
 
-                            Sim.Sim.RoadIntersections.Add(r);
+                            if (r is not null)
+                            {
+                                Sim.Sim.RoadIntersections.Add(r);
+                            }
                         }
                     }
                 }

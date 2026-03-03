@@ -14,14 +14,14 @@ namespace UrbanEcho.Models
         private bool validType = false;
 
         //Have variable for length of each car type so style can scale image correct
-        public static readonly float CarLength = 6.0f;//Helper.DoMapCorrection(4.0f);
+        public static readonly float CarLength = 5.0f;//Helper.DoMapCorrection(4.0f);
 
         public VehicleSettings(string carType)
         {
             if (carType == "RegularCar")
             {
                 length = CarLength;
-                width = 3.0f;//Helper.DoMapCorrection(2.0f);
+                width = 2.0f;//Helper.DoMapCorrection(2.0f);
 
                 acceleration = 2.0f;// Helper.DoMapCorrection(0.5f * Helper.NumberOfVehicleGroups);
                 deceleration = 2.0f;// Helper.DoMapCorrection(3.0f * Helper.NumberOfVehicleGroups);

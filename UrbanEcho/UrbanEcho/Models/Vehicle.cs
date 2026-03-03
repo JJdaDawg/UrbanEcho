@@ -111,6 +111,9 @@ namespace UrbanEcho.Sim
         private bool hasClearedIntersection = true;
         private bool intersectionOccupied = false;
 
+        private int lanePicked = 1;
+        private float calculatedOffsetForLane = 0.5f;
+
         public Vehicle(PointFeature feature, RoadEdge currentRoadEdge, string carType, int updateGroup)
         {
             settings = new VehicleSettings(carType);
@@ -832,8 +835,8 @@ namespace UrbanEcho.Sim
                         angleForLaneOffset = 0;
                     //1/0.707f so lane is wider since we are measuring at a 135angle
                     Vector2 laneOffset = new Vector2(
-                        MathF.Cos(angleForLaneOffset + Helper.Deg2Rad(-90.0f - 45.0f)) * Helper.DefaultLaneWidth * 1 / 0.707f,
-                        MathF.Sin(angleForLaneOffset + Helper.Deg2Rad(-90.0f - 45.0f)) * Helper.DefaultLaneWidth * 1 / 0.707f);
+                        MathF.Cos(angleForLaneOffset + Helper.Deg2Rad(-90.0f - 45.0f)) * Helper.DefaultLaneWidth * (calculatedOffsetForLane) / 0.707f,
+                        MathF.Sin(angleForLaneOffset + Helper.Deg2Rad(-90.0f - 45.0f)) * Helper.DefaultLaneWidth * (calculatedOffsetForLane) / 0.707f);
 
                     startPos = new Vector2(startPosRoad.X + laneOffset.X, startPosRoad.Y + laneOffset.Y);
 
@@ -891,7 +894,58 @@ namespace UrbanEcho.Sim
                 }
             }
 
+            SetLane(updatedRoadEdge);
+
             return updatedRoadEdge;
+        }
+
+        private void SetLane(RoadEdge roadEdge)
+        {
+            bool hasSamePropertiesAsOldEdge = true;
+
+            int numberOfLanes = Helpers.Helper.TryGetFeatureKVPToInt(roadEdge.Feature, "LANES", 2);
+            if (currentRoadEdge is null || currentRoadEdge.Metadata.OneWay != roadEdge.Metadata.OneWay)
+            {
+                hasSamePropertiesAsOldEdge = false;
+            }
+
+            if (currentRoadEdge is null || Helpers.Helper.TryGetFeatureKVPToInt(currentRoadEdge.Feature, "LANES", 2) !=
+                numberOfLanes)
+            {
+                hasSamePropertiesAsOldEdge = false;
+            }
+
+            //if different properties allow picking a new lane
+            if (!hasSamePropertiesAsOldEdge)
+            {
+                if (numberOfLanes <= 1)
+                {
+                    calculatedOffsetForLane = 0;
+                    lanePicked = 0;
+                }
+                else
+                {
+                    if (roadEdge.Metadata.OneWay)
+                    {
+                        float offsetToUse = (numberOfLanes - 1) / 2.0f;
+
+                        lanePicked = Random.Shared.Next(numberOfLanes);
+                        calculatedOffsetForLane = (lanePicked - offsetToUse);
+                    }
+                    else
+                    {
+                        bool isEven = (numberOfLanes % 2) == 0;
+                        float offsetToUse = isEven ? 0.5f : 1.5f;
+                        int chooseableLanes = isEven ? (numberOfLanes / 2) : ((numberOfLanes - 1) / 2);
+                        if (numberOfLanes == 5 && chooseableLanes >= 3)
+                        {
+                            bool help = true;
+                        }
+                        lanePicked = Random.Shared.Next(chooseableLanes);
+                        calculatedOffsetForLane = (lanePicked + offsetToUse);
+                    }
+                }
+            }
         }
     }
 }

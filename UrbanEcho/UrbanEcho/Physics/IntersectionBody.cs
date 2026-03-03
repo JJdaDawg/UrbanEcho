@@ -21,7 +21,7 @@ namespace UrbanEcho.Physics
         public b2BodyId BodyId;
 
         //Used for when no connection points line up with intersection
-        private static float defaultSize = 12.0f * Helper.MapCorrection;
+        private static float defaultSize = 17.0f * Helper.MapCorrection;
 
         public b2Polygon polygon;
 

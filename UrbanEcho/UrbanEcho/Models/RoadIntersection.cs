@@ -19,14 +19,14 @@ namespace UrbanEcho.Models
 
         public Vector2 Center;
 
-        public IntersectionBody Body;
+        public IntersectionBody? Body;
 
         public string Name = "test123";
 
         public IFeature Feature;
 
         private bool isBodySet = false;
-
+        private bool isCenterSet = false;
         public TrafficRule FallBackTrafficRule;//Used if intersection has no connecting edges
 
         public SignalType TheSignalType = SignalType.Uncontrolled;
@@ -67,46 +67,59 @@ namespace UrbanEcho.Models
             Uncontrolled
         };
 
-        public RoadIntersection(string name, float waitTime, IFeature feature, RoadGraph graph)
+        private RoadIntersection(string name, IFeature feature, RoadGraph graph)
         {
             this.Name = name;
             Feature = feature;
             EdgesInto = new List<EdgeTrafficRule>();
             EdgesOut = new List<RoadEdge>();
             pairedRoads = new List<PairedTrafficRule>();
-            bool isCenterSet = false;
-
-            offsetTime = 5.0f + (float)Random.Shared.NextDouble() * 10.0f;
-
-            if (feature is GeometryFeature intersectGF)
+            TheSignalType = SetSignalType();
+            //Only allow few types to be created
+            if (TheSignalType == SignalType.AllWayStop || TheSignalType == SignalType.TwoWayStop || TheSignalType == SignalType.FullSignal)
             {
-                if (intersectGF.Geometry is Point p)
+                if (feature is GeometryFeature intersectGF)
                 {
-                    Center = Helpers.Helper.Convert2Box2dWorldPosition(p);
-                    isCenterSet = true;
+                    if (intersectGF.Geometry is Point p)
+                    {
+                        Center = Helpers.Helper.Convert2Box2dWorldPosition(p);
+                        isCenterSet = true;
+                    }
                 }
             }
+        }
 
-            List<(Vector2 direction, float width)> connectionsForBody = setConnections(graph);
+        public static RoadIntersection? Create(string name, IFeature feature, RoadGraph graph)
+        {
+            RoadIntersection? returnValue = new RoadIntersection(name, feature, graph);
 
-            Body = new IntersectionBody(this, connectionsForBody);
-
-            if (isCenterSet && graph is not null)
+            if (returnValue.isCenterSet == false)//If center not set just return null
             {
-                isBodySet = true;
+                returnValue = null;
             }
             else
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to add a intersection"));
+                returnValue.offsetTime = 5.0f + (float)Random.Shared.NextDouble() * 10.0f;
+
+                List<(Vector2 direction, float width)> connectionsForBody = returnValue.setConnections(graph);
+                if (returnValue.isCenterSet && graph is not null)
+                {
+                    returnValue.Body = new IntersectionBody(returnValue, connectionsForBody);
+                    returnValue.isBodySet = true;
+                    returnValue.FallBackTrafficRule = TrafficRule.SetDefaultTrafficRule();
+                    returnValue.SetStaticTrafficRules();
+                }
+                else
+                {
+                    returnValue = null;
+                    EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to add a intersection"));
+                }
             }
-            FallBackTrafficRule = TrafficRule.SetDefaultTrafficRule();
-            SetStaticTrafficRules();
+            return returnValue;
         }
 
         private void SetStaticTrafficRules()
         {
-            TheSignalType = SetSignalType();
-
             if (TheSignalType == SignalType.AllWayStop || TheSignalType == SignalType.TwoWayStop)
             {
                 SetStaticTrafficRulesStopSign();
@@ -257,7 +270,7 @@ namespace UrbanEcho.Models
                 float computeRatioForSignal = 1.0f;
                 if (aadtSumEdgesInto != 0)
                 {
-                    computeRatioForSignal = pairedRoads[0].combinedAADT / aadtSumEdgesInto;
+                    computeRatioForSignal = pairedRoads[0].CombinedAADT / aadtSumEdgesInto;
                 }
 
                 ratioForSignal = Math.Clamp(computeRatioForSignal, 0.2f, 0.8f);
@@ -435,7 +448,7 @@ namespace UrbanEcho.Models
                                             width = minPavementWidth;
                                         }
 
-                                        width *= 1.25f;//Add bit of width just incase intersection is not centered
+                                        width *= 1.5f;//Add bit of width just incase intersection is not centered
                                         if (checkingOutGoing)
                                         {
                                             EdgesOut.Add(roadEdge);
