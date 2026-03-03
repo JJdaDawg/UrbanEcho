@@ -24,6 +24,7 @@ using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
 using UrbanEcho.Graph;
 using UrbanEcho.Helpers;
+using UrbanEcho.Models;
 using UrbanEcho.Physics;
 using UrbanEcho.Sim;
 using UrbanEcho.Styles;
@@ -454,7 +455,7 @@ namespace UrbanEcho.FileManagement
                     ? TrafficVolumeLoader.BuildWeightedEdgeSpawnList(Sim.Sim.RoadGraph)
                     : new List<int>();
 
-                int spawnCount = 10000;// Sim.Sim.RoadGraph?.Edges.Count / 2 ?? 0;
+                int spawnCount = 5000;// Sim.Sim.RoadGraph?.Edges.Count / 2 ?? 0;
 
                 for (int v = 0; v < spawnCount; v++)
                 {
@@ -533,7 +534,7 @@ namespace UrbanEcho.FileManagement
 
                     GraphLayerFeatures.Add(pf);
                 }*/
-                /*
+
                 if (ProjectLayers.CreateRoadIntersections())
                 {
                     Sim.Sim.SetIntersectionBodiesCreated();
@@ -563,8 +564,8 @@ namespace UrbanEcho.FileManagement
                         }
                     }
                 }
-                */
-                /*show graph*/
+
+                /*show graph
                 for (int i = 0; i < Sim.Sim.RoadGraph.Edges.Count; i++)
                 {
                     int fromNodeIndex = Sim.Sim.RoadGraph.Edges[i].From;
@@ -594,7 +595,7 @@ namespace UrbanEcho.FileManagement
                         EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to get from Node"));
                     }
                 }
-
+                */
                 layer.Opacity = 1.0f;
 
                 VectorStyle orangeDotStyle = new VectorStyle { Line = new Pen { Color = Color.Pink, Width = 5 }, Outline = new Pen { Color = Color.Black, Width = 0.5 }, Fill = new Mapsui.Styles.Brush(Color.Orange) };

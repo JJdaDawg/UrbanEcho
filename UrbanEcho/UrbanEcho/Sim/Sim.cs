@@ -1,8 +1,12 @@
-﻿using Box2dNet.Interop;
+﻿using Box2dNet;
+using Box2dNet.Interop;
+using BruTile.Wms;
 using Mapsui;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 using UrbanEcho.Events.Sim;
@@ -10,6 +14,7 @@ using UrbanEcho.Events.UI;
 using UrbanEcho.FileManagement;
 using UrbanEcho.Graph;
 using UrbanEcho.Helpers;
+using UrbanEcho.Models;
 using UrbanEcho.Physics;
 using UrbanEcho.ViewModels;
 using static UrbanEcho.FileManagement.FileTypes;
@@ -32,7 +37,7 @@ namespace UrbanEcho.Sim
 
         public static RoadGraph? RoadGraph;
 
-        public static float SimTime = 0;
+        private static float simTime = 0;
 
         public static long SimFrames = 0;
 
@@ -41,7 +46,7 @@ namespace UrbanEcho.Sim
         public static AStarPathfinder? pathfinder;
         public static List<int>? nodes;
 
-        private static bool vehiclePathsLoaded = false;
+        public static bool VehiclePathsLoaded = false;
         private static bool intersectionBodiesCreated = false;
 
         public static void SetMainViewModel(MainViewModel setMainViewModel)
@@ -69,7 +74,7 @@ namespace UrbanEcho.Sim
             LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/ProjectFiles/myFile.Json", mainViewModel.Map.MyMap);
             EventQueueForSim.Instance.Add(loadProjectEvent); //will usually happen from UI
 
-            FrameTimer frameTimer = new FrameTimer(false);
+            FrameTimer frameTimer = new FrameTimer(true, 60);
 
             while (Cts.IsCancellationRequested == false)
             {
@@ -92,6 +97,11 @@ namespace UrbanEcho.Sim
             }
         }
 
+        public static float GetSimTime()
+        {
+            return simTime;
+        }
+
         private static void simulationLoop()
         {
             if (World.Created)
@@ -104,22 +114,29 @@ namespace UrbanEcho.Sim
                     }
                     EventQueueForUI.Instance.Add(new LogToConsole(mainViewModel, "Done adding intersection bodies"));
                 }
+
                 B2Api.b2World_Step(World.WorldId, 1 / 60.0f, 1);
 
-                Sim.SimTime += 1 / 60.0f;
+                Sim.simTime += 1 / 60.0f;
 
                 Sim.SimFrames++;
 
                 Sim.GroupToUpdate = (Sim.GroupToUpdate + 1) % Helper.NumberOfVehicleGroups;
                 bool aPathNotLoaded = false;
-                foreach (Vehicle v in Vehicles)
+                if (!VehiclePathsLoaded)
                 {
-                    if (!v.GraphSet)
+                    foreach (Vehicle v in Vehicles)
                     {
-                        aPathNotLoaded = true;
-                        InitializeVehicle(v);
+                        if (!v.GraphSet)
+                        {
+                            aPathNotLoaded = true;
+                            InitializeVehicle(v);
+                        }
                     }
-                    else
+                }
+                else
+                {
+                    foreach (Vehicle v in Vehicles)
                     {
                         v.Update();
                     }
@@ -127,12 +144,17 @@ namespace UrbanEcho.Sim
 
                 if (!aPathNotLoaded)
                 {
-                    if (!vehiclePathsLoaded)
+                    if (!VehiclePathsLoaded)
                     {
-                        vehiclePathsLoaded = true;
+                        VehiclePathsLoaded = true;
                         EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), "All vehicle paths loaded"));
                     }
                 }
+            }
+
+            foreach (RoadIntersection roadIntersection in RoadIntersections)
+            {
+                roadIntersection.UpdateTrafficRules();
             }
 
             //Only update vehicle layer if ui queue is empty and do it every few frames
@@ -175,6 +197,7 @@ namespace UrbanEcho.Sim
         public static void Free()
         {
             Sim.Cts.Cancel();
+
             try
             {
                 if (Sim.SimTask != null)

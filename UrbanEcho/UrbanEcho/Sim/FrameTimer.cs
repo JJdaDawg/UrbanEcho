@@ -10,11 +10,11 @@ namespace UrbanEcho.Sim
 
         private Stopwatch fpsTimer;
 
-        private double targetMs = 16.6667f;
-        private double actualMs = 0.0f;
+        private double targetMs;
+        private double actualMs;
 
         private const double second = 1000;
-        private const double targetFrameTime = 16.6666667f;
+        private double targetFrameTime;
 
         private int frames = 0;
         private string timeToSend = "";
@@ -25,8 +25,11 @@ namespace UrbanEcho.Sim
 
         public double ElaspedSecondsSinceLastFrame = 0;
 
-        public FrameTimer(bool showingFPS)
+        public FrameTimer(bool showingFPS, int fpsTarget)
         {
+            targetMs = 1000.0f * 1.0f / (float)(fpsTarget);
+            targetFrameTime = targetMs;
+
             fpsTimer = new Stopwatch();
             fpsTimer.Start();
             stopwatch = new Stopwatch();

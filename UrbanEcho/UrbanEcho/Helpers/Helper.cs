@@ -23,9 +23,9 @@ namespace UrbanEcho.Helpers
     public static class Helper
     {
         //1.0f / MathF.Cos(43.4511f*(MathF.PI / 180.0f))
-        public const float MapCorrection = 1.37748f;
+        public const float MapCorrection = 1.0f;// 1.37748f; try without since the correction only applies to east to west
 
-        public const float DefaultLaneWidth = 3.5f * MapCorrection;//in meters
+        public const float DefaultLaneWidth = 4.0f * MapCorrection;//in meters
         public const int NumberOfVehicleGroups = 4; //spread out the updates so we can have better fps
 
         public static Point MakePrecisePoint(
@@ -141,6 +141,24 @@ namespace UrbanEcho.Helpers
                 if (gf.Fields.Contains(key))
                 {
                     if (float.TryParse(gf[key]?.ToString(), out float valueOut))
+                    {
+                        value = valueOut;
+                    }
+                }
+            }
+
+            return value;
+        }
+
+        public static int TryGetFeatureKVPToInt(IFeature feature, string key, int defaultValue)
+        {
+            int value = defaultValue;
+
+            if (feature is GeometryFeature gf)
+            {
+                if (gf.Fields.Contains(key))
+                {
+                    if (Int32.TryParse(gf[key]?.ToString(), out int valueOut))
                     {
                         value = valueOut;
                     }
