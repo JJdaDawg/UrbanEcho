@@ -13,7 +13,6 @@ namespace UrbanEcho.ViewModels
 {
     public partial class ProjectViewModel : ObservableObject
     {
-
         private readonly IFileDialogService _fileDialogService;
         private ProjectFile? _currentProject;
 
@@ -29,14 +28,28 @@ namespace UrbanEcho.ViewModels
         {
             var path = await _fileDialogService.OpenFileAsync();
             if (path is null) return;
+            Map? map = Sim.Sim.MyMap;
+            if (map != null)
+            {
+                LoadFileEvent loadProjectEvent = new LoadFileEvent(UrbanEcho.FileManagement.FileTypes.FileType.ProjectFile, path, map);
+                EventQueueForSim.Instance.Add(loadProjectEvent);
+            }
+        }
 
-            _currentProject = ProjectFile.Open(path);
+        public void OpenedProject(string path)
+        {
+            _currentProject = ProjectLayers.GetProject();
+
             if (_currentProject is not null)
             {
                 HasProject = true;
                 NotifyProjectCommands();
                 WeakReferenceMessenger.Default.Send(new ProjectLoadedMessage());
                 WeakReferenceMessenger.Default.Send(new LogMessage($"Project successfully opened '{path}'", LogSource.System));
+            }
+            else
+            {
+                HasProject = false;
             }
         }
 
@@ -93,7 +106,9 @@ namespace UrbanEcho.ViewModels
         }
 
         private bool CanSave() => _currentProject is not null;
+
         private bool CanClose() => _currentProject is not null;
+
         private bool CanImportData() => _currentProject is not null;
 
         private void NotifyProjectCommands()

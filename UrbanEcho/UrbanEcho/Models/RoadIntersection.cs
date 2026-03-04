@@ -445,22 +445,27 @@ namespace UrbanEcho.Models
                                     {
                                         int nextIndexForSegment = (directionToUse) ? startIndex + 1 : startIndex - 1;
                                         Vector2 end = Helpers.Helper.Convert2Box2dWorldPosition(lineString.Coordinates[nextIndexForSegment].X, lineString.Coordinates[nextIndexForSegment].Y);
+
+                                        double pavementWidth = 0;
                                         //TODO: update key value and minWidth to not be hardcoded here
-                                        float minPavementWidth = 8.0f;
-                                        float width = Helpers.Helper.DoMapCorrection(Helpers.Helper.TryGetFeatureKVPToFloat(roadFeature, "PAVEMENT_W", minPavementWidth));
+                                        //pavementWidth = Helpers.Helper.TryGetFeatureKVPToDouble(gf, "PAVEMENT_W", 1);
 
-                                        if (width < minPavementWidth)
-                                        {
-                                            width = minPavementWidth;
-                                        }
+                                        //if (pavementWidth < 4)
+                                        //{
+                                        //    int lanes = Helpers.Helper.TryGetFeatureKVPToInt(gf, "LANES", 2);
 
-                                        width *= 1.5f;//Add bit of width just incase intersection is not centered
+                                        //    pavementWidth = lanes * Helpers.Helper.DefaultLaneWidth;
+                                        //}
+                                        //pavementWidth = pavementWidth * Helpers.Helper.ExtraPavementFactor;
+                                        int lanes = Helpers.Helper.TryGetFeatureKVPToInt(gf, "LANES", 2);
+                                        pavementWidth = lanes * Helpers.Helper.DefaultLaneWidth * Helpers.Helper.ExtraPavementFactor;
+
                                         if (checkingOutGoing)
                                         {
                                             EdgesOut.Add(roadEdge);
                                             if (!(connectingPoints.Any(point => point.pos == end)))
                                             {
-                                                connectingPoints.Add((end, width));
+                                                connectingPoints.Add((end, (float)pavementWidth));
                                             }
                                         }
                                         else
@@ -472,7 +477,7 @@ namespace UrbanEcho.Models
 
                                             if (!(connectingPoints.Any(point => point.pos == end)))
                                             {
-                                                connectingPoints.Add((end, width));
+                                                connectingPoints.Add((end, (float)pavementWidth));
                                             }
                                         }
                                         connectionAdded = true;
@@ -580,8 +585,8 @@ namespace UrbanEcho.Models
         {
             if (EdgesInto.Count != 0)
             {
-                //allow one incoming to unblock at a time every 2 seconds
-                int every2Seconds = (int)((offsetTime + Sim.Sim.GetSimTime()) * 0.5f);
+                //allow one incoming to unblock at a time every 3.3 seconds
+                int every2Seconds = (int)((offsetTime + Sim.Sim.GetSimTime()) * 0.3f);
                 int edgeToUnblock = every2Seconds % (EdgesInto.Count);
 
                 for (int i = 0; i < EdgesInto.Count; i++)

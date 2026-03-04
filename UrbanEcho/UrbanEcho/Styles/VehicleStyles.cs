@@ -22,7 +22,7 @@ namespace UrbanEcho.Styles
         private Dictionary<string, IStyle> Styles = new Dictionary<string, IStyle>();
 
         private Random random = new Random();
-        public static int NumberOFCarColors = 10;
+        public static int NumberOFCarColors = 20;
 
         public VehicleStyles()
         {
@@ -62,7 +62,7 @@ namespace UrbanEcho.Styles
                 new Image
                 {
                     Source = sourceString,
-                    SvgFillColor = new Color(random.Next(0, 255), random.Next(0, 255), random.Next(0, 255))
+                    SvgFillColor = new Color(random.Next(64, 235), random.Next(64, 235), random.Next(64, 235))
                 };
 
             style.SymbolScale = physicalCarLength / (float)(imageWidth);

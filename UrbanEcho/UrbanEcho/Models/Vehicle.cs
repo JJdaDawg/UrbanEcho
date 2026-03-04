@@ -114,6 +114,10 @@ namespace UrbanEcho.Sim
 
         private float lastTimeCheckedOverlap = 0;
         private float overlapTestFrequency = 5.0f;//Check for overlap every five seconds
+        private float stoppedThresholdWaitTime = 120.0f;//If vehicle hasn't moved for this long respawn it
+        private float stoppedStartTime = 0;
+        private float stoppedElaspedTime = 0;
+        private bool startedStoppedTimer = false;
 
         // Pubic fields
         public float Kmh => kmh;
@@ -485,6 +489,11 @@ namespace UrbanEcho.Sim
                 if (kmh <= 0 && targetSpeed == 0)
                 {
                     state = VehicleStates.Stopped;
+                    if (!startedStoppedTimer)
+                    {
+                        startedStoppedTimer = true;
+                        stoppedStartTime = Sim.GetSimTime();
+                    }
                 }
                 else
                 {
@@ -515,6 +524,12 @@ namespace UrbanEcho.Sim
                 if (kmh <= 0 && targetSpeed == 0)
                 {
                     state = VehicleStates.Stopped;
+
+                    if (!startedStoppedTimer)
+                    {
+                        startedStoppedTimer = true;
+                        stoppedStartTime = Sim.GetSimTime();
+                    }
                 }
                 else
                 {
@@ -638,6 +653,27 @@ namespace UrbanEcho.Sim
                 {
                     hasClearedIntersection = false;
                 }
+
+                if (state == VehicleStates.Stopped)
+                {
+                    stoppedElaspedTime = Sim.GetSimTime() - stoppedStartTime;
+
+                    if (stoppedElaspedTime > stoppedThresholdWaitTime)
+                    {
+                        ResetVehicleToNewPos();
+                        stoppedElaspedTime = 0;
+                        startedStoppedTimer = false;
+                        vehicleInFrontCount = 0;//Reset this so resetVehicle to new position isn't called twice
+                        insideAnotherVehicle = false;//Reset this so resetVehicle to new position isn't called twice
+                    }
+                }
+                else
+                {
+                    stoppedStartTime = 0;
+                    startedStoppedTimer = false;
+                    stoppedElaspedTime = 0;
+                }
+
                 if (vehicleInFrontCount > 0)
                 {
                     vehicleInFront = true;
@@ -646,6 +682,7 @@ namespace UrbanEcho.Sim
                     if (vehicleInFrontElaspedTime > vehicleInFrontThresholdWaitTime)
                     {
                         ResetVehicleToNewPos();
+                        insideAnotherVehicle = false;//Reset this so resetVehicle to new position isn't called twice
                     }
                 }
                 else

@@ -67,7 +67,7 @@ namespace UrbanEcho.FileManagement
 
         public static bool IsRasterVisible { get; set; } = true;
         public static bool IsIntersectionsVisible { get; set; } = true;
-        public static bool IsCensusOverlayVisible { get; set; } = true;
+        public static bool IsCensusOverlayVisible { get; set; } = false;
 
         private static List<IFeature> RoadFeatures = new List<IFeature>();
 
@@ -76,6 +76,8 @@ namespace UrbanEcho.FileManagement
         public static List<IFeature> DebugLayerFeatures = new List<IFeature>();
 
         public static MPoint CenterOfMap = new MPoint();
+
+        private static ProjectFile? projectFile;
 
         public static Layer? IntersectionLayer => intersectionLayer;
         public static MemoryLayer? VehicleLayer => vehicleLayer;
@@ -96,8 +98,21 @@ namespace UrbanEcho.FileManagement
                 intersectionLoaded = false;
                 vehicleLoaded = false;
 
-                Load(currentProjectFile);
+                if (Load(currentProjectFile))
+                {
+                    projectFile = openProject;
+                    EventQueueForUI.Instance.Add(new OpenedProjectEvent(path));
+                }
+                else
+                {
+                    projectFile = openProject;
+                }
             }
+        }
+
+        public static ProjectFile? GetProject()
+        {
+            return projectFile;
         }
 
         public static void LoadBackgroundFile(string path)
@@ -164,7 +179,7 @@ namespace UrbanEcho.FileManagement
                         EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Load Road Shape File"));
                         Layer roadLayer = CreateRoadLayer(roadNetwork, "Road Outline", true, false);
                         roadLayerFirstPass = new RasterizingLayer(roadLayer);
-                        roadLayerSecondPass = new RasterizingLayer(CreateRoadLayer(roadNetwork, "Roads", false, true));
+                        roadLayerSecondPass = new RasterizingLayer(CreateRoadLayer(roadNetwork, "Roads", false, false));
 
                         RoadFeatures = Helpers.Helper.GetFeatures(roadLayer.DataSource);
                         Sim.Sim.RoadGraph = UrbanTrafficSim.Core.IO.RoadGraphLoader.LoadFromFeatures(Helpers.Helper.GetFeatures(roadLayer.DataSource));
@@ -414,34 +429,10 @@ namespace UrbanEcho.FileManagement
                 layer = new Layer(name);
                 layer.DataSource = projectingProvider;
 
-                //https://github.com/Mapsui/Mapsui/blob/42b59e9dad1fd9512f0114f8c8a3fd3f5666d330/Samples/Mapsui.Samples.Common/Maps/CustomStyleSample.cs#L16-L51
+                RoadStyles roadStyle = new RoadStyles(doOutline, showAADT);
 
-                RoadStyle style = new RoadStyle();
-                if (style.Line != null)
-                {
-                    style.Line.PenStrokeCap = PenStrokeCap.Square;
-                    style.Line.StrokeJoin = StrokeJoin.Bevel;
-                    style.Line.StrokeMiterLimit = 10.0f;
-                }
+                layer.Style = roadStyle.CreateThemeStyle();
 
-                if (style.Outline != null)
-                {
-                    style.Outline.PenStrokeCap = PenStrokeCap.Square;
-                    style.Outline.StrokeJoin = StrokeJoin.Bevel;
-                    style.Outline.StrokeMiterLimit = 10.0f;
-                }
-
-                style.UseOutline = doOutline;
-                style.ShowAADT = showAADT;
-
-                style.Opacity = 1.0f;
-                style.Line = new Pen();
-                style.Line.Color = Color.LightGrey;
-                style.Outline = new Pen();
-                style.Outline.Color = Color.GhostWhite;
-
-                layer.Style = style;
-                layer.Opacity = 1.0f;
                 EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Created Road Layer"));
             }
             catch (Exception ex)
