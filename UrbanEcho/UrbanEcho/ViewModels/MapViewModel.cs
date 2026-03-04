@@ -16,6 +16,8 @@ public partial class MapViewModel : ObservableObject
 {
     private readonly IMapFeatureService _mapFeatureService;
 
+    private SelectionLayer _activeLayer = SelectionLayer.None;
+
     [ObservableProperty] private Map myMap = new Map();
     [ObservableProperty] private bool isRasterVisible = true;
     [ObservableProperty] private bool isIntersectionsVisible = true;
@@ -24,19 +26,29 @@ public partial class MapViewModel : ObservableObject
     {
         _mapFeatureService = mapFeatureService;
         MyMap.Tapped += OnMapTapped;
+        WeakReferenceMessenger.Default.Register<ActiveLayerChangedMessage>(this, (r, m) => _activeLayer = m.ActiveLayer);
     }
 
     private void OnMapTapped(object? sender, MapEventArgs e)
     {
         var layers = new List<ILayer>();
-        if (ProjectLayers.IntersectionLayer is not null) layers.Add(ProjectLayers.IntersectionLayer);
-        if (ProjectLayers.VehicleLayer is not null) layers.Add(ProjectLayers.VehicleLayer);
+
+        if (_activeLayer == SelectionLayer.Intersection && ProjectLayers.IntersectionLayer is not null)
+        {
+            layers.Add(ProjectLayers.IntersectionLayer);
+        }
+        else if (_activeLayer == SelectionLayer.Vehicle && ProjectLayers.VehicleLayer is not null)
+        {
+            layers.Add(ProjectLayers.VehicleLayer);
+        }
+
+        if (layers.Count == 0) { return; }
 
         var mapInfo = e.GetMapInfo(layers);
-        if (mapInfo?.Feature is null) return;
+        if (mapInfo?.Feature is null) { return; }
 
-        if (mapInfo.Layer == ProjectLayers.IntersectionLayer) HandleIntersectionClick(mapInfo.Feature);
-        else if (mapInfo.Layer == ProjectLayers.VehicleLayer) HandleVehicleClick(mapInfo.Feature);
+        if (mapInfo.Layer == ProjectLayers.IntersectionLayer) { HandleIntersectionClick(mapInfo.Feature); }
+        else if (mapInfo.Layer == ProjectLayers.VehicleLayer) { HandleVehicleClick(mapInfo.Feature); }
     }
 
     private void HandleIntersectionClick(IFeature feature)

@@ -20,4 +20,10 @@ namespace UrbanEcho.Messages
     }
 
     public class MapFeatureDeselectedMessage { }
+
+    public class ActiveLayerChangedMessage
+    {
+        public SelectionLayer ActiveLayer { get; }
+        public ActiveLayerChangedMessage(SelectionLayer activeLayer) => ActiveLayer = activeLayer;
+    }
 }
