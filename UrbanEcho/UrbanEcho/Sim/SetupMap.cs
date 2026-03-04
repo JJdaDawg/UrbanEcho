@@ -1,8 +1,11 @@
 ﻿using Mapsui;
 using Mapsui.Rendering.Skia;
 using Mapsui.Styles;
+using Mapsui.Widgets;
+using Mapsui.Widgets.InfoWidgets;
 using System;
 using System.Linq;
+using UrbanEcho.Events.UI;
 using UrbanEcho.FileManagement;
 using UrbanEcho.Styles;
 
@@ -14,15 +17,11 @@ namespace UrbanEcho.Sim
         {
             MyMap.CRS = "EPSG:3857"; // The Map CRS needs to be set
 
-            //Load the styles to use that are not default
-            //other styles that are default will already be registered
-            MapRenderer.RegisterStyleRenderer(typeof(RoadStyle), new RoadStyleRenderer());
-
             //Add default Zoom limit right away so no crashes if mouse wheel scrolling without layer loaded
             ProjectLayers.SetDefaultZoomLimit(MyMap);
             MyMap.BackColor = Color.Black;
             //Removes debug info on mapControl
-            /*
+
             LoggingWidget.ShowLoggingInMap = ActiveMode.No;
 
             try
@@ -36,7 +35,7 @@ namespace UrbanEcho.Sim
             catch (System.Exception ex)
             {
                 EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Failed to remove performance Widget {ex.ToString()}"));
-            }*/
+            }
         }
     }
 }

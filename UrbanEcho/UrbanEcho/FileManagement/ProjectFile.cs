@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UrbanEcho.Events.Sim;
 using UrbanEcho.Events.UI;
 using UrbanEcho.Sim;
 
@@ -35,7 +36,7 @@ namespace UrbanEcho.FileManagement
                 {
                     string textRead = reader.ReadToEnd();
                     projectFile = JsonConvert.DeserializeObject<ProjectFile>(textRead);
-                    EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Opened Project File {path}"));
+                    //use messager to log instead of this//EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Opened Project File {path}"));
                 }
             }
             catch (Exception ex)
