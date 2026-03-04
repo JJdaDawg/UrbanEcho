@@ -22,7 +22,7 @@
                 </Grid>
             </Border>
             <!-- Content -->
-            <StackPanel Grid.Row="1" Margin="8" Spacing="6">
+            <StackPanel Grid.Row="1" Margin="10,0,0,0" Spacing="6">
                 <TextBlock Text="SELECT LAYER" Opacity="0.5" />
                 <StackPanel Orientation="Horizontal" Spacing="4">
                     <ToggleButton Content="Intersections"
