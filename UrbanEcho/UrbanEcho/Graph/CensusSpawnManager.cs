@@ -37,10 +37,32 @@ namespace UrbanEcho.Graph
         /// </summary>
         private void BuildWeightedSpawnNodes()
         {
+            double maxValue = 0;
             foreach (var zone in _zones)
             {
+                double zoneAreaToUse = zone.RatioOfArea;
+                if (zoneAreaToUse < 0.0001f)
+                {
+                    zoneAreaToUse = 0.0001f;
+                }
+                double theValue = (zone.CarTruckVanDrivers) * 1.0f / zoneAreaToUse;
+
+                if (theValue > maxValue)
+                {
+                    maxValue = theValue;
+                }
+            }
+
+            foreach (var zone in _zones)
+            {
+                double zoneAreaToUse = zone.RatioOfArea;
+                if (zoneAreaToUse < 0.0001f)
+                {
+                    zoneAreaToUse = 0.0001f;
+                }
+                double intensity = (((zone.CarTruckVanDrivers) * 1.0f / zoneAreaToUse) / maxValue) * 10.0f;
                 // Scale down so the list stays manageable — 1 entry per 10 drivers, min 1
-                int entries = Math.Max(1, zone.CarTruckVanDrivers / 10);
+                int entries = Math.Max(1, (int)(intensity));
 
                 foreach (int nodeId in zone.GateNodeIds)
                 {

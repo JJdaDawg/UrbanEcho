@@ -19,10 +19,12 @@ namespace UrbanEcho.Graph
 
         // Commute destination breakdown
         public int CommuteWithinCSD { get; init; }
+
         public int CommuteDiffCSDSameCD { get; init; }
 
         // Commute duration
         public int CommuteLessThan15Min { get; init; }
+
         public int Commute15To29Min { get; init; }
         public int Commute30To44Min { get; init; }
 
@@ -36,5 +38,7 @@ namespace UrbanEcho.Graph
         /// The number of vehicle trips this zone generates (drivers only).
         /// </summary>
         public int VehicleTripsGenerated => CarTruckVanDrivers;
+
+        public double RatioOfArea;
     }
 }

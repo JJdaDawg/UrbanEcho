@@ -5,6 +5,7 @@ using Mapsui;
 using Mapsui.Nts;
 using Mapsui.Nts.Providers.Shapefile;
 using Mapsui.Providers;
+using NetTopologySuite.Algorithm;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Geometries.Prepared;
 using System;
@@ -50,6 +51,22 @@ namespace UrbanEcho.Graph
                     Sim.Sim.GetMainViewModel(),
                     $"[Census] Loaded {features.Count} features from shapefile"));
 
+                double totalArea = 1;
+                foreach (var feature in features)
+                {
+                    if (feature is not GeometryFeature gf)
+                        continue;
+
+                    string totalAreaFeature = feature["GEO_LEVEL"]?.ToString() ?? "";
+                    if (totalAreaFeature == "Census metropolitan area")
+                    {
+                        if (gf.Geometry is not Polygon polygon)
+                            continue;
+
+                        totalArea = polygon.Area;
+                    }
+                }
+
                 foreach (var feature in features)
                 {
                     if (feature is not GeometryFeature gf)
@@ -62,6 +79,15 @@ namespace UrbanEcho.Graph
 
                     if (gf.Geometry is not Polygon polygon)
                         continue;
+                    double theArea = polygon.Area;
+                    double ratioOfArea = theArea / totalArea;
+                    if (ratioOfArea > 1.0f)
+                    {
+                        EventQueueForUI.Instance.Add(new LogToConsole(
+               Sim.Sim.GetMainViewModel(),
+               $"[Census] Error with total area"));
+                        ratioOfArea = 1.0f;
+                    }
 
                     var zone = new CensusZone
                     {
@@ -76,6 +102,7 @@ namespace UrbanEcho.Graph
                         CommuteLessThan15Min = TryParseInt(feature["COMM_LESS_"]),
                         Commute15To29Min = TryParseInt(feature["COMM_15_29"]),
                         Commute30To44Min = TryParseInt(feature["COMM_30_44"]),
+                        RatioOfArea = ratioOfArea,
                     };
 
                     zones.Add(zone);

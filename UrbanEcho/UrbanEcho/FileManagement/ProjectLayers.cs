@@ -586,6 +586,21 @@ namespace UrbanEcho.FileManagement
                     if (z.CarTruckVanDrivers > maxDrivers)
                         maxDrivers = z.CarTruckVanDrivers;
                 }
+                double maxIntensityValue = 0;
+                foreach (var zone in zones)
+                {
+                    double zoneAreaToUse = zone.RatioOfArea;
+                    if (zoneAreaToUse < 0.0001f)
+                    {
+                        zoneAreaToUse = 0.0001f;
+                    }
+                    double theValue = (zone.CarTruckVanDrivers / (double)(maxDrivers)) * 1.0f / zoneAreaToUse;
+
+                    if (theValue > maxIntensityValue)
+                    {
+                        maxIntensityValue = theValue;
+                    }
+                }
 
                 foreach (var zone in zones)
                 {
@@ -595,8 +610,15 @@ namespace UrbanEcho.FileManagement
                     gf["Population"] = zone.Population;
                     gf["GeoCode"] = zone.GeoCode;
 
+                    double zoneAreaToUse = zone.RatioOfArea;
+                    if (zoneAreaToUse < 0.0001f)
+                    {
+                        zoneAreaToUse = 0.0001f;
+                    }
+
                     // Normalized intensity 0.0 → 1.0
-                    double intensity = (double)zone.CarTruckVanDrivers / maxDrivers;
+                    double intensity = ((zone.CarTruckVanDrivers / (double)(maxDrivers)) * 1.0f / zoneAreaToUse) / maxIntensityValue;
+
                     gf["Intensity"] = intensity;
 
                     features.Add(gf);

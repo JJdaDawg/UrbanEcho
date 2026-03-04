@@ -697,7 +697,22 @@ namespace UrbanEcho.Sim
                 EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Tried to set path when graph was null"));
                 return;
             }
-            startNode = TrafficVolumeLoader.PickWeightedDestination(graph, -1);
+            if (Sim.CensusSpawn != null)
+            {
+                if (Sim.CensusSpawn.IsLoaded)
+                {
+                    startNode = Sim.CensusSpawn.PickWeightedSpawnNode();
+                }
+                else
+                {
+                    startNode = TrafficVolumeLoader.PickWeightedDestination(graph, -1);
+                }
+            }
+            else
+            {
+                startNode = TrafficVolumeLoader.PickWeightedDestination(graph, -1);
+            }
+
             goalNode = TrafficVolumeLoader.PickWeightedDestination(graph, startNode); //  we donmt use goal node here but it is needed to call pick weighted destination which also sets the path for the vehicle
 
             setNewPath(startNode);
