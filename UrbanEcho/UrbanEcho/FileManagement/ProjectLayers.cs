@@ -10,6 +10,7 @@ using Mapsui.Nts;
 using Mapsui.Nts.Providers.Shapefile;
 using Mapsui.Providers;
 using Mapsui.Styles;
+using Mapsui.Styles.Thematics;
 using Mapsui.Tiling.Layers;
 using Mapsui.UI;
 using Mapsui.UI.Avalonia;
@@ -47,6 +48,7 @@ namespace UrbanEcho.FileManagement
 
         //private static MemoryProvider? vehicleProvider;
         private static RasterizingLayer? debugLayer;
+        private static MemoryLayer? censusOverlayLayer;
 
         private static bool backgroundRequiresLoading = false;
         private static bool roadRequiresLoading = false;
@@ -64,6 +66,7 @@ namespace UrbanEcho.FileManagement
 
         public static bool IsRasterVisible { get; set; } = true;
         public static bool IsIntersectionsVisible { get; set; } = true;
+        public static bool IsCensusOverlayVisible { get; set; } = true;
 
         private static List<IFeature> RoadFeatures = new List<IFeature>();
 
@@ -204,8 +207,6 @@ namespace UrbanEcho.FileManagement
                     ///2d world and dispose any handles created in the
                     ///IntersectionBody file. Then create a new world and make new shapes again
 
-                    vehicleLayer = CreateVehicleLayer();
-
                     vehicleRequiresLoading = false;
                     EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Initialize Graph"));
                     Sim.Sim.InitializeGraph();
@@ -214,6 +215,28 @@ namespace UrbanEcho.FileManagement
                     {
                         TrafficVolumeLoader.AssignToGraph(Sim.Sim.RoadGraph);
                     }
+
+                    // Load census data for realistic spawn distribution (before vehicle creation)
+                    if (!string.IsNullOrEmpty(currentProjectFile?.CensusLayerPath))
+                    {
+                        Sim.Sim.InitializeCensusSpawning(currentProjectFile.CensusLayerPath);
+                    }
+                    else
+                    {
+                        string defaultCensusPath = "Resources/ShapeFiles/Census_2021_Work_Commuting/GIS_DATA_CENSUS_2021_WORK_COMMUTING.shp";
+                        if (System.IO.File.Exists(defaultCensusPath))
+                        {
+                            Sim.Sim.InitializeCensusSpawning(defaultCensusPath);
+                        }
+                    }
+
+                    vehicleLayer = CreateVehicleLayer();
+
+                    // Build census zone overlay if census data was loaded
+                    //if (Sim.Sim.CensusSpawn != null && Sim.Sim.CensusSpawn.IsLoaded)
+                    //{
+                    //    censusOverlayLayer = CreateCensusOverlayLayer(Sim.Sim.CensusSpawn.Zones);
+                    //}
                 }
             }
             else
@@ -453,21 +476,42 @@ namespace UrbanEcho.FileManagement
                 int vehiclesAdded = 0;
                 Random random = new Random();
 
-                // Build a weighted spawn list so high-AADT edges get more vehicles
+                // Build a weighted spawn list so high-AADT edges get more vehicles (fallback)
                 var weightedEdgeIndices = Sim.Sim.RoadGraph != null
                     ? TrafficVolumeLoader.BuildWeightedEdgeSpawnList(Sim.Sim.RoadGraph)
                     : new List<int>();
 
-                int spawnCount = 5000;// Sim.Sim.RoadGraph?.Edges.Count / 2 ?? 0;
+                //// Scale vehicle count to observed AADT rather than edge count.
+                //// Each simulated vehicle represents ~scaleFactor worth of daily traffic.
+                //double totalAADT = Sim.Sim.RoadGraph?.Edges
+                //    .Where(e => e.Metadata.TrafficVolume > 100) // exclude defaulted edges
+                //    .Sum(e => e.Metadata.TrafficVolume) ?? 0;
+
+                //const double scaleFactor = 0.00004;
+                //int spawnCount = Math.Clamp((int)(totalAADT * scaleFactor), 50, 600);
+                int spawnCount = Sim.Sim.RoadGraph?.Edges.Count / 2 ?? 0;
 
                 for (int v = 0; v < spawnCount; v++)
                 {
-                    // Pick an edge index from the weighted list
-                    int edgeIdx = weightedEdgeIndices.Count > 0
-                        ? weightedEdgeIndices[random.Next(weightedEdgeIndices.Count)]
-                        : v;
+                    // Use census spawn manager if available, otherwise fall back to AADT
+                    int spawnNodeId;
+                    if (Sim.Sim.CensusSpawn != null && Sim.Sim.CensusSpawn.IsLoaded)
+                    {
+                        spawnNodeId = Sim.Sim.CensusSpawn.PickWeightedSpawnNode();
+                    }
+                    else
+                    {
+                        int edgeIdx = weightedEdgeIndices.Count > 0
+                            ? weightedEdgeIndices[random.Next(weightedEdgeIndices.Count)]
+                            : v;
+                        spawnNodeId = Sim.Sim.RoadGraph!.Edges[edgeIdx].From;
+                    }
 
-                    var edge = Sim.Sim.RoadGraph!.Edges[edgeIdx];
+                    // Find an outgoing edge from the chosen spawn node
+                    var outgoing = Sim.Sim.RoadGraph!.GetOutgoingEdges(spawnNodeId);
+                    if (outgoing.Count == 0) continue;
+
+                    var edge = outgoing[random.Next(outgoing.Count)];
 
                     if (Sim.Sim.RoadGraph.Nodes.TryGetValue(edge.From, out RoadNode? roadNodeFrom))
                     {
@@ -519,6 +563,78 @@ namespace UrbanEcho.FileManagement
             }
 
             return layer;
+        }
+
+        /// <summary>
+        /// Creates a semi-transparent overlay layer showing census dissemination
+        /// areas color-coded by car commuter density (drivers per zone).
+        /// Red = high density, blue = low density.
+        /// </summary>
+        public static MemoryLayer? CreateCensusOverlayLayer(IReadOnlyList<CensusZone> zones)
+        {
+            if (zones == null || zones.Count == 0)
+                return null;
+
+            try
+            {
+                var features = new List<IFeature>();
+
+                int maxDrivers = 1;
+                foreach (var z in zones)
+                {
+                    if (z.CarTruckVanDrivers > maxDrivers)
+                        maxDrivers = z.CarTruckVanDrivers;
+                }
+
+                foreach (var zone in zones)
+                {
+                    var gf = new GeometryFeature();
+                    gf.Geometry = zone.Boundary;
+                    gf["Drivers"] = zone.CarTruckVanDrivers;
+                    gf["Population"] = zone.Population;
+                    gf["GeoCode"] = zone.GeoCode;
+
+                    // Normalized intensity 0.0 → 1.0
+                    double intensity = (double)zone.CarTruckVanDrivers / maxDrivers;
+                    gf["Intensity"] = intensity;
+
+                    features.Add(gf);
+                }
+
+                var layer = new MemoryLayer("Census Zones");
+                layer.Features = features;
+                layer.Opacity = 0.45f;
+
+                layer.Style = new ThemeStyle(f =>
+                {
+                    double intensity = 0.0;
+                    if (f is GeometryFeature gf && gf["Intensity"] is double val)
+                        intensity = val;
+
+                    // Lerp from blue (low) → red (high)
+                    int r = (int)(intensity * 255);
+                    int g = 40;
+                    int b = (int)((1.0 - intensity) * 255);
+
+                    return new VectorStyle
+                    {
+                        Fill = new Mapsui.Styles.Brush(new Color(r, g, b, 120)),
+                        Line = new Pen(new Color(80, 80, 80, 100), 0.5),
+                        Outline = new Pen(new Color(80, 80, 80, 100), 0.5),
+                    };
+                });
+
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(),
+                    $"[Census] Created overlay layer with {features.Count} zone polygons"));
+
+                return layer;
+            }
+            catch (Exception ex)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(),
+                    $"[Census] Failed to create overlay layer: {ex}"));
+                return null;
+            }
         }
 
         public static MemoryLayer? CreateDebugLayer()
@@ -708,6 +824,10 @@ namespace UrbanEcho.FileManagement
             if (roadLayerSecondPass != null)
             {
                 myMap?.Layers.Add(roadLayerSecondPass);
+            }
+            if (IsCensusOverlayVisible && censusOverlayLayer != null)
+            {
+                myMap?.Layers.Add(censusOverlayLayer);
             }
             if (IsIntersectionsVisible && intersectionLayer != null)
             {
