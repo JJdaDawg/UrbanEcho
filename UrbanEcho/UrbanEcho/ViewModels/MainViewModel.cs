@@ -28,12 +28,12 @@ namespace UrbanEcho.ViewModels
         public ProjectViewModel Project { get; }
         public bool IsEditMode => EditMode.IsEditMode;
 
-        public MainViewModel(IPanelService panelService, IFileDialogService fileDialogService)
+        public MainViewModel(IPanelService panelService, IFileDialogService fileDialogService, IMapFeatureService mapFeatureService)
         {
             Console = new ConsolePanelViewModel(panelService);
             Properties = new PropertiesPanelViewModel(panelService);
             ProjectExplorer = new ProjectExplorerPanelViewModel(panelService);
-            Map = new MapViewModel();
+            Map = new MapViewModel(mapFeatureService);
             EditMode = new EditModeViewModel();
             Project = new ProjectViewModel(fileDialogService);
             Simulation = new SimulationViewModel();

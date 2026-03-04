@@ -119,6 +119,16 @@ namespace UrbanEcho.Sim
         private float stoppedElaspedTime = 0;
         private bool startedStoppedTimer = false;
 
+        // Pubic fields
+        public float Kmh => kmh;
+        public float SpeedLimit => speedLimit;
+        public VehicleStates State => state;
+        public bool IsWaiting => isWaiting;
+        public bool WaitingOnIntersection => waitingOnIntersection;
+        public bool VehicleInFront => vehicleInFront;
+        public float MetersFromCarInFront => metersFromCarInFront;
+        public RoadEdge CurrentRoadEdge => currentRoadEdge;
+
         public Vehicle(PointFeature feature, RoadEdge currentRoadEdge, string carType, int updateGroup)
         {
             settings = new VehicleSettings(carType);

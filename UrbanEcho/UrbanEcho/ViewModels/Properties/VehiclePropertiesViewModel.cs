@@ -1,50 +1,30 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.Messaging;
-using UrbanEcho.Messages;
-using UrbanEcho.ViewModels.Properties;
+using UrbanEcho.Models;
+using UrbanEcho.Models.UI;
+using UrbanEcho.Sim;
 
 namespace UrbanEcho.ViewModels.Properties
 {
     public partial class VehiclePropertiesViewModel : ObservableObject, IPropertiesViewModel
     {
+        private readonly VehicleUI _vehicle;
+
         public string Title => "Vehicle";
-        public string Subtitle => $"ID: {VehicleId}";
+        public string Subtitle => $"ID: {_vehicle.Id}";
+        public int Id => _vehicle.Id;
+        public string VehicleType => _vehicle.VehicleType;
+        public float Kmh => _vehicle.Kmh;
+        public float SpeedLimit => _vehicle.SpeedLimit;
+        public VehicleStates State => _vehicle.State;
+        public bool IsWaiting => _vehicle.IsWaiting;
+        public bool WaitingOnIntersection => _vehicle.WaitingOnIntersection;
+        public bool VehicleInFront => _vehicle.VehicleInFront;
+        public float MetersFromCarInFront => _vehicle.MetersFromCarInFront;
+        public string RoadType => _vehicle.RoadType;
 
-        [ObservableProperty] private int _vehicleId;
-        [ObservableProperty] private string _status = string.Empty;
-        [ObservableProperty] private string _originStreet = string.Empty;
-        [ObservableProperty] private string _destinationStreet = string.Empty;
-        [ObservableProperty] private bool _isEditMode;
-
-        public RelayCommand HighlightPathCommand { get; }
-        public RelayCommand ShowTrendCommand { get; }
-        public RelayCommand TrackVehicleCommand { get; }
-
-        public RelayCommand ChangeDestinationCommand { get; }
-        public RelayCommand ToggleStartStopCommand { get; }
-        public RelayCommand DespawnCommand { get; }
-
-        public VehiclePropertiesViewModel()
+        public VehiclePropertiesViewModel(VehicleUI vehicle)
         {
-            WeakReferenceMessenger.Default.Register<EditModeChangedMessage>(this, (r, m) =>
-            {
-                IsEditMode = m.IsEditMode;
-            });
-
-            HighlightPathCommand = new RelayCommand(HighlightPath);
-            ShowTrendCommand = new RelayCommand(ShowTrend);
-            TrackVehicleCommand = new RelayCommand(TrackVehicle);
-            ChangeDestinationCommand = new RelayCommand(ChangeDestination);
-            ToggleStartStopCommand = new RelayCommand(ToggleStartStop);
-            DespawnCommand = new RelayCommand(Despawn);
+            _vehicle = vehicle;
         }
-
-        private void HighlightPath() { }
-        private void ShowTrend() { }
-        private void TrackVehicle() { }
-        private void ChangeDestination() { }
-        private void ToggleStartStop() { }
-        private void Despawn() { }
     }
 }

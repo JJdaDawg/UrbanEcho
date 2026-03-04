@@ -79,6 +79,9 @@ namespace UrbanEcho.FileManagement
 
         private static ProjectFile? projectFile;
 
+        public static Layer? IntersectionLayer => intersectionLayer;
+        public static MemoryLayer? VehicleLayer => vehicleLayer;
+
         public static void LoadProject(string path)
         {
             ProjectFile? openProject = ProjectFile.Open(path);

@@ -1,6 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using UrbanEcho.Events.UI;
+using UrbanEcho.Messages;
+using UrbanEcho.Models;
+using UrbanEcho.Models.UI;
 using UrbanEcho.ViewModels.Properties;
 using static UrbanEcho.Models.TrafficSignal;
 
@@ -28,59 +32,17 @@ namespace UrbanEcho.ViewModels
             _panelService = panelService;
             ToggleCommand = new RelayCommand(Toggle);
 
-            var signal = new SignalPropertiesViewModel
+            WeakReferenceMessenger.Default.Register<MapFeatureSelectedMessage>(this, (r, m) =>
             {
-                SignalType = SignalType.StopSign,
-                IsFourWayStop = false,
-                StopSignRoad = "Elm St"
-            };
+                SelectedProperties = m.Type switch
+                {
+                    MapFeatureType.Signal when m.Data is IntersectionUI i => new SignalPropertiesViewModel(i),
+                    MapFeatureType.Vehicle when m.Data is VehicleUI v => new VehiclePropertiesViewModel(v),
+                    _ => null
+                };
+            });
 
-            signal.ConnectingRoads.Add("Main St");
-            signal.ConnectingRoads.Add("Elm St");
-            signal.WaitTimes.Add(new RoadSignalStatus { RoadName = "Main St", AverageWaitTime = 15.0 });
-            signal.WaitTimes.Add(new RoadSignalStatus { RoadName = "Elm St", AverageWaitTime = 6.0 });
-
-            SelectedProperties = signal;
-
-
-
-
-            //var signal = new SignalPropertiesViewModel
-            //{
-            //    SignalType = SignalType.Light,
-            //};
-
-            //signal.RoadStatuses.Add(new RoadSignalStatus { RoadName = "Main St", LightStatus = LightStatus.Green, AverageWaitTime = 12.5 });
-            //signal.RoadStatuses.Add(new RoadSignalStatus { RoadName = "Elm St", LightStatus = LightStatus.Red, AverageWaitTime = 8.3 });
-
-            //signal.WaitTimes.Add(new RoadSignalStatus { RoadName = "Main St", AverageWaitTime = 12.5 });
-            //signal.WaitTimes.Add(new RoadSignalStatus { RoadName = "Elm St", AverageWaitTime = 8.3 });
-
-            //signal.RoadTimings.Add(new RoadTimingConfig { RoadName = "Main St", GreenDuration = 30, ExtendedGreenDuration = 10 });
-            //signal.RoadTimings.Add(new RoadTimingConfig { RoadName = "Elm St", GreenDuration = 25, ExtendedGreenDuration = 5 });
-
-            //SelectedProperties = signal;
-
-
-
-            //SelectedProperties = new RoadPropertiesViewModel
-            //{
-            //    RoadName = "Main St",
-            //    Aadt = "12500 vehicles/day",
-            //    SpeedLimit = 50,
-            //    IsRoadOpen = true,
-            //    TruckAllowance = false
-            //};
-
-
-
-            //SelectedProperties = new VehiclePropertiesViewModel
-            //{
-            //    VehicleId = 42,
-            //    Status = "Running",
-            //    OriginStreet = "Main St",
-            //    DestinationStreet = "Elm St"
-            //};
+            WeakReferenceMessenger.Default.Register<MapFeatureDeselectedMessage>(this, (r, m) => SelectedProperties = null);
         }
 
         public void Toggle()
