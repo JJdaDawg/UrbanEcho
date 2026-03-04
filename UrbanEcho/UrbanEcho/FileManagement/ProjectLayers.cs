@@ -48,6 +48,7 @@ namespace UrbanEcho.FileManagement
 
         //private static MemoryProvider? vehicleProvider;
         private static RasterizingLayer? debugLayer;
+
         private static MemoryLayer? censusOverlayLayer;
 
         private static bool backgroundRequiresLoading = false;
@@ -233,10 +234,10 @@ namespace UrbanEcho.FileManagement
                     vehicleLayer = CreateVehicleLayer();
 
                     // Build census zone overlay if census data was loaded
-                    //if (Sim.Sim.CensusSpawn != null && Sim.Sim.CensusSpawn.IsLoaded)
-                    //{
-                    //    censusOverlayLayer = CreateCensusOverlayLayer(Sim.Sim.CensusSpawn.Zones);
-                    //}
+                    if (Sim.Sim.CensusSpawn != null && Sim.Sim.CensusSpawn.IsLoaded)
+                    {
+                        censusOverlayLayer = CreateCensusOverlayLayer(Sim.Sim.CensusSpawn.Zones);
+                    }
                 }
             }
             else
