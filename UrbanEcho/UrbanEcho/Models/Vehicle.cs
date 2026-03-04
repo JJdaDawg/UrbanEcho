@@ -115,6 +115,16 @@ namespace UrbanEcho.Sim
         private float lastTimeCheckedOverlap = 0;
         private float overlapTestFrequency = 5.0f;//Check for overlap every five seconds
 
+        // Pubic fields
+        public float Kmh => kmh;
+        public float SpeedLimit => speedLimit;
+        public VehicleStates State => state;
+        public bool IsWaiting => isWaiting;
+        public bool WaitingOnIntersection => waitingOnIntersection;
+        public bool VehicleInFront => vehicleInFront;
+        public float MetersFromCarInFront => metersFromCarInFront;
+        public RoadEdge CurrentRoadEdge => currentRoadEdge;
+
         public Vehicle(PointFeature feature, RoadEdge currentRoadEdge, string carType, int updateGroup)
         {
             settings = new VehicleSettings(carType);

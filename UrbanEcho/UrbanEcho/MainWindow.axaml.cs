@@ -44,7 +44,8 @@ public partial class MainWindow : AppWindow, IPanelService
         TitleBar.ExtendsContentIntoTitleBar = true;
         TitleBar.TitleBarHitTestType = TitleBarHitTestType.Complex;
         var fileDialogService = new FileDialogService(this);
-        MainViewModel vm = new MainViewModel(this, fileDialogService);
+        var mapFeatureService = new MapFeatureService();
+        MainViewModel vm = new MainViewModel(this, fileDialogService, mapFeatureService);
         DataContext = vm;
         SetupMap.Init(vm.Map.MyMap);
         Sim.Sim.SetMainViewModel(vm);
