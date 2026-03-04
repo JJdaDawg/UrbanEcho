@@ -63,61 +63,67 @@ public static class RoadGraphLoader
                 var metadata = ExtractMetadata(feature);
 
                 var coords = line.Coordinates;
+
                 int startIndex = 0;
+                int endIndex = 1;
+                double length = 0;
 
-                while (startIndex < coords.Length - 1)
+                //while (startIndex < coords.Length - 1)
+                //{
+                /*
+                if (!IsGraphNode(coords[startIndex], startIndex == 0, usage))
                 {
-                    if (!IsGraphNode(coords[startIndex], startIndex == 0, usage))
+                    startIndex++;
+                    continue;
+                }*/
+
+                //double length = 0;
+                //int endIndex = startIndex + 1;
+
+                while (endIndex < coords.Length)
+                {
+                    length += coords[endIndex - 1]
+                        .Distance(coords[endIndex]);
+                    /*
+                    if (IsGraphNode(
+                        coords[endIndex],
+                        endIndex == coords.Length - 1,
+                        usage))
+                        break;
+                    */
+                    if (endIndex == coords.Length - 1)
+                        break;
+                    endIndex++;
+                }
+
+                //if (endIndex < coords.Length)
+                //{
+                int from = GetNodeId(coords[startIndex]);
+                int to = GetNodeId(coords[endIndex]);
+
+                if (from != to && length > 0)
+                {
+                    if (!(metadata.OneWay))
                     {
-                        startIndex++;
-                        continue;
+                        edges.Add(new RoadEdge(from, to, length, metadata, g, true));
+                        edges.Add(new RoadEdge(to, from, length, metadata, g, false));
                     }
-
-                    double length = 0;
-                    int endIndex = startIndex + 1;
-
-                    while (endIndex < coords.Length)
+                    else
                     {
-                        length += coords[endIndex - 1]
-                            .Distance(coords[endIndex]);
-
-                        if (IsGraphNode(
-                            coords[endIndex],
-                            endIndex == coords.Length - 1,
-                            usage))
-                            break;
-
-                        endIndex++;
-                    }
-
-                    if (endIndex < coords.Length)
-                    {
-                        int from = GetNodeId(coords[startIndex]);
-                        int to = GetNodeId(coords[endIndex]);
-
-                        if (from != to && length > 0)
+                        if (metadata.FromToFlowDirection)
                         {
-                            if (!(metadata.OneWay))
-                            {
-                                edges.Add(new RoadEdge(from, to, length, metadata, g, true));
-                                edges.Add(new RoadEdge(to, from, length, metadata, g, false));
-                            }
-                            else
-                            {
-                                if (metadata.FromToFlowDirection)
-                                {
-                                    edges.Add(new RoadEdge(from, to, length, metadata, g, true));
-                                }
-                                else
-                                {
-                                    edges.Add(new RoadEdge(to, from, length, metadata, g, false));
-                                }
-                            }
+                            edges.Add(new RoadEdge(from, to, length, metadata, g, true));
+                        }
+                        else
+                        {
+                            edges.Add(new RoadEdge(to, from, length, metadata, g, false));
                         }
                     }
-
-                    startIndex = endIndex;
                 }
+                //}
+
+                //startIndex = endIndex;
+                //}
             }
             else
             {
@@ -127,7 +133,7 @@ public static class RoadGraphLoader
 
         var graph = new RoadGraph(nodeObjects, edges);
 
-        return RemoveOrphanComponents(graph);
+        return graph;//RemoveOrphanComponents(graph);
     }
 
     private static void NormalizeFeatures(

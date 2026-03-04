@@ -8,6 +8,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.Helpers;
+using UrbanEcho.Models;
 using UrbanEcho.Sim;
 using static Box2dNet.Interop.B2Api;
 
@@ -20,13 +21,15 @@ namespace UrbanEcho.Physics
         public b2BodyId BodyId;
 
         //Used for when no connection points line up with intersection
-        private static float defaultSize = 12.0f * Helper.MapCorrection;
+        private static float defaultSize = 17.0f * Helper.MapCorrection;
 
         public b2Polygon polygon;
 
         private RoadIntersection parent;
 
         private nint intPtr;
+
+        private Vector2[] vertices;
 
         public IntersectionBody(RoadIntersection parent, List<(Vector2 pos, float width)> connectingPoints)
         {
@@ -48,14 +51,29 @@ namespace UrbanEcho.Physics
             {
                 Vector2[]? Points = CircleOfPoints();
                 polygon = Helper.CreatePolygon(Points);
+                vertices = new Vector2[polygon.count];
+                for (int i = 0; i < polygon.count; i++)
+                {
+                    vertices[i] = polygon.vertices(i);
+                }
                 ShapeId = b2CreatePolygonShape(BodyId, in shapeDef, in polygon);
             }
             else
             {
                 Vector2[]? Points = PointsFromRoadConnections(connectingPoints);
                 polygon = Helper.CreatePolygon(Points);
+                vertices = new Vector2[polygon.count];
+                for (int i = 0; i < polygon.count; i++)
+                {
+                    vertices[i] = polygon.vertices(i);
+                }
                 ShapeId = b2CreatePolygonShape(BodyId, in shapeDef, in polygon);
             }
+        }
+
+        public Vector2[] GetShapeVertices()
+        {
+            return vertices;
         }
 
         private Vector2[] CircleOfPoints()
@@ -96,11 +114,6 @@ namespace UrbanEcho.Physics
             }
 
             return points;
-        }
-
-        public RoadIntersection GetParent()
-        {
-            return parent;
         }
 
         public void Dispose()

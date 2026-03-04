@@ -33,6 +33,7 @@ namespace UrbanEcho.Physics
             // Construct a world object, which will hold all the shapes and box2d bodies.
             b2WorldDef worldDef = b2DefaultWorldDef();
             worldDef.gravity = gravity;
+            worldDef.enableSleep = false;
             WorldId = b2CreateWorld(worldDef);
             Created = true;
         }

@@ -2,5 +2,6 @@
   "PathForThisFile": "myFile.Json",
   "BackgroundLayerPath": "Resources\\Rasters\\Aerial2.mbtiles",
   "RoadLayerPath": "Resources\\ShapeFiles\\Road_Network\\Road_Network.shp",
-  "IntersectionLayerPath": "Resources\\ShapeFiles\\intersections_kitchener\\intersections_kitchener.shp"
+  "IntersectionLayerPath": "Resources\\ShapeFiles\\intersections_kitchener\\intersections_kitchener.shp",
+  "CensusLayerPath": "Resources\\ShapeFiles\\Census_2021_Work_Commuting\\GIS_DATA_CENSUS_2021_WORK_COMMUTING.shp"
 }

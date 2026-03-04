@@ -24,13 +24,15 @@ namespace UrbanEcho.Physics
 
         private nint intPtr;
 
+        private Vector2[] vertices;
+
         public VehicleBody(Vehicle parent, FRect rect)
         {
             this.parent = parent;
             // Define the vehicle body.
             b2BodyDef bodyDef = b2DefaultBodyDef();
             bodyDef.position = new Vector2(rect.X + rect.Width * 0.5f, rect.Y + rect.Height * 0.5f);
-            bodyDef.type = b2BodyType.b2_kinematicBody;
+            bodyDef.type = b2BodyType.b2_dynamicBody;// .b2_kinematicBody;
 
             bodyDef.linearDamping = 0.01f;
 
@@ -38,12 +40,23 @@ namespace UrbanEcho.Physics
             BodyId = b2CreateBody(World.WorldId, bodyDef);
             b2ShapeDef shapeDef = b2DefaultShapeDef();
             b2Polygon polygon = Helper.CreatePolygon([new(-rect.Width / 2, -rect.Height / 2), new(-rect.Width / 2, rect.Height / 2), new(rect.Width / 2, rect.Height / 2), new(rect.Width / 2, -rect.Height / 2)]);
+            vertices = new Vector2[polygon.count];
+            for (int i = 0; i < polygon.count; i++)
+            {
+                vertices[i] = polygon.vertices(i);
+            }
             shapeDef.isSensor = true;
+
             shapeDef.filter.categoryBits = (ulong)ShapeCategories.Vehicle;
             intPtr = NativeHandle.Alloc(parent);
             shapeDef.userData = intPtr;
-
+            //shapeDef.enableSensorEvents = true;
             ShapeId = b2CreatePolygonShape(BodyId, in shapeDef, in polygon);
+        }
+
+        public Vector2[] GetShapeVertices()
+        {
+            return vertices;
         }
 
         public void Dispose()
