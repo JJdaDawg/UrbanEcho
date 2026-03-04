@@ -39,7 +39,7 @@ namespace UrbanEcho.Sim
 
         public static CensusSpawnManager? CensusSpawn;
 
-        public static float SimTime = 0;
+        private static float simTime = 0;
 
         public static long SimFrames = 0;
 
