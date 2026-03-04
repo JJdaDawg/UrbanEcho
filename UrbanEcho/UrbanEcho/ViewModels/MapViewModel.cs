@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Mapsui;
+using Mapsui.Layers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,12 +19,37 @@ namespace UrbanEcho.ViewModels
     {
         [ObservableProperty]
         private Map myMap = new Map();
-
         [ObservableProperty]
         private bool isRasterVisible = true;
-
         [ObservableProperty]
         private bool isIntersectionsVisible = true;
+
+        public MapViewModel()
+        {
+            MyMap.Tapped += OnMapTapped;
+        }
+
+        private void OnMapTapped(object? sender, MapEventArgs e)
+        {
+            var layers = new List<ILayer>();
+            if (ProjectLayers.IntersectionLayer is not null) layers.Add(ProjectLayers.IntersectionLayer);
+            if (ProjectLayers.VehicleLayer is not null) layers.Add(ProjectLayers.VehicleLayer);
+
+            var mapInfo = e.GetMapInfo(layers);
+
+            if (mapInfo?.Feature is null) return;
+
+            if (mapInfo.Layer == ProjectLayers.IntersectionLayer)
+            {
+                var id = mapInfo.Feature["OBJECTID"]?.ToString();
+                WeakReferenceMessenger.Default.Send(new LogMessage($"Clicked intersection {id}", LogSource.Map));
+            }
+            else if (mapInfo.Layer == ProjectLayers.VehicleLayer)
+            {
+                var id = mapInfo.Feature["VehicleNumber"]?.ToString();
+                WeakReferenceMessenger.Default.Send(new LogMessage($"Clicked vehicle {id}", LogSource.Map));
+            }
+        }
 
         partial void OnIsRasterVisibleChanged(bool value)
         {
@@ -31,24 +57,15 @@ namespace UrbanEcho.ViewModels
             ProjectLayers.AddLayers(MyMap);
             WeakReferenceMessenger.Default.Send(new LogMessage("Raster background image toggled", LogSource.Map));
         }
-
         partial void OnIsIntersectionsVisibleChanged(bool value)
         {
             ProjectLayers.IsIntersectionsVisible = value;
             ProjectLayers.AddLayers(MyMap);
             WeakReferenceMessenger.Default.Send(new LogMessage("Intersection details toggled", LogSource.Map));
         }
-
         [RelayCommand]
-        private void ToggleRaster()
-        {
-            IsRasterVisible = !IsRasterVisible;
-        }
-
+        private void ToggleRaster() => IsRasterVisible = !IsRasterVisible;
         [RelayCommand]
-        private void ToggleIntersectionDetails()
-        {
-            IsIntersectionsVisible = !IsIntersectionsVisible;
-        }
+        private void ToggleIntersectionDetails() => IsIntersectionsVisible = !IsIntersectionsVisible;
     }
 }

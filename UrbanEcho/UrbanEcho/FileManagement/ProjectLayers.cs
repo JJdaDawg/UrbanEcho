@@ -72,6 +72,9 @@ namespace UrbanEcho.FileManagement
 
         public static MPoint CenterOfMap = new MPoint();
 
+        public static Layer? IntersectionLayer => intersectionLayer;
+        public static MemoryLayer? VehicleLayer => vehicleLayer;
+
         public static void LoadProject(string path)
         {
             ProjectFile? openProject = ProjectFile.Open(path);
