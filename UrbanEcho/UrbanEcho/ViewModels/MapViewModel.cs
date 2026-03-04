@@ -21,6 +21,7 @@ public partial class MapViewModel : ObservableObject
     [ObservableProperty] private Map myMap = new Map();
     [ObservableProperty] private bool isRasterVisible = true;
     [ObservableProperty] private bool isIntersectionsVisible = true;
+    [ObservableProperty] private bool isCensusOverlayVisible = true;
 
     public MapViewModel(IMapFeatureService mapFeatureService)
     {
@@ -87,6 +88,14 @@ public partial class MapViewModel : ObservableObject
         WeakReferenceMessenger.Default.Send(new LogMessage("Intersection details toggled", LogSource.Map));
     }
 
+    partial void OnIsCensusOverlayVisibleChanged(bool value)
+    {
+        ProjectLayers.IsCensusOverlayVisible = value;
+        ProjectLayers.AddLayers(MyMap);
+        WeakReferenceMessenger.Default.Send(new LogMessage("Census overlay toggled", LogSource.Map));
+    }
+
     [RelayCommand] private void ToggleRaster() => IsRasterVisible = !IsRasterVisible;
     [RelayCommand] private void ToggleIntersectionDetails() => IsIntersectionsVisible = !IsIntersectionsVisible;
+    [RelayCommand] private void ToggleCensusOverlay() => IsCensusOverlayVisible = !IsCensusOverlayVisible;
 }
