@@ -7,6 +7,9 @@ namespace UrbanEcho.Graph
     {
         private readonly RoadGraph _graph;
 
+        /// <summary>Upper-bound speed (m/s) keeps the heuristic admissible when cost = travel time.</summary>
+        private const double MaxSpeedMs = 130.0 / 3.6;
+
         public AStarPathfinder(RoadGraph graph)
         {
             _graph = graph;
@@ -48,7 +51,7 @@ namespace UrbanEcho.Graph
                     int node_successor = edge.To;
 
                     double successor_current_cost =
-                        g[node_current] + edge.Length;
+                        g[node_current] + edge.TravelTimeSeconds;
 
                     if (successor_current_cost >= g.GetValueOrDefault(node_successor, double.PositiveInfinity)
                         && closedSet.Contains(node_successor))
@@ -80,7 +83,8 @@ namespace UrbanEcho.Graph
             double dx = pa.X - pb.X;
             double dy = pa.Y - pb.Y;
 
-            return Math.Sqrt(dx * dx + dy * dy);
+            // Cost unit is seconds — divide by max speed so it never overestimates.
+            return Math.Sqrt(dx * dx + dy * dy) / MaxSpeedMs;
         }
 
         public IReadOnlyList<RoadEdge> FindPathEdges(int node_start, int node_goal)
@@ -119,7 +123,7 @@ namespace UrbanEcho.Graph
                     int node_successor = edge.To;
 
                     double successor_current_cost =
-                        g[node_current] + edge.Length;
+                        g[node_current] + edge.TravelTimeSeconds;
 
                     if (successor_current_cost >= g.GetValueOrDefault(node_successor, double.PositiveInfinity)
                         && closedSet.Contains(node_successor))
@@ -176,3 +180,4 @@ namespace UrbanEcho.Graph
         }
     }
 }
+    
