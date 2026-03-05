@@ -77,12 +77,12 @@ namespace UrbanEcho.Sim
                 return;
             }
             //TODO: Remove this once we have UI for loading project
-            //LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/ProjectFiles/myFile.uep", mainViewModel.Map.MyMap);
-            //EventQueueForSim.Instance.Add(loadProjectEvent); //will usually happen from UI
+            LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/ProjectFiles/myFile.uep", mainViewModel.Map.MyMap);
+            EventQueueForSim.Instance.Add(loadProjectEvent); //will usually happen from UI
 
             //Start with a new project
-            NewProjectEvent newProjectEvent = new NewProjectEvent(mainViewModel.Map.MyMap);
-            EventQueueForSim.Instance.Add(newProjectEvent); //will usually happen from UI
+            //NewProjectEvent newProjectEvent = new NewProjectEvent(mainViewModel.Map.MyMap);
+            //EventQueueForSim.Instance.Add(newProjectEvent); //will usually happen from UI
 
             FrameTimer frameTimer = new FrameTimer(false, 60);
 
