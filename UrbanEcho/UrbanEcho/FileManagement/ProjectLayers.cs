@@ -516,16 +516,17 @@ namespace UrbanEcho.FileManagement
                             {
                                 MPoint mPoint = new MPoint(roadNodeFrom.X, roadNodeFrom.Y);
                                 PointFeature pf = new PointFeature(mPoint);
-                                pf["VehicleNumber"] = v;
+                                pf["VehicleNumber"] = vehiclesAdded;
                                 pf["VehicleType"] = "Car" + random.Next(0, VehicleStyles.NumberOFCarColors);
                                 pf["Hidden"] = false;
                                 pf["Angle"] = 0.0f;
                                 //Vehicle groups used so we don't raycast and update velocities every frame (was slowing down fps)
                                 //currently vehicle groups just set as 1 so vehicle groups is bypassed
                                 Vehicle vehicle = new Vehicle(pf, edge, "RegularCar", vehiclesAdded % Helper.NumberOfVehicleGroups);
-                                vehiclesAdded++;
+
                                 if (vehicle.IsCreated)
                                 {
+                                    vehiclesAdded++;
                                     UrbanEcho.Sim.Sim.Vehicles.Add(vehicle);
                                     VehicleFeatures.Add(pf);
                                 }
