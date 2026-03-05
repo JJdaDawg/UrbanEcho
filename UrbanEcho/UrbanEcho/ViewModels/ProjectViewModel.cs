@@ -105,6 +105,33 @@ namespace UrbanEcho.ViewModels
             WeakReferenceMessenger.Default.Send(new LogMessage("Data imported successfully", LogSource.System));
         }
 
+        [RelayCommand(CanExecute = nameof(CanImportData))]
+        private async Task ImportBackground()
+        {
+            var path = await _fileDialogService.OpenShapeFileAsync("Import Background", FileTypes.MbTiles);
+            if (path is null) return;
+            ProjectLayers.LoadBackgroundFile(path);
+            WeakReferenceMessenger.Default.Send(new LogMessage($"Background loaded '{path}'", LogSource.System));
+        }
+
+        [RelayCommand(CanExecute = nameof(CanImportData))]
+        private async Task ImportRoads()
+        {
+            var path = await _fileDialogService.OpenShapeFileAsync("Import Roads", FileTypes.ShapeFile);
+            if (path is null) return;
+            ProjectLayers.LoadRoadFile(path);
+            WeakReferenceMessenger.Default.Send(new LogMessage($"Roads loaded '{path}'", LogSource.System));
+        }
+
+        [RelayCommand(CanExecute = nameof(CanImportData))]
+        private async Task ImportIntersections()
+        {
+            var path = await _fileDialogService.OpenShapeFileAsync("Import Intersections", FileTypes.ShapeFile);
+            if (path is null) return;
+            ProjectLayers.LoadIntersectionsFile(path);
+            WeakReferenceMessenger.Default.Send(new LogMessage($"Intersections loaded '{path}'", LogSource.System));
+        }
+
         private bool CanSave() => _currentProject is not null;
 
         private bool CanClose() => _currentProject is not null;
@@ -117,6 +144,9 @@ namespace UrbanEcho.ViewModels
             SaveProjectCommand.NotifyCanExecuteChanged();
             CloseProjectCommand.NotifyCanExecuteChanged();
             ImportDataCommand.NotifyCanExecuteChanged();
+            ImportBackgroundCommand.NotifyCanExecuteChanged();
+            ImportRoadsCommand.NotifyCanExecuteChanged();
+            ImportIntersectionsCommand.NotifyCanExecuteChanged();
         }
     }
 }

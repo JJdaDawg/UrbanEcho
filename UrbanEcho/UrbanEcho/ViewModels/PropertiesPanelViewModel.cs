@@ -19,7 +19,14 @@ namespace UrbanEcho.ViewModels
         [NotifyPropertyChangedFor(nameof(Title))]
         [NotifyPropertyChangedFor(nameof(Subtitle))]
         [NotifyPropertyChangedFor(nameof(HasSelection))]
+        [NotifyPropertyChangedFor(nameof(ShowEmptyMapMessage))]
         private IPropertiesViewModel? _selectedProperties;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ShowEmptyMapMessage))]
+        private bool _hasProject;
+
+        public bool ShowEmptyMapMessage => HasProject && !HasSelection;
 
         public string Title => SelectedProperties?.Title ?? "Properties";
         public string Subtitle => SelectedProperties?.Subtitle ?? string.Empty;
@@ -43,6 +50,8 @@ namespace UrbanEcho.ViewModels
             });
 
             WeakReferenceMessenger.Default.Register<MapFeatureDeselectedMessage>(this, (r, m) => SelectedProperties = null);
+            WeakReferenceMessenger.Default.Register<ProjectLoadedMessage>(this, (r, m) => HasProject = true);
+            WeakReferenceMessenger.Default.Register<ProjectClosedMessage>(this, (r, m) => HasProject = false);
         }
 
         public void Toggle()

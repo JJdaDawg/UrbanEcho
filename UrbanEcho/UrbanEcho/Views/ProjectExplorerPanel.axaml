@@ -8,7 +8,7 @@
     d:DesignHeight="500"
     d:DesignWidth="300">
     <Border Classes="focus-indicator" Focusable="True" Padding="0">
-        <Grid RowDefinitions="32,*">
+        <Grid RowDefinitions="32,Auto,*">
             <!-- Title bar -->
             <Border Grid.Row="0">
                 <Grid ColumnDefinitions="*, Auto">
@@ -21,18 +21,28 @@
                         Command="{Binding ToggleCommand}" />
                 </Grid>
             </Border>
+
+            <Separator Grid.Row="1" Margin="0" />
+
             <!-- Content -->
-            <StackPanel Grid.Row="1" Margin="10,0,0,0" Spacing="6">
-                <TextBlock Text="SELECT LAYER" Opacity="0.5" />
-                <StackPanel Orientation="Horizontal" Spacing="4">
-                    <ToggleButton Content="Intersections"
-                                  IsChecked="{Binding IsIntersectionLayerActive}"
-                                  Command="{Binding SelectIntersectionLayerCommand}" />
-                    <ToggleButton Content="Vehicles"
-                                  IsChecked="{Binding IsVehicleLayerActive}"
-                                  Command="{Binding SelectVehicleLayerCommand}" />
+            <Grid Grid.Row="2">
+                <TextBlock Text="No project loaded"
+                           Opacity="0.5"
+                           IsVisible="{Binding !HasProject}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"/>
+                <StackPanel IsVisible="{Binding HasProject}" Margin="10,10,0,0" Spacing="6">
+                    <TextBlock Text="SELECT LAYER" Opacity="0.5" />
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <ToggleButton Content="Intersections"
+                                      IsChecked="{Binding IsIntersectionLayerActive}"
+                                      Command="{Binding SelectIntersectionLayerCommand}" />
+                        <ToggleButton Content="Vehicles"
+                                      IsChecked="{Binding IsVehicleLayerActive}"
+                                      Command="{Binding SelectVehicleLayerCommand}" />
+                    </StackPanel>
                 </StackPanel>
-            </StackPanel>
+            </Grid>
         </Grid>
     </Border>
 </UserControl>

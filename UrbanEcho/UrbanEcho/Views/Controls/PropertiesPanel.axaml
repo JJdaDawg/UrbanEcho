@@ -34,17 +34,18 @@
             <!-- Content area -->
             <ScrollViewer Grid.Row="2" Margin="2">
                 <Panel>
-
-                    <!-- Empty state -->
                     <TextBlock
-                        Text="Select an object on the map"
-                        IsVisible="{Binding !HasSelection}"
+                        Text="No project loaded"
+                        IsVisible="{Binding !HasProject}"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
-                        Margin="0,20,0,0"
                         Opacity="0.5"/>
-
-                    <!-- Changeable properties view -->
+                    <TextBlock
+                        Text="Select an object on the map"
+                        IsVisible="{Binding ShowEmptyMapMessage}"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Opacity="0.5"/>
                     <ContentControl
                         Content="{Binding SelectedProperties}"
                         IsVisible="{Binding HasSelection}">
