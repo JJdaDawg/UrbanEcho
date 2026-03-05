@@ -37,6 +37,11 @@ namespace UrbanEcho.Events.UI
         {
         }
 
+        public void Clear()
+        {
+            cq.Clear();
+        }
+
         /// <summary>
         /// Returns status of the queue
         /// </summary>

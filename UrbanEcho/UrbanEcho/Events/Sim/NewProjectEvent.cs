@@ -29,7 +29,6 @@ namespace UrbanEcho.Events.Sim
         {
             //These Events should run on UI after loading a project
             EventQueueForUI.Instance.Add(new ClearLayersEvent(map));
-            EventQueueForUI.Instance.Add(new ZoomEvent(map));
         }
     }
 }

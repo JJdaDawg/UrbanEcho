@@ -44,12 +44,13 @@ namespace UrbanEcho.ViewModels
             {
                 HasProject = true;
                 //NotifyProjectCommands();
-                //WeakReferenceMessenger.Default.Send(new ProjectLoadedMessage());
+                WeakReferenceMessenger.Default.Send(new ProjectLoadedMessage());
                 //WeakReferenceMessenger.Default.Send(new LogMessage($"Project successfully opened '{path}'", LogSource.System));
             }
             else
             {
                 HasProject = false;
+                WeakReferenceMessenger.Default.Send(new ProjectClosedMessage());
             }
 
             NotifyProjectCommands();
@@ -73,8 +74,16 @@ namespace UrbanEcho.ViewModels
         private void SaveProject()
         {
             if (_currentProject is null) return;
-            SaveProjectEvent saveProjectEvent = new SaveProjectEvent(_currentProject);
-            EventQueueForSim.Instance.Add(saveProjectEvent);
+            if (_currentProject.PathForThisFile != string.Empty)
+            {
+                SaveProjectEvent saveProjectEvent = new SaveProjectEvent(_currentProject);
+                EventQueueForSim.Instance.Add(saveProjectEvent);
+            }
+            else
+            {
+                Task saveAs = SaveAsProject();
+            }
+
             //WeakReferenceMessenger.Default.Send(new LogMessage("Project successfully saved", LogSource.System));
         }
 

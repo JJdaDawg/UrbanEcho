@@ -650,6 +650,10 @@ namespace UrbanEcho.Sim
             {
                 updateToSpeed = Math.Clamp(updateToSpeed + settings.GetAcceleration(), 0, SpeedLimit);
             }
+            if (State == VehicleStates.AtTargetSpeed)
+            {
+                updateToSpeed = Math.Clamp(updateToSpeed, 0, SpeedLimit);
+            }
             if (State == VehicleStates.Decelerating || State == VehicleStates.Stopped)//Stopped case added here to ensure vehicle doesn't slowly creep if very close to zero speed
             {
                 updateToSpeed = Math.Clamp(updateToSpeed - settings.GetDeceleration(), 0, SpeedLimit);

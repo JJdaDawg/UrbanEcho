@@ -66,7 +66,7 @@ namespace UrbanEcho.FileManagement
 
         public static bool IsRasterVisible { get; set; } = true;
         public static bool IsIntersectionsVisible { get; set; } = true;
-        public static bool IsCensusOverlayVisible { get; set; } = false;
+        public static bool IsCensusOverlayVisible { get; set; } = true;
 
         private static List<IFeature> RoadFeatures = new List<IFeature>();
 
@@ -85,16 +85,12 @@ namespace UrbanEcho.FileManagement
 
             if (openProject != null)
             {
-                currentProjectFile = openProject;
-                backgroundRequiresLoading = true;
-                roadRequiresLoading = true;
-                intersectionRequiresLoading = true;
-                vehicleRequiresLoading = true;
+                //Clear queue incase UI is currently updating vehicle layer
+                EventQueueForUI.Instance.Clear();
 
-                backgroundLoaded = false;
-                roadLoaded = false;
-                intersectionLoaded = false;
-                vehicleLoaded = false;
+                currentProjectFile = openProject;
+
+                resetLayers();
 
                 if (Load(currentProjectFile))
                 {
@@ -128,7 +124,14 @@ namespace UrbanEcho.FileManagement
                 currentProjectFile.BackgroundLayerPath = path;
                 backgroundRequiresLoading = true;
                 backgroundLoaded = false;
-                Load(currentProjectFile);
+                if (Load(currentProjectFile))
+                {
+                    if (Sim.Sim.MyMap != null)
+                    {
+                        EventQueueForUI.Instance.Add(new AddLayersEvent(Sim.Sim.MyMap));
+                        EventQueueForUI.Instance.Add(new ZoomEvent(Sim.Sim.MyMap));
+                    }
+                }
 
                 EventQueueForUI.Instance.Add(new SetProjectEvent(currentProjectFile));
             }
@@ -142,7 +145,14 @@ namespace UrbanEcho.FileManagement
                 roadRequiresLoading = true;
                 roadLoaded = false;
 
-                Load(currentProjectFile);
+                if (Load(currentProjectFile))
+                {
+                    if (Sim.Sim.MyMap != null)
+                    {
+                        EventQueueForUI.Instance.Add(new AddLayersEvent(Sim.Sim.MyMap));
+                        EventQueueForUI.Instance.Add(new ZoomEvent(Sim.Sim.MyMap));
+                    }
+                }
 
                 EventQueueForUI.Instance.Add(new SetProjectEvent(currentProjectFile));
             }
@@ -156,7 +166,14 @@ namespace UrbanEcho.FileManagement
                 intersectionRequiresLoading = true;
                 intersectionLoaded = false;
 
-                Load(currentProjectFile);
+                if (Load(currentProjectFile))
+                {
+                    if (Sim.Sim.MyMap != null)
+                    {
+                        EventQueueForUI.Instance.Add(new AddLayersEvent(Sim.Sim.MyMap));
+                        EventQueueForUI.Instance.Add(new ZoomEvent(Sim.Sim.MyMap));
+                    }
+                }
 
                 EventQueueForUI.Instance.Add(new SetProjectEvent(currentProjectFile));
             }
@@ -169,6 +186,15 @@ namespace UrbanEcho.FileManagement
 
         private static void resetLayers()
         {
+            backgroundRequiresLoading = true;
+            roadRequiresLoading = true;
+            intersectionRequiresLoading = true;
+            vehicleRequiresLoading = true;
+
+            backgroundLoaded = false;
+            roadLoaded = false;
+            intersectionLoaded = false;
+            vehicleLoaded = false;
             backgroundMBTile = null;
             roadLayerFirstPass = null;
             roadLayerSecondPass = null;
@@ -176,11 +202,21 @@ namespace UrbanEcho.FileManagement
             vehicleLayer = null;
             debugLayer = null;
             censusOverlayLayer = null;
+            World.Clear();
+            Sim.Sim.Clear();
+            RoadFeatures = new List<IFeature>();
+            VehicleFeatures = new List<IFeature>();
+            DebugLayerFeatures = new List<IFeature>();
+
+            Map? map = Sim.Sim.MyMap;
+            if (map != null)
+            {
+                map.Refresh();
+            }
         }
 
         public static bool Load(ProjectFile currentProjectFile)
         {
-            resetLayers();
             bool addLayer = false;
             if (currentProjectFile != null)
             {
@@ -807,7 +843,43 @@ namespace UrbanEcho.FileManagement
             return isZoomedToLayer;
         }
 
+        public static void ZoomToLayer(Map map)
+        {
+            if (map == null)
+            {
+                return;
+            }
+
+            MRect? extent = map.Extent;
+            if (extent != null)
+            {
+                MRect panBounds = extent;
+
+                if (map != null)
+                {
+                    panBounds?.Multiply(5.0f);
+                    //https://github.com/Mapsui/Mapsui/blob/main/Samples/Mapsui.Samples.Common/Maps/Navigation/KeepWithinExtentSample.cs
+
+                    if (panBounds != null)
+                    {
+                        map.Navigator.OverridePanBounds = panBounds;
+                        map.Navigator.OverrideZoomBounds = new MMinMax(0.01, 50);
+
+                        map.Navigator.CenterOnAndZoomTo(new MPoint(extent.MinX + (extent.MaxX - extent.MinX) / 2,
+                            extent.MinY + (extent.MaxY - extent.MinY) / 2), 15.0);
+                    }
+                }
+
+                isZoomedToLayer = true;
+            }
+            else
+            {
+                SetDefaultZoomLimit(map);
+            }
+        }
+
         //Only call from UI
+        /* old version of ZoomToLayer
         public static void ZoomToLayer(Map map)
         {
             if (map == null)
@@ -845,7 +917,7 @@ namespace UrbanEcho.FileManagement
             {
                 SetDefaultZoomLimit(map);
             }
-        }
+        }*/
 
         //Only call from UI
         //Add a default zoom limit, otherwise there is a crash if trying if scrolling
@@ -913,6 +985,12 @@ namespace UrbanEcho.FileManagement
             {
                 myMap?.Layers.Add(debugLayer);
             }*/
+
+            Map? map = Sim.Sim.MyMap;
+            if (map != null)
+            {
+                map.Refresh();
+            }
         }
 
         public static void UpdateVehicleLayer(bool fullClone, Map? map)
@@ -968,6 +1046,7 @@ namespace UrbanEcho.FileManagement
         public static void NewProject()
         {
             currentProjectFile = new ProjectFile();
+            resetLayers();
             EventQueueForUI.Instance.Add(new SetProjectEvent(currentProjectFile));
         }
     }

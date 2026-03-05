@@ -29,6 +29,18 @@ namespace UrbanEcho.Events.Sim
             {
                 ProjectLayers.LoadProject(path);
             }
+            if (fileType == FileType.BackgroundFile)
+            {
+                ProjectLayers.LoadBackgroundFile(path);
+            }
+            if (fileType == FileType.RoadLayerFile)
+            {
+                ProjectLayers.LoadRoadFile(path);
+            }
+            if (fileType == FileType.IntersectionLayerFile)
+            {
+                ProjectLayers.LoadIntersectionsFile(path);
+            }
         }
 
         public FileType GetFileType()
