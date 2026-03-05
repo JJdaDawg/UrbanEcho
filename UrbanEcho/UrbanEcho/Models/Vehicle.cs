@@ -89,7 +89,7 @@ namespace UrbanEcho.Sim
         private int updateGroup = 0;
 
         private List<int>? path;
-        private List<RoadEdge>? pathEdges;
+        private List<PathStep>? pathSteps;
 
         private int pathSegmentIndex = 0;
         private RoadGraph? graph;
@@ -181,20 +181,19 @@ namespace UrbanEcho.Sim
 
         private void AdvanceToNextRoad()
         {
-            if (path == null || pathEdges == null || graph == null || Body == null)
+            if (path == null || pathSteps == null || graph == null || Body == null)
             {
                 EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Could not run advance to next road"));
                 return;
             }
 
-            if (pathSegmentIndex >= pathEdges.Count)
+            if (pathSegmentIndex >= pathSteps.Count)
             {
                 int currentNodeId = path[path.Count - 1];
                 setNewPath(currentNodeId);
             }
 
             stepThroughPath();
-            // Old: stepThroughPath(path);
         }
 
         private void setNewPath(int currentNodeId)
@@ -222,7 +221,7 @@ namespace UrbanEcho.Sim
                 ResetVehicleToNewPos();
                 return;
             }
-            pathEdges = new List<RoadEdge>(newPathEdges);
+            pathSteps = PathStepBuilder.Build(newPathEdges, graph);
             path = new List<int> { newPathEdges[0].From };
             for (int i = 0; i < newPathEdges.Count; i++)
                 path.Add(newPathEdges[i].To);
@@ -233,17 +232,17 @@ namespace UrbanEcho.Sim
 
         private void stepThroughPath()
         {
-            if (pathEdges == null || pathSegmentIndex >= pathEdges.Count)
+            if (pathSteps == null || pathSegmentIndex >= pathSteps.Count)
             {
                 ResetVehicleToNewPos();
                 return;
             }
 
-            RoadEdge nextEdge = pathEdges[pathSegmentIndex];
+            PathStep step = pathSteps[pathSegmentIndex];
 
-            if (nextEdge.Feature is GeometryFeature theRoad && theRoad.Geometry is LineString newLineString)
+            if (step.Edge.Feature is GeometryFeature theRoad && theRoad.Geometry is LineString newLineString)
             {
-                currentRoadEdge = SetCurrentRoadEdge(nextEdge);
+                currentRoadEdge = SetCurrentRoadEdge(step.Edge, step.Turn);
 
                 StepThroughLineString(true);
 
@@ -949,7 +948,7 @@ namespace UrbanEcho.Sim
             }
         }
 
-        private RoadEdge SetCurrentRoadEdge(RoadEdge updatedRoadEdge)
+        private RoadEdge SetCurrentRoadEdge(RoadEdge updatedRoadEdge, TurnDirection turn = TurnDirection.Straight)
         {
             float newSpeedLimit = Helper.TryGetFeatureKVPToFloat(updatedRoadEdge.Feature, "SPEED_LIMI", speedLimit);
             if (newSpeedLimit < 30.0f)
@@ -970,12 +969,12 @@ namespace UrbanEcho.Sim
                 }
             }
 
-            SetLane(updatedRoadEdge);
+            SetLane(updatedRoadEdge, turn);
 
             return updatedRoadEdge;
         }
 
-        private void SetLane(RoadEdge roadEdge)
+        private void SetLane(RoadEdge roadEdge, TurnDirection turn = TurnDirection.Straight)
         {
             bool hasSamePropertiesAsOldEdge = true;
 
@@ -1005,7 +1004,7 @@ namespace UrbanEcho.Sim
                     {
                         float offsetToUse = (numberOfLanes - 1) / 2.0f;
 
-                        lanePicked = Random.Shared.Next(numberOfLanes);
+                        lanePicked = PickLaneForTurn(turn, numberOfLanes);
                         calculatedOffsetForLane = (lanePicked - offsetToUse);
                     }
                     else
@@ -1013,15 +1012,28 @@ namespace UrbanEcho.Sim
                         bool isEven = (numberOfLanes % 2) == 0;
                         float offsetToUse = isEven ? 0.5f : 1.5f;
                         int chooseableLanes = isEven ? (numberOfLanes / 2) : ((numberOfLanes - 1) / 2);
-                        if (numberOfLanes == 5 && chooseableLanes >= 3)
-                        {
-                            bool help = true;
-                        }
-                        lanePicked = Random.Shared.Next(chooseableLanes);
+
+                        lanePicked = PickLaneForTurn(turn, chooseableLanes);
                         calculatedOffsetForLane = (lanePicked + offsetToUse);
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Pick a lane index based on the upcoming turn direction.
+        /// Higher index = further right. Right turn → rightmost, left turn → leftmost.
+        /// </summary>
+        private static int PickLaneForTurn(TurnDirection turn, int laneCount)
+        {
+            if (laneCount <= 1) return 0;
+
+            return turn switch
+            {
+                TurnDirection.Right => laneCount - 1,
+                TurnDirection.Left  => 0,
+                _                   => Random.Shared.Next(laneCount),
+            };
         }
     }
 }
