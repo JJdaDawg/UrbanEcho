@@ -51,6 +51,8 @@ namespace UrbanEcho.Sim
         public static bool VehiclePathsLoaded = false;
         private static bool intersectionBodiesCreated = false;
 
+        public static IReadOnlyDictionary<int, double> NodePenalties = new Dictionary<int, double>();
+
         public static bool Flasher;
 
         public static void SetMainViewModel(MainViewModel setMainViewModel)
@@ -202,6 +204,38 @@ namespace UrbanEcho.Sim
         public static void SetIntersectionBodiesCreated()
         {
             intersectionBodiesCreated = true;
+            NodePenalties = BuildNodePenalties();
+        }
+
+        private static IReadOnlyDictionary<int, double> BuildNodePenalties()
+        {
+            var penalties = new Dictionary<int, double>();
+            foreach (var intersection in RoadIntersections)
+            {
+                if (intersection.TheSignalType == RoadIntersection.SignalType.TwoWayStop)
+                {
+                    foreach (var etr in intersection.EdgesInto)
+                        if (!etr.TrafficRule.IsNeverBlockingTraffic())
+                            penalties[etr.RoadEdge.To] = Math.Max(penalties.GetValueOrDefault(etr.RoadEdge.To), 5.0);
+                    continue;
+                }
+
+                double delay = intersection.TheSignalType switch
+                {
+                    RoadIntersection.SignalType.FullSignal       => 30.0,
+                    RoadIntersection.SignalType.AllWayStop       =>  8.0,
+                    RoadIntersection.SignalType.Flasher          =>  2.0,
+                    RoadIntersection.SignalType.PedestrianSignal =>  4.0,
+                    RoadIntersection.SignalType.StopLRTSignal    => 20.0,
+                    _                                            =>  0.0
+                };
+
+                if (delay <= 0) continue;
+
+                foreach (var etr in intersection.EdgesInto)
+                    penalties[etr.RoadEdge.To] = Math.Max(penalties.GetValueOrDefault(etr.RoadEdge.To), delay);
+            }
+            return penalties;
         }
 
         public static void InitializeGraph()
