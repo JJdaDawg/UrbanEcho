@@ -6,13 +6,15 @@ namespace UrbanEcho.Graph
     public sealed class AStarPathfinder
     {
         private readonly RoadGraph _graph;
+        private readonly IReadOnlyDictionary<int, double>? _nodePenalties;
 
         /// <summary>Upper-bound speed (m/s) keeps the heuristic admissible when cost = travel time.</summary>
         private const double MaxSpeedMs = 130.0 / 3.6;
 
-        public AStarPathfinder(RoadGraph graph)
+        public AStarPathfinder(RoadGraph graph, IReadOnlyDictionary<int, double>? nodePenalties = null)
         {
             _graph = graph;
+            _nodePenalties = nodePenalties;
         }
 
         public IReadOnlyList<int> FindPath(int node_start, int node_goal)
@@ -51,7 +53,8 @@ namespace UrbanEcho.Graph
                     int node_successor = edge.To;
 
                     double successor_current_cost =
-                        g[node_current] + edge.TravelTimeSeconds;
+                        g[node_current] + edge.TravelTimeSeconds
+                        + (_nodePenalties?.GetValueOrDefault(node_successor, 0.0) ?? 0.0);
 
                     if (successor_current_cost >= g.GetValueOrDefault(node_successor, double.PositiveInfinity)
                         && closedSet.Contains(node_successor))
@@ -123,7 +126,8 @@ namespace UrbanEcho.Graph
                     int node_successor = edge.To;
 
                     double successor_current_cost =
-                        g[node_current] + edge.TravelTimeSeconds;
+                        g[node_current] + edge.TravelTimeSeconds
+                        + (_nodePenalties?.GetValueOrDefault(node_successor, 0.0) ?? 0.0);
 
                     if (successor_current_cost >= g.GetValueOrDefault(node_successor, double.PositiveInfinity)
                         && closedSet.Contains(node_successor))

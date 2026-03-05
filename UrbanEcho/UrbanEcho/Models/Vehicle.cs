@@ -212,7 +212,7 @@ namespace UrbanEcho.Sim
                 ResetVehicleToNewPos();
                 return;
             }
-            var pathfinder = new AStarPathfinder(graph);
+            var pathfinder = new AStarPathfinder(graph, Sim.NodePenalties);
             int goalNode = TrafficVolumeLoader.PickWeightedDestination(graph, currentNodeId);
 
             var newPathEdges = pathfinder.FindPathEdges(currentNodeId, goalNode);
