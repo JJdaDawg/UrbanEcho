@@ -29,15 +29,6 @@ namespace UrbanEcho.Events.Sim
             {
                 ProjectLayers.LoadProject(path);
             }
-
-            PostRun();
-        }
-
-        public void PostRun()
-        {
-            //These Events should run on UI after loading a project
-            EventQueueForUI.Instance.Add(new AddLayersEvent(map));
-            EventQueueForUI.Instance.Add(new ZoomEvent(map));
         }
 
         public FileType GetFileType()
