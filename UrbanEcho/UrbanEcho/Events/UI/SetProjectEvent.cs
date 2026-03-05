@@ -5,16 +5,17 @@ using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.ViewModels;
 using UrbanEcho.Sim;
+using UrbanEcho.FileManagement;
 
 namespace UrbanEcho.Events.UI
 {
-    public class OpenedProjectEvent : IEventForUI
+    public class SetProjectEvent : IEventForUI
     {
-        private string path;
+        private ProjectFile? projectFile;
 
-        public OpenedProjectEvent(string path)
+        public SetProjectEvent(ProjectFile? projectFile)
         {
-            this.path = path;
+            this.projectFile = projectFile;
         }
 
         public void Run()
@@ -22,7 +23,7 @@ namespace UrbanEcho.Events.UI
             MainViewModel? mvm = UrbanEcho.Sim.Sim.GetMainViewModel();
             if (mvm != null)
             {
-                mvm.Project.OpenedProject(path);
+                mvm.Project.SetProject(projectFile);
             }
         }
     }

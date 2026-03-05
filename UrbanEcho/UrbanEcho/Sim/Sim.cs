@@ -51,7 +51,7 @@ namespace UrbanEcho.Sim
         public static bool VehiclePathsLoaded = false;
         private static bool intersectionBodiesCreated = false;
 
-        public static IReadOnlyDictionary<int, double> NodePenalties = new Dictionary<int, double>();
+        public static Dictionary<int, double> NodePenalties = new Dictionary<int, double>();
 
         public static bool Flasher;
 
@@ -77,8 +77,12 @@ namespace UrbanEcho.Sim
                 return;
             }
             //TODO: Remove this once we have UI for loading project
-            LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/ProjectFiles/myFile.uep", mainViewModel.Map.MyMap);
-            EventQueueForSim.Instance.Add(loadProjectEvent); //will usually happen from UI
+            //LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/ProjectFiles/myFile.uep", mainViewModel.Map.MyMap);
+            //EventQueueForSim.Instance.Add(loadProjectEvent); //will usually happen from UI
+
+            //Start with a new project
+            NewProjectEvent newProjectEvent = new NewProjectEvent(mainViewModel.Map.MyMap);
+            EventQueueForSim.Instance.Add(newProjectEvent); //will usually happen from UI
 
             FrameTimer frameTimer = new FrameTimer(false, 60);
 
@@ -207,7 +211,7 @@ namespace UrbanEcho.Sim
             NodePenalties = BuildNodePenalties();
         }
 
-        private static IReadOnlyDictionary<int, double> BuildNodePenalties()
+        private static Dictionary<int, double> BuildNodePenalties()
         {
             var penalties = new Dictionary<int, double>();
             foreach (var intersection in RoadIntersections)
@@ -222,12 +226,12 @@ namespace UrbanEcho.Sim
 
                 double delay = intersection.TheSignalType switch
                 {
-                    RoadIntersection.SignalType.FullSignal       => 30.0,
-                    RoadIntersection.SignalType.AllWayStop       =>  8.0,
-                    RoadIntersection.SignalType.Flasher          =>  2.0,
-                    RoadIntersection.SignalType.PedestrianSignal =>  4.0,
-                    RoadIntersection.SignalType.StopLRTSignal    => 20.0,
-                    _                                            =>  0.0
+                    RoadIntersection.SignalType.FullSignal => 30.0,
+                    RoadIntersection.SignalType.AllWayStop => 8.0,
+                    RoadIntersection.SignalType.Flasher => 2.0,
+                    RoadIntersection.SignalType.PedestrianSignal => 4.0,
+                    RoadIntersection.SignalType.StopLRTSignal => 20.0,
+                    _ => 0.0
                 };
 
                 if (delay <= 0) continue;
@@ -275,6 +279,22 @@ namespace UrbanEcho.Sim
             }
         }
 
+        public static void Clear()
+        {
+            Vehicles = new List<Vehicle>();
+            RoadIntersections = new List<RoadIntersection>();
+            RoadGraph = null;
+            CensusSpawn = null;
+            simTime = 0;
+            SimFrames = 0;
+            GroupToUpdate = 0;
+            pathfinder = null;
+            nodes = null;
+            VehiclePathsLoaded = false;
+            intersectionBodiesCreated = false;
+            NodePenalties = new Dictionary<int, double>();
+        }
+
         public static void Free()
         {
             Sim.Cts.Cancel();
@@ -303,6 +323,7 @@ namespace UrbanEcho.Sim
                     if (World.Created)
                     {
                         B2Api.b2DestroyWorld(World.WorldId);//Destroy world
+                        World.Created = false;
                     }
                 }
             }

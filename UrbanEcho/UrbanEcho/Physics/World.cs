@@ -6,6 +6,8 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using UrbanEcho.Models;
+using UrbanEcho.Sim;
 using static Box2dNet.Interop.B2Api;
 
 namespace UrbanEcho.Physics
@@ -36,6 +38,30 @@ namespace UrbanEcho.Physics
             worldDef.enableSleep = false;
             WorldId = b2CreateWorld(worldDef);
             Created = true;
+        }
+
+        public static void Clear()
+        {
+            foreach (RoadIntersection r in Sim.Sim.RoadIntersections)
+            {
+                if (r.Body != null)
+                {
+                    r.Body.Dispose();
+                }
+            }
+
+            foreach (Vehicle v in Sim.Sim.Vehicles)
+            {
+                if (v.Body != null)
+                {
+                    v.Body.Dispose();
+                }
+            }
+            if (World.Created)
+            {
+                B2Api.b2DestroyWorld(World.WorldId);//Destroy world
+                World.Created = false;
+            }
         }
     }
 }
