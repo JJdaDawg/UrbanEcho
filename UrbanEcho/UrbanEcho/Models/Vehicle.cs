@@ -1088,6 +1088,8 @@ namespace UrbanEcho.Sim
         {
             bool hasSamePropertiesAsOldEdge = true;
 
+            RoadName = roadEdge.Metadata.RoadName;
+
             int numberOfLanes = Helpers.Helper.TryGetFeatureKVPToInt(roadEdge.Feature, "LANES", 2);
             if (currentRoadEdge is null || currentRoadEdge.Metadata.OneWay != roadEdge.Metadata.OneWay)
             {
@@ -1141,8 +1143,8 @@ namespace UrbanEcho.Sim
             return turn switch
             {
                 TurnDirection.Right => laneCount - 1,
-                TurnDirection.Left  => 0,
-                _                   => Random.Shared.Next(laneCount),
+                TurnDirection.Left => 0,
+                _ => Random.Shared.Next(laneCount),
             };
         }
     }
