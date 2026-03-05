@@ -17,6 +17,8 @@ public partial class ProjectExplorerPanelViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsVehicleLayerActive))]
     private SelectionLayer _activeLayer = SelectionLayer.None;
 
+    [ObservableProperty] private bool _hasProject;
+
     public bool IsIntersectionLayerActive => ActiveLayer == SelectionLayer.Intersection;
     public bool IsVehicleLayerActive => ActiveLayer == SelectionLayer.Vehicle;
 
@@ -30,6 +32,8 @@ public partial class ProjectExplorerPanelViewModel : ObservableObject
         ToggleCommand = new RelayCommand(Toggle);
         SelectIntersectionLayerCommand = new RelayCommand(() => ActiveLayer = IsIntersectionLayerActive ? SelectionLayer.None : SelectionLayer.Intersection);
         SelectVehicleLayerCommand = new RelayCommand(() => ActiveLayer = IsVehicleLayerActive ? SelectionLayer.None : SelectionLayer.Vehicle);
+        WeakReferenceMessenger.Default.Register<ProjectLoadedMessage>(this, (r, m) => HasProject = true);
+        WeakReferenceMessenger.Default.Register<ProjectClosedMessage>(this, (r, m) => HasProject = false);
     }
 
     partial void OnActiveLayerChanged(SelectionLayer value)

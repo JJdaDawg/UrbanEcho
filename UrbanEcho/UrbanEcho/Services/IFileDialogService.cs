@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Avalonia.Platform.Storage;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,5 +12,6 @@ namespace UrbanEcho.Services
         Task<string?> OpenFileAsync();
         Task<string?> SaveFileAsync();
         Task<string?> CreateProject();
+        Task<string?> OpenShapeFileAsync(string title, FilePickerFileType fileType);
     }
 }

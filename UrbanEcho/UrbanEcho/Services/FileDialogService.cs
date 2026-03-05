@@ -19,6 +19,17 @@ namespace UrbanEcho.Services
             _topLevel = topLevel;
         }
 
+        public async Task<string?> OpenShapeFileAsync(string title, FilePickerFileType fileType)
+        {
+            var files = await _topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = title,
+                AllowMultiple = false,
+                FileTypeFilter = new[] { fileType }
+            });
+            return files.Count > 0 ? files[0].Path.LocalPath : null;
+        }
+
         public async Task<string?> OpenFileAsync()
         {
             var files = await _topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
