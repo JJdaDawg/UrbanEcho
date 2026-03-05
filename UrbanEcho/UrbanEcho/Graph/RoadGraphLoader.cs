@@ -223,8 +223,8 @@ public static class RoadGraphLoader
 
         return new RoadMetadata
         {
-            RoadType = f.Fields.Contains("CATEGORY")
-                ? f["CATEGORY"]?.ToString() ?? ""
+            RoadName = f.Fields.Contains("STREET")
+                ? f["STREET"]?.ToString() ?? ""
                 : "",
 
             SpeedLimit = speedKmh / 3.6,

@@ -18,6 +18,6 @@ namespace UrbanEcho.Models.UI
         public bool WaitingOnIntersection { get; set; }
         public bool VehicleInFront { get; set; }
         public float MetersFromCarInFront { get; set; }
-        public string RoadType { get; set; } = string.Empty;
+        public string RoadName { get; set; } = string.Empty;
     }
 }

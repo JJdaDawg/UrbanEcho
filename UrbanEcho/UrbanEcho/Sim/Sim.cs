@@ -51,6 +51,8 @@ namespace UrbanEcho.Sim
         public static bool VehiclePathsLoaded = false;
         private static bool intersectionBodiesCreated = false;
 
+        public static bool Flasher;
+
         public static void SetMainViewModel(MainViewModel setMainViewModel)
         {
             mainViewModel = setMainViewModel;
@@ -163,6 +165,29 @@ namespace UrbanEcho.Sim
             if (EventQueueForUI.Instance.IsEmpty() && Sim.SimFrames % 2 == 0)
             {
                 ProjectLayers.UpdateVehicleLayer(true, MyMap);
+            }
+
+            //Update property panel
+            updatePropertyPanel();
+        }
+
+        private static void updatePropertyPanel()
+        {
+            bool flasherLastValue = Flasher;
+            //Panel updates once a second of the simulation
+            if (Sim.SimFrames % 120 > 60)
+            {
+                Flasher = true;
+            }
+            else
+            {
+                Flasher = false;
+            }
+
+            if (flasherLastValue != Flasher)
+            {
+                UpdatePropertyPanelEvent updatePropertyPanelEvent = new UpdatePropertyPanelEvent();
+                EventQueueForUI.Instance.Add(updatePropertyPanelEvent);
             }
         }
 

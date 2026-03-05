@@ -22,5 +22,9 @@ namespace UrbanEcho.ViewModels.Properties
         {
             _intersection = intersection;
         }
+
+        public void UpdatePropertyView()
+        {
+        }
     }
 }

@@ -31,8 +31,8 @@
                 <TextBlock Text="{Binding SpeedLimit, StringFormat='{}{0} km/h'}" Opacity="0.85" />
             </StackPanel>
             <StackPanel Spacing="2">
-                <TextBlock Text="Road Type" Opacity="0.5" />
-                <TextBlock Text="{Binding RoadType}" Opacity="0.85" />
+                <TextBlock Text="Road Name" Opacity="0.5" />
+                <TextBlock Text="{Binding RoadName}" Opacity="0.85" />
             </StackPanel>
             <StackPanel Spacing="2">
                 <TextBlock Text="Waiting" Opacity="0.5" />

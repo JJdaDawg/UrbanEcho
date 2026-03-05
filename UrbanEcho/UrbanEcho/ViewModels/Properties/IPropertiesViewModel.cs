@@ -10,5 +10,7 @@ namespace UrbanEcho.ViewModels.Properties
     {
         string Title { get; }
         string Subtitle { get; }
+
+        public void UpdatePropertyView();
     }
 }

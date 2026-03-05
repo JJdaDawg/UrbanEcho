@@ -36,10 +36,15 @@ public partial class RoadPropertiesViewModel : ObservableObject, IPropertiesView
         EditLanesCommand = new RelayCommand(EditLanes);
     }
 
-    private void SpawnVehicle() { }
+    private void SpawnVehicle()
+    { }
 
     private void EditLanes()
     {
         ShowLaneEditor = !ShowLaneEditor;
+    }
+
+    public void UpdatePropertyView()
+    {
     }
 }

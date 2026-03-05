@@ -119,14 +119,11 @@ namespace UrbanEcho.Helpers
         {
             double value = defaultValue;
 
-            if (feature is GeometryFeature gf)
+            if (feature.Fields.Contains(key))
             {
-                if (gf.Fields.Contains(key))
+                if (double.TryParse(feature[key]?.ToString(), out double valueOut))
                 {
-                    if (double.TryParse(gf[key]?.ToString(), out double valueOut))
-                    {
-                        value = valueOut;
-                    }
+                    value = valueOut;
                 }
             }
 
@@ -137,14 +134,11 @@ namespace UrbanEcho.Helpers
         {
             float value = defaultValue;
 
-            if (feature is GeometryFeature gf)
+            if (feature.Fields.Contains(key))
             {
-                if (gf.Fields.Contains(key))
+                if (float.TryParse(feature[key]?.ToString(), out float valueOut))
                 {
-                    if (float.TryParse(gf[key]?.ToString(), out float valueOut))
-                    {
-                        value = valueOut;
-                    }
+                    value = valueOut;
                 }
             }
 
@@ -155,13 +149,29 @@ namespace UrbanEcho.Helpers
         {
             int value = defaultValue;
 
-            if (feature is GeometryFeature gf)
+            if (feature.Fields.Contains(key))
             {
-                if (gf.Fields.Contains(key))
+                if (Int32.TryParse(feature[key]?.ToString(), out int valueOut))
                 {
-                    if (Int32.TryParse(gf[key]?.ToString(), out int valueOut))
+                    value = valueOut;
+                }
+            }
+
+            return value;
+        }
+
+        public static string TryGetFeatureKVPToString(IFeature feature, string key, string defaultValue)
+        {
+            string value = defaultValue;
+
+            if (feature.Fields.Contains(key))
+            {
+                if (feature[key] != null)
+                {
+                    string? keyValue = feature[key]?.ToString();
+                    if (keyValue != null)
                     {
-                        value = valueOut;
+                        value = keyValue;
                     }
                 }
             }

@@ -14,6 +14,7 @@ using UrbanEcho.Events.UI;
 using UrbanEcho.Graph;
 using UrbanEcho.Helpers;
 using UrbanEcho.Models;
+using UrbanEcho.Models.UI;
 using UrbanEcho.Physics;
 using Point = NetTopologySuite.Geometries.Point;
 
@@ -30,6 +31,11 @@ namespace UrbanEcho.Sim
 
     public class Vehicle : IBodyParent
     {
+        public VehicleUI VehicleUI
+        {
+            get; private set;
+        } = new VehicleUI();
+
         //public b2CastResultFcn? rayCastDelegate;
         public b2OverlapResultFcn overlapDelegateVehicle;
 
@@ -61,21 +67,12 @@ namespace UrbanEcho.Sim
         private float rayDistance;
         private b2Rot currentAngle;
 
-        private bool waitingOnIntersection = false;
-        private bool isWaiting = false;
-
         private float targetSpeed = 0;
-        private float speedLimit = 50;// Helper.DoMapCorrection(50);
+
         private VehicleSettings settings;
 
         private float angleThresholdToDecelerate = Helper.Deg2Rad(45.0f);//How many degrees off target angle before decelerate
         private bool angleAboveThreshold = false;
-        private bool vehicleInFront = false;
-        private float metersFromCarInFront = 0;
-
-        private float kmh = 0;
-
-        private VehicleStates state = VehicleStates.Stopped;
 
         private PointFeature? feature;//The feature this vehicle is connected to
 
@@ -119,18 +116,131 @@ namespace UrbanEcho.Sim
         private float stoppedElaspedTime = 0;
         private bool startedStoppedTimer = false;
 
-        // Pubic fields
-        public float Kmh => kmh;
-        public float SpeedLimit => speedLimit;
-        public VehicleStates State => state;
-        public bool IsWaiting => isWaiting;
-        public bool WaitingOnIntersection => waitingOnIntersection;
-        public bool VehicleInFront => vehicleInFront;
-        public float MetersFromCarInFront => metersFromCarInFront;
-        public RoadEdge CurrentRoadEdge => currentRoadEdge;
+        private float kmh = 0;
+
+        public float Kmh
+        {
+            get
+            {
+                return kmh;
+            }
+            set
+            {
+                VehicleUI.Kmh = value;
+                kmh = value;
+            }
+        }
+
+        private float speedLimit = 50;
+
+        public float SpeedLimit
+        {
+            get
+            {
+                return speedLimit;
+            }
+            set
+            {
+                VehicleUI.SpeedLimit = value;
+                speedLimit = value;
+            }
+        }
+
+        private VehicleStates state = VehicleStates.Stopped;
+
+        public VehicleStates State
+        {
+            get
+            {
+                return state;
+            }
+            set
+            {
+                VehicleUI.State = value;
+                state = value;
+            }
+        }
+
+        private bool isWaiting = false;
+
+        public bool IsWaiting
+        {
+            get
+            {
+                return isWaiting;
+            }
+            set
+            {
+                VehicleUI.IsWaiting = value;
+                isWaiting = value;
+            }
+        }
+
+        private bool waitingOnIntersection = false;
+
+        public bool WaitingOnIntersection
+        {
+            get
+            {
+                return waitingOnIntersection;
+            }
+            set
+            {
+                VehicleUI.WaitingOnIntersection = value;
+                waitingOnIntersection = value;
+            }
+        }
+
+        private bool vehicleInFront = false;
+
+        public bool VehicleInFront
+        {
+            get
+            {
+                return vehicleInFront;
+            }
+            set
+            {
+                VehicleUI.VehicleInFront = value;
+                vehicleInFront = value;
+            }
+        }
+
+        private float metersFromCarInFront = 0;
+
+        public float MetersFromCarInFront
+        {
+            get
+            {
+                return metersFromCarInFront;
+            }
+            set
+            {
+                VehicleUI.MetersFromCarInFront = value;
+                metersFromCarInFront = value;
+            }
+        }
+
+        private string roadType = "road";
+
+        public string RoadName
+        {
+            get
+            {
+                return currentRoadEdge.Metadata.RoadName;
+            }
+            set
+            {
+                roadType = value;
+                VehicleUI.RoadName = value;
+            }
+        }
 
         public Vehicle(PointFeature feature, RoadEdge currentRoadEdge, string carType, int updateGroup)
         {
+            VehicleUI.VehicleType = Helper.TryGetFeatureKVPToString(feature, "VehicleType", "");
+            VehicleUI.Id = Helper.TryGetFeatureKVPToInt(feature, "VehicleNumber", 0);
+
             settings = new VehicleSettings(carType);
             currentTrafficRule = TrafficRule.SetDefaultTrafficRule();
 
@@ -299,15 +409,15 @@ namespace UrbanEcho.Sim
 
                 if (currentTrafficRule.IsBlockingTraffic())
                 {
-                    isWaiting = true;
+                    IsWaiting = true;
                 }
 
                 if (currentTrafficRule.IsStopSign() && !currentTrafficRule.IsNeverBlockingTraffic())
                 {
-                    isWaiting = true;
+                    IsWaiting = true;
                 }
 
-                if (isWaiting == true)
+                if (IsWaiting == true)
                 {
                     whenToStopWaiting = Sim.GetSimTime() + minimumStopWaiting;
                 }
@@ -330,16 +440,16 @@ namespace UrbanEcho.Sim
 
                 if (IsCollidedVehicleSameEdgeOrIntersection(otherVehicle.currentRoadEdge))
                 {
-                    metersFromCarInFront = rayDistance * howFar;
+                    MetersFromCarInFront = rayDistance * howFar;
 
-                    if (!vehicleInFront)
+                    if (!VehicleInFront)
                     {
                         vehicleInFrontStartTime = Sim.GetSimTime();
                     }
                     vehicleInFrontCount++;
                     counted = true;
 
-                    if (isWaiting == true)
+                    if (IsWaiting == true)
                     {
                         whenToStopWaiting = Sim.GetSimTime() + minimumStopWaiting;
                     }
@@ -430,11 +540,11 @@ namespace UrbanEcho.Sim
                 EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Vehicle missing angle feature + {ex.ToString()}"));
             }
 
-            if (isWaiting)
+            if (IsWaiting)
             {
                 if (currentTrafficRule.IsBlockingTraffic())
                 {
-                    waitingOnIntersection = true;
+                    WaitingOnIntersection = true;
                 }
                 else
                 {
@@ -456,39 +566,39 @@ namespace UrbanEcho.Sim
 
                                 if (!(intersectionOccupied))
                                 {
-                                    waitingOnIntersection = false;
-                                    isWaiting = false;
+                                    WaitingOnIntersection = false;
+                                    IsWaiting = false;
                                 }
                             }
                         }
                     }
                     else
                     {
-                        waitingOnIntersection = true;
+                        WaitingOnIntersection = true;
                     }
                 }
             }
             else
             {
-                waitingOnIntersection = false;
+                WaitingOnIntersection = false;
             }
 
-            if (waitingOnIntersection == true)
+            if (WaitingOnIntersection == true)
             {
                 targetSpeed = 0;
             }
             else
             {
-                targetSpeed = speedLimit;
+                targetSpeed = SpeedLimit;
             }
 
-            float updateToSpeed = kmh;
+            float updateToSpeed = Kmh;
 
-            if (vehicleInFront == false)
+            if (VehicleInFront == false)
             {
-                if (kmh <= 0 && targetSpeed == 0)
+                if (Kmh <= 0.1f && targetSpeed <= 0.1f)
                 {
-                    state = VehicleStates.Stopped;
+                    State = VehicleStates.Stopped;
                     if (!startedStoppedTimer)
                     {
                         startedStoppedTimer = true;
@@ -497,33 +607,33 @@ namespace UrbanEcho.Sim
                 }
                 else
                 {
-                    if (kmh >= targetSpeed && targetSpeed != 0)
+                    if (Kmh >= targetSpeed && targetSpeed > 0.1f)
                     {
-                        state = VehicleStates.AtTargetSpeed;
+                        State = VehicleStates.AtTargetSpeed;
                     }
                     else
                     {
-                        if (kmh < targetSpeed)
+                        if (Kmh < targetSpeed)
                         {
-                            state = VehicleStates.Accelerating;
+                            State = VehicleStates.Accelerating;
                         }
                         else
                         {
-                            state = VehicleStates.Decelerating;
+                            State = VehicleStates.Decelerating;
                         }
                     }
 
-                    if (angleAboveThreshold && (!(state == VehicleStates.Decelerating || state == VehicleStates.Stopped)))
+                    if (angleAboveThreshold && (!(State == VehicleStates.Decelerating || State == VehicleStates.Stopped)))
                     {
-                        state = VehicleStates.SlowDownForTurn;
+                        State = VehicleStates.SlowDownForTurn;
                     }
                 }
             }
             else
             {
-                if (kmh <= 0 && targetSpeed == 0)
+                if (Kmh <= 0.1f && targetSpeed <= 0.1f)
                 {
-                    state = VehicleStates.Stopped;
+                    State = VehicleStates.Stopped;
 
                     if (!startedStoppedTimer)
                     {
@@ -533,22 +643,22 @@ namespace UrbanEcho.Sim
                 }
                 else
                 {
-                    state = VehicleStates.Decelerating;
+                    State = VehicleStates.Decelerating;
                 }
             }
 
-            if (state == VehicleStates.Accelerating)
+            if (State == VehicleStates.Accelerating)
             {
-                updateToSpeed = Math.Clamp(updateToSpeed + settings.GetAcceleration(), 0, speedLimit);
+                updateToSpeed = Math.Clamp(updateToSpeed + settings.GetAcceleration(), 0, SpeedLimit);
             }
-            if (state == VehicleStates.Decelerating || state == VehicleStates.Stopped)//Stopped case added here to ensure vehicle doesn't slowly creep if very close to zero speed
+            if (State == VehicleStates.Decelerating || State == VehicleStates.Stopped)//Stopped case added here to ensure vehicle doesn't slowly creep if very close to zero speed
             {
-                updateToSpeed = Math.Clamp(updateToSpeed - settings.GetDeceleration(), 0, speedLimit);
+                updateToSpeed = Math.Clamp(updateToSpeed - settings.GetDeceleration(), 0, SpeedLimit);
             }
 
-            if (state == VehicleStates.SlowDownForTurn)
+            if (State == VehicleStates.SlowDownForTurn)
             {
-                updateToSpeed = Math.Clamp(updateToSpeed - settings.GetDeceleration() * settings.GetSlowDownfactor(), 0, speedLimit);
+                updateToSpeed = Math.Clamp(updateToSpeed - settings.GetDeceleration() * settings.GetSlowDownfactor(), 0, SpeedLimit);
             }
 
             float speedToUseMs = Helper.Kmh2Ms(updateToSpeed);
@@ -556,10 +666,10 @@ namespace UrbanEcho.Sim
 
             B2Api.b2Body_SetLinearVelocity(Body.BodyId, velocityToSetMs);
 
-            kmh = Helper.MS2Kmh(Vector2.Dot(velocityToSetMs/*B2Api.b2Body_GetLinearVelocity(Body.BodyId)*/, new Vector2(currentAngle.c, currentAngle.s)));
-            if (float.IsNaN(kmh))
+            Kmh = Helper.MS2Kmh(Vector2.Dot(velocityToSetMs/*B2Api.b2Body_GetLinearVelocity(Body.BodyId)*/, new Vector2(currentAngle.c, currentAngle.s)));
+            if (float.IsNaN(Kmh))
             {
-                kmh = 0;
+                Kmh = 0;
             }
 
             if (Sim.GroupToUpdate == updateGroup)
@@ -654,7 +764,7 @@ namespace UrbanEcho.Sim
                     hasClearedIntersection = false;
                 }
 
-                if (state == VehicleStates.Stopped)
+                if (State == VehicleStates.Stopped)
                 {
                     stoppedElaspedTime = Sim.GetSimTime() - stoppedStartTime;
 
@@ -676,7 +786,7 @@ namespace UrbanEcho.Sim
 
                 if (vehicleInFrontCount > 0)
                 {
-                    vehicleInFront = true;
+                    VehicleInFront = true;
                     vehicleInFrontElaspedTime = Sim.GetSimTime() - vehicleInFrontStartTime;
 
                     if (vehicleInFrontElaspedTime > vehicleInFrontThresholdWaitTime)
@@ -687,7 +797,7 @@ namespace UrbanEcho.Sim
                 }
                 else
                 {
-                    vehicleInFront = false;
+                    VehicleInFront = false;
                     vehicleInFrontElaspedTime = 0;
                 }
 
@@ -951,12 +1061,12 @@ namespace UrbanEcho.Sim
 
         private RoadEdge SetCurrentRoadEdge(RoadEdge updatedRoadEdge)
         {
-            float newSpeedLimit = Helper.TryGetFeatureKVPToFloat(updatedRoadEdge.Feature, "SPEED_LIMI", speedLimit);
+            float newSpeedLimit = Helper.TryGetFeatureKVPToFloat(updatedRoadEdge.Feature, "SPEED_LIMI", SpeedLimit);
             if (newSpeedLimit < 30.0f)
             {
                 newSpeedLimit = 30.0f;
             }
-            speedLimit = Helper.DoMapCorrection(newSpeedLimit);
+            SpeedLimit = Helper.DoMapCorrection(newSpeedLimit);
 
             if (updatedRoadEdge.Feature is GeometryFeature g)
             {
@@ -969,6 +1079,8 @@ namespace UrbanEcho.Sim
                     }
                 }
             }
+
+            RoadName = updatedRoadEdge.Metadata.RoadName;
 
             SetLane(updatedRoadEdge);
 
@@ -1013,10 +1125,7 @@ namespace UrbanEcho.Sim
                         bool isEven = (numberOfLanes % 2) == 0;
                         float offsetToUse = isEven ? 0.5f : 1.5f;
                         int chooseableLanes = isEven ? (numberOfLanes / 2) : ((numberOfLanes - 1) / 2);
-                        if (numberOfLanes == 5 && chooseableLanes >= 3)
-                        {
-                            bool help = true;
-                        }
+
                         lanePicked = Random.Shared.Next(chooseableLanes);
                         calculatedOffsetForLane = (lanePicked + offsetToUse);
                     }

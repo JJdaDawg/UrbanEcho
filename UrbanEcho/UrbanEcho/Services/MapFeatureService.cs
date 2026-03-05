@@ -10,6 +10,7 @@ namespace UrbanEcho.Services
     public interface IMapFeatureService
     {
         IntersectionUI? MapIntersection(IFeature feature);
+
         VehicleUI? MapVehicle(IFeature feature);
     }
 
@@ -57,7 +58,7 @@ namespace UrbanEcho.Services
                 return null;
             }
 
-            return new VehicleUI
+            return simVehicle.VehicleUI; /* new VehicleUI
             {
                 Id = vehicleId,
                 VehicleType = feature["VehicleType"]?.ToString() ?? string.Empty,
@@ -69,7 +70,7 @@ namespace UrbanEcho.Services
                 VehicleInFront = simVehicle.VehicleInFront,
                 MetersFromCarInFront = simVehicle.MetersFromCarInFront,
                 RoadType = simVehicle.CurrentRoadEdge.Metadata.RoadType
-            };
+            };*/
         }
     }
 }
