@@ -5,6 +5,7 @@ using UrbanEcho.Events.UI;
 using UrbanEcho.Messages;
 using UrbanEcho.Models;
 using UrbanEcho.Models.UI;
+using UrbanEcho.Sim;
 using UrbanEcho.ViewModels.Properties;
 using static UrbanEcho.Models.TrafficSignal;
 
@@ -33,7 +34,6 @@ namespace UrbanEcho.ViewModels
         public bool IsNotEditing => !IsEditing;
 
         public RelayCommand EditCommand { get; }
-        public RelayCommand SaveCommand { get; }
         public RelayCommand CancelCommand { get; }
 
         public bool ShowEmptyMapMessage => HasProject && !HasSelection;
@@ -49,7 +49,6 @@ namespace UrbanEcho.ViewModels
             _panelService = panelService;
             ToggleCommand = new RelayCommand(Toggle);
             EditCommand = new RelayCommand(Edit);
-            SaveCommand = new RelayCommand(Save);
             CancelCommand = new RelayCommand(Cancel);
 
             WeakReferenceMessenger.Default.Register<MapFeatureSelectedMessage>(this, (r, m) =>
@@ -58,7 +57,7 @@ namespace UrbanEcho.ViewModels
                 SelectedProperties = m.Type switch
                 {
                     MapFeatureType.Signal when m.Data is IntersectionUI i => new SignalPropertiesViewModel(i),
-                    MapFeatureType.Vehicle when m.Data is VehicleUI v => new VehiclePropertiesViewModel(v),
+                    MapFeatureType.Vehicle when m.Data is Vehicle v => new VehiclePropertiesViewModel(v),
                     _ => null
                 };
             });
@@ -80,12 +79,6 @@ namespace UrbanEcho.ViewModels
         }
 
         private void Cancel()
-        {
-            IsEditing = false;
-            if (SelectedProperties is not null) SelectedProperties.IsEditing = false;
-        }
-
-        private void Save()
         {
             IsEditing = false;
             if (SelectedProperties is not null) SelectedProperties.IsEditing = false;

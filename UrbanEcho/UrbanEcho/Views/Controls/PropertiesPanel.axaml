@@ -29,10 +29,6 @@
                                 Height="22" Padding="8,0"
                                 IsVisible="{Binding IsNotEditing}"
                                 Command="{Binding EditCommand}"/>
-                        <Button Content="Save"
-                                Height="22" Padding="8,0"
-                                IsVisible="{Binding IsEditing}"
-                                Command="{Binding SaveCommand}"/>
                         <Button Content="Cancel"
                                 Height="22" Padding="8,0"
                                 IsVisible="{Binding IsEditing}"

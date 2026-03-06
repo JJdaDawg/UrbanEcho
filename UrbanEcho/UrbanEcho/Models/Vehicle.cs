@@ -33,6 +33,8 @@ namespace UrbanEcho.Sim
             get; private set;
         } = new VehicleUI();
 
+        public bool IsForceStopped = false;
+
         //public b2CastResultFcn? rayCastDelegate;
         public b2OverlapResultFcn overlapDelegateVehicle;
 
@@ -508,6 +510,13 @@ namespace UrbanEcho.Sim
 
         public void Update()
         {
+            if (IsForceStopped)
+            {
+                B2Api.b2Body_SetLinearVelocity(Body.BodyId, Vector2.Zero);
+                State = VehicleStates.Stopped;
+                return;
+            }
+
             Pos = B2Api.b2Body_GetPosition(Body.BodyId);
 
             float distanceToTarget = Vector2.Distance(Pos, endPos);

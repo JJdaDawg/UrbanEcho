@@ -9,13 +9,13 @@ namespace UrbanEcho.ViewModels.Properties
 {
     public partial class VehiclePropertiesViewModel : ObservableObject, IPropertiesViewModel
     {
-        private readonly VehicleUI _vehicle;
+        private readonly Vehicle _vehicle;
 
         public string Title => "Vehicle";
-        public string Subtitle => $"ID: {_vehicle.Id}";
+        public string Subtitle => $"ID: {_vehicle.VehicleUI.Id}";
 
-        public int Id => _vehicle.Id;
-        public string VehicleType => _vehicle.VehicleType;
+        public int Id => _vehicle.VehicleUI.Id;
+        public string VehicleType => _vehicle.VehicleUI.VehicleType;
         public float Kmh => _vehicle.Kmh;
         public float SpeedLimit => _vehicle.SpeedLimit;
         public VehicleStates State => _vehicle.State;
@@ -28,9 +28,11 @@ namespace UrbanEcho.ViewModels.Properties
         [ObservableProperty]
         private bool _isEditing;
 
-        public VehiclePropertiesViewModel(VehicleUI vehicle)
+        public VehiclePropertiesViewModel(Vehicle vehicle)
         {
             _vehicle = vehicle;
+            StartStopCommand = new RelayCommand(() => _vehicle.IsForceStopped = !_vehicle.IsForceStopped);
+            DespawnCommand = new RelayCommand(() => _vehicle.ResetVehicleToNewPos());
         }
 
         // ACTION Commands
@@ -40,10 +42,10 @@ namespace UrbanEcho.ViewModels.Properties
         
         // EDIT Commands
         public RelayCommand DestinationCommand { get; } = new RelayCommand(() => { /* todo */ });
-        public RelayCommand StartStopCommand { get; } = new RelayCommand(() => { /* todo */ });
-        public RelayCommand DespawnCommand { get; } = new RelayCommand(() => { /* todo */ });
+        public RelayCommand StartStopCommand { get; }
+        public RelayCommand DespawnCommand { get; }
 
-        public string StartStopLabel => State == VehicleStates.Stopped ? "Start" : "Stop";
+        public string StartStopLabel => _vehicle.IsForceStopped ? "Start" : "Stop";
 
         public void UpdatePropertyView()
         {
