@@ -26,7 +26,7 @@ namespace UrbanEcho.Helpers
         public const float MapCorrection = 1.0f;// 1.37748f; try without since the correction only applies to east to west
 
         public const float DefaultLaneWidth = 3.75f * MapCorrection;//in meters
-        public const int NumberOfVehicleGroups = 4; //spread out the updates so we can have better fps
+        public const int NumberOfVehicleGroups = 1; //spread out the updates so we can have better fps
         public const float ExtraPavementFactor = 1.25f;
 
         public static Point MakePrecisePoint(

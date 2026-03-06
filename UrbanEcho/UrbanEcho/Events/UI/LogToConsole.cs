@@ -15,15 +15,30 @@ namespace UrbanEcho.Events.UI
         private MainViewModel? mainViewModel;
         private string message;
 
+        private static string lastMessage = "";
+        private static bool repeatedMessage = false;
+
         public LogToConsole(MainViewModel? mainViewModel, string message)
         {
+            if (message == lastMessage)
+            {
+                repeatedMessage = true;
+            }
+            else
+            {
+                repeatedMessage = false;
+            }
+            lastMessage = message;
             this.mainViewModel = mainViewModel;
             this.message = $"{message} [{DateTime.Now}]";
         }
 
         public void Run()
         {
-            mainViewModel?.Console.AddLog(message, LogSource.System);
+            if (!repeatedMessage)
+            {
+                mainViewModel?.Console.AddLog(message, LogSource.System);
+            }
         }
     }
 }
