@@ -63,13 +63,13 @@
                     <icon:SymbolIcon Symbol="SaveEdit" Foreground="LightSkyBlue"/>
                 </Button>
                 <Rectangle Width="1" Height="16" Fill="DimGray" Margin="5,0"/>
-                <Button Classes="ToolbarButton" ToolTip.Tip="Start Simulation" Command="{Binding Simulation.StartCommand}" IsVisible="{Binding !Simulation.IsRunning}">
+                <Button Classes="ToolbarButton" ToolTip.Tip="Start Simulation" Command="{Binding Simulation.StartCommand}" IsVisible="{Binding !Simulation.IsPausedOrRunning}">
                     <icon:SymbolIcon Symbol="Play" Foreground="LightGreen" IconVariant="Filled"/>
                 </Button>
-                <Button Classes="ToolbarButton" Command="{Binding Simulation.StopCommand}" IsVisible="{Binding Simulation.IsRunning}">
+                <Button Classes="ToolbarButton" ToolTip.Tip="Stop Simulation" Command="{Binding Simulation.StopCommand}" IsVisible="{Binding Simulation.IsPausedOrRunning}">
                     <icon:SymbolIcon Symbol="Stop" Foreground="IndianRed" IconVariant="Filled"/>
                 </Button>
-                <Button Classes="ToolbarButton" ToolTip.Tip="Stop Simulation" Command="{Binding Simulation.PauseCommand}" IsVisible="{Binding Simulation.IsRunning}">
+                <Button Classes="ToolbarButton" ToolTip.Tip="Pause Simulation" Command="{Binding Simulation.PauseCommand}" IsVisible="{Binding Simulation.IsPausedOrRunning}">
                     <icon:SymbolIcon Symbol="Pause" IconVariant="Filled"/>
                 </Button>
                 <Rectangle Width="1" Height="16" Fill="DimGray" Margin="5,0"/>
@@ -81,10 +81,10 @@
                     <icon:SymbolIcon Symbol="Edit" IconVariant="Regular"/>
                 </Button>
                 <Rectangle Width="1" Height="16" Fill="DimGray" Margin="5,0" IsVisible="{Binding Simulation.IsRunning}"/>
-                <Button Classes="ToolbarButton" ToolTip.Tip="Speed Down" IsVisible="{Binding Simulation.IsRunning}">
+                <Button Classes="ToolbarButton" ToolTip.Tip="Speed Down" Command="{Binding Simulation.SpeedDownCommand}" IsVisible="{Binding Simulation.IsRunning}">
                     <icon:SymbolIcon Symbol="Previous" IconVariant="Regular"/>
                 </Button>
-                <Button Classes="ToolbarButton" ToolTip.Tip="Speed Up" IsVisible="{Binding Simulation.IsRunning}">
+                <Button Classes="ToolbarButton" ToolTip.Tip="Speed Up" Command="{Binding Simulation.SpeedUpCommand}" IsVisible="{Binding Simulation.IsRunning}">
                     <icon:SymbolIcon Symbol="Next" IconVariant="Regular"/>
                 </Button>
             </StackPanel>

@@ -602,15 +602,33 @@ namespace UrbanEcho.FileManagement
                         {
                             if (roadNodeFrom != null && roadNodeTo != null)
                             {
+                                double randomValue = Random.Shared.NextDouble();
+                                double truckRatio = 0.1f;
+                                bool isTruck = false;
+                                if (randomValue <= truckRatio)
+                                {
+                                    isTruck = true;
+                                }
+
                                 MPoint mPoint = new MPoint(roadNodeFrom.X, roadNodeFrom.Y);
                                 PointFeature pf = new PointFeature(mPoint);
+
                                 pf["VehicleNumber"] = vehiclesAdded;
-                                pf["VehicleType"] = "Car" + random.Next(0, VehicleStyles.NumberOFCarColors);
                                 pf["Hidden"] = "true";
                                 pf["Angle"] = 0.0f;
+                                string type = "RegularCar";
+                                if (!isTruck)
+                                {
+                                    pf["VehicleType"] = "Car" + random.Next(0, VehicleStyles.NumberOFCarColors);
+                                }
+                                else
+                                {
+                                    pf["VehicleType"] = "Truck" + random.Next(0, VehicleStyles.NumberOFTruckColors);
+                                    type = "TransportTruck";
+                                }
                                 //Vehicle groups used so we don't raycast and update velocities every frame (was slowing down fps)
                                 //currently vehicle groups just set as 1 so vehicle groups is bypassed
-                                Vehicle vehicle = new Vehicle(pf, edge, "RegularCar", vehiclesAdded % Helper.NumberOfVehicleGroups);
+                                Vehicle vehicle = new Vehicle(pf, edge, type, vehiclesAdded % Helper.NumberOfVehicleGroups);
 
                                 if (vehicle.IsCreated)
                                 {
@@ -1002,16 +1020,18 @@ namespace UrbanEcho.FileManagement
                     MRect extent = map.Navigator.Viewport.ToExtent();
 
                     List<IFeature> copyOfVehiclesFeatures = new List<IFeature>();
-
-                    foreach (IFeature v in VehicleFeatures)
+                    lock (Sim.Sim.LockAddNewVehicleFeature)
                     {
-                        if (map.Navigator.Viewport.Resolution <= vehicleLayer.MaxVisible)
+                        foreach (IFeature v in VehicleFeatures)
                         {
-                            if (v is PointFeature pf)
+                            if (map.Navigator.Viewport.Resolution <= vehicleLayer.MaxVisible)
                             {
-                                if (extent.Contains(pf.Point))
+                                if (v is PointFeature pf)
                                 {
-                                    copyOfVehiclesFeatures.Add((IFeature)pf.Clone());
+                                    if (extent.Contains(pf.Point))
+                                    {
+                                        copyOfVehiclesFeatures.Add((IFeature)pf.Clone());
+                                    }
                                 }
                             }
                         }

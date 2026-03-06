@@ -10,6 +10,7 @@ using System.Linq;
 using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
+using Tmds.DBus.Protocol;
 using UrbanEcho.Events.Sim;
 using UrbanEcho.Events.UI;
 using UrbanEcho.FileManagement;
@@ -23,6 +24,15 @@ using static UrbanEcho.FileManagement.FileTypes;
 
 namespace UrbanEcho.Sim
 {
+    public enum SimControlType
+    {
+        Stop = 0,
+        Pause = 1,
+        Start = 2,
+        SpeedUp = 3,
+        SpeedDown = 4
+    }
+
     public static class Sim
     {
         public static CancellationTokenSource Cts = new CancellationTokenSource();
@@ -61,6 +71,28 @@ namespace UrbanEcho.Sim
 
         private static readonly Random spawnRng = new Random();
 
+        public static object LockAddNewVehicleFeature = new object();
+
+        private static int maxSimSpeed = 4;
+
+        private static int simSpeed = 1;
+
+        private static float baseStepSize = 1 / 60.0f;
+
+        public static bool RunSimulation;
+
+        public static int SimSpeed
+        {
+            get
+            {
+                return simSpeed;
+            }
+            set
+            {
+                simSpeed = Math.Clamp(value, 1, maxSimSpeed);
+            }
+        }
+
         public static void SetMainViewModel(MainViewModel setMainViewModel)
         {
             mainViewModel = setMainViewModel;
@@ -95,7 +127,10 @@ namespace UrbanEcho.Sim
             while (Cts.IsCancellationRequested == false)
             {
                 frameTimer.Update();
-                simulationLoop();
+                if (RunSimulation)
+                {
+                    simulationLoop();
+                }
                 readQueue();
 
                 if (frameTimer.ShouldShowText())
@@ -131,9 +166,11 @@ namespace UrbanEcho.Sim
                     EventQueueForUI.Instance.Add(new LogToConsole(mainViewModel, "Done adding intersection bodies"));
                 }
 
-                B2Api.b2World_Step(World.WorldId, 1 / 60.0f, 1);
+                float stepSize = baseStepSize * SimSpeed;
 
-                Sim.simTime += 1 / 60.0f;
+                B2Api.b2World_Step(World.WorldId, stepSize, 1);
+
+                Sim.simTime += stepSize;
 
                 Sim.SimFrames++;
 
@@ -331,12 +368,34 @@ namespace UrbanEcho.Sim
             pf["Hidden"] = "true";
             pf["Angle"] = 0.0f;
 
-            Vehicle vehicle = new Vehicle(pf, edge, "RegularCar", vehicleId % Helper.NumberOfVehicleGroups);
+            double randomValue = Random.Shared.NextDouble();
+            double truckRatio = 0.1f;
+            bool isTruck = false;
+            if (randomValue <= truckRatio)
+            {
+                isTruck = true;
+            }
+
+            string type = "RegularCar";
+            if (!isTruck)
+            {
+                pf["VehicleType"] = "Car" + spawnRng.Next(0, VehicleStyles.NumberOFCarColors);
+            }
+            else
+            {
+                pf["VehicleType"] = "Truck" + spawnRng.Next(0, VehicleStyles.NumberOFTruckColors);
+                type = "TransportTruck";
+            }
+
+            Vehicle vehicle = new Vehicle(pf, edge, type, vehicleId % Helper.NumberOfVehicleGroups);
 
             if (vehicle.IsCreated)
             {
                 Vehicles.Add(vehicle);
-                ProjectLayers.VehicleFeatures.Add(pf);
+                lock (LockAddNewVehicleFeature)
+                {
+                    ProjectLayers.VehicleFeatures.Add(pf);
+                }
                 InitializeVehicle(vehicle);
                 EventQueueForUI.Instance.Add(new LogToConsole(mainViewModel,
                     $"[Spawn {Clock.FormatTimeOfDay(simTime)}] Vehicle #{vehicleId} spawned at node {spawnNodeId} — total: {Vehicles.Count}"));
