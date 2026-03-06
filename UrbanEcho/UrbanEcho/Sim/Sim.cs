@@ -2,6 +2,7 @@
 using Box2dNet.Interop;
 using BruTile.Wms;
 using Mapsui;
+using Mapsui.Layers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -16,6 +17,7 @@ using UrbanEcho.Graph;
 using UrbanEcho.Helpers;
 using UrbanEcho.Models;
 using UrbanEcho.Physics;
+using UrbanEcho.Styles;
 using UrbanEcho.ViewModels;
 using static UrbanEcho.FileManagement.FileTypes;
 
@@ -54,6 +56,10 @@ namespace UrbanEcho.Sim
         public static Dictionary<int, double> NodePenalties = new Dictionary<int, double>();
 
         public static bool Flasher;
+
+        public static SimClock Clock = new SimClock(startHourOfDay: 6, simMinutesPerRealSecond: 1f);
+
+        private static readonly Random spawnRng = new Random();
 
         public static void SetMainViewModel(MainViewModel setMainViewModel)
         {
@@ -130,6 +136,8 @@ namespace UrbanEcho.Sim
                 Sim.simTime += 1 / 60.0f;
 
                 Sim.SimFrames++;
+
+                TrySpawnVehicle();
 
                 Sim.GroupToUpdate = (Sim.GroupToUpdate + 1) % Helper.NumberOfVehicleGroups;
                 bool aPathNotLoaded = false;
@@ -279,6 +287,62 @@ namespace UrbanEcho.Sim
             }
         }
 
+        /// <summary>
+        /// Checks the SimClock and, when the spawn interval has elapsed, creates
+        /// one new vehicle using the census-weighted origin node (or a random
+        /// node as fallback) and adds it to the simulation.
+        /// </summary>
+        private static void TrySpawnVehicle()
+        {
+            if (!Clock.ShouldSpawn(simTime))
+                return;
+
+            if (RoadGraph == null || !World.Created)
+                return;
+
+            int spawnNodeId;
+            if (CensusSpawn != null && CensusSpawn.IsLoaded)
+            {
+                spawnNodeId = CensusSpawn.PickWeightedSpawnNode();
+            }
+            else if (nodes != null && nodes.Count > 0)
+            {
+                spawnNodeId = nodes[spawnRng.Next(nodes.Count)];
+            }
+            else
+            {
+                return;
+            }
+
+            var outgoing = RoadGraph.GetOutgoingEdges(spawnNodeId);
+            if (outgoing.Count == 0)
+                return;
+
+            var edge = outgoing[spawnRng.Next(outgoing.Count)];
+
+            if (!RoadGraph.Nodes.TryGetValue(edge.From, out RoadNode? fromNode) || fromNode == null)
+                return;
+
+            int vehicleId = Vehicles.Count;
+            MPoint mPoint = new MPoint(fromNode.X, fromNode.Y);
+            PointFeature pf = new PointFeature(mPoint);
+            pf["VehicleNumber"] = vehicleId;
+            pf["VehicleType"] = "Car" + spawnRng.Next(0, VehicleStyles.NumberOFCarColors);
+            pf["Hidden"] = "true";
+            pf["Angle"] = 0.0f;
+
+            Vehicle vehicle = new Vehicle(pf, edge, "RegularCar", vehicleId % Helper.NumberOfVehicleGroups);
+
+            if (vehicle.IsCreated)
+            {
+                Vehicles.Add(vehicle);
+                ProjectLayers.VehicleFeatures.Add(pf);
+                InitializeVehicle(vehicle);
+                EventQueueForUI.Instance.Add(new LogToConsole(mainViewModel,
+                    $"[Spawn {Clock.FormatTimeOfDay(simTime)}] Vehicle #{vehicleId} spawned at node {spawnNodeId} — total: {Vehicles.Count}"));
+            }
+        }
+
         public static void Clear()
         {
             Vehicles = new List<Vehicle>();
@@ -293,6 +357,7 @@ namespace UrbanEcho.Sim
             VehiclePathsLoaded = false;
             intersectionBodiesCreated = false;
             NodePenalties = new Dictionary<int, double>();
+            Clock.Reset();
         }
 
         public static void Free()
