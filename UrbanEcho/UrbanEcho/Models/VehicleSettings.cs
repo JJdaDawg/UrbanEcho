@@ -14,7 +14,12 @@ namespace UrbanEcho.Models
         private bool validType = false;
 
         //Have variable for length of each car type so style can scale image correct
-        public static readonly float CarLength = 5.0f;//Helper.DoMapCorrection(4.0f);
+        public static readonly float CarLength = 5.0f;
+
+        public static readonly float TruckLength = 18.0f;
+
+        public static readonly int CarImageWidth = 48;
+        public static readonly int TruckImageWidth = 144;
 
         public VehicleSettings(string carType)
         {
@@ -28,6 +33,19 @@ namespace UrbanEcho.Models
                 slowDownfactor = 0.25f;//number from 0 to 1 multiplied by deceleration for slowing down on turns
                 turnSpeed = 4.0f;
                 lookAheadValueForSteerTowardsLane = 15.0f;
+
+                validType = true;
+            }
+            if (carType == "TransportTruck")
+            {
+                length = TruckLength;
+                width = 2.0f;
+
+                acceleration = 0.2f;
+                deceleration = 2.0f;
+                slowDownfactor = 0.25f;
+                turnSpeed = 4.0f;
+                lookAheadValueForSteerTowardsLane = 20.0f;
 
                 validType = true;
             }

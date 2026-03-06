@@ -66,9 +66,9 @@ namespace UrbanEcho.FileManagement
 
         public static bool IsRasterVisible { get; set; } = true;
         public static bool IsIntersectionsVisible { get; set; } = true;
-        public static bool IsCensusOverlayVisible { get; set; } = true;
+        public static bool IsCensusOverlayVisible { get; set; } = false;
 
-        private static List<IFeature> RoadFeatures = new List<IFeature>();
+        //private static List<IFeature> RoadFeatures = new List<IFeature>();
 
         public static List<IFeature> VehicleFeatures = new List<IFeature>();
 
@@ -204,7 +204,7 @@ namespace UrbanEcho.FileManagement
             censusOverlayLayer = null;
             World.Clear();
             Sim.Sim.Clear();
-            RoadFeatures = new List<IFeature>();
+            //RoadFeatures = new List<IFeature>();
             VehicleFeatures = new List<IFeature>();
             DebugLayerFeatures = new List<IFeature>();
 
@@ -250,7 +250,7 @@ namespace UrbanEcho.FileManagement
                             roadLayerFirstPass = new RasterizingLayer(roadLayer);
                             roadLayerSecondPass = new RasterizingLayer(CreateRoadLayer(roadNetwork, "Roads", false, false));
 
-                            RoadFeatures = Helpers.Helper.GetFeatures(roadLayer.DataSource);
+                            //RoadFeatures = Helpers.Helper.GetFeatures(roadLayer.DataSource);
                             Sim.Sim.RoadGraph = UrbanTrafficSim.Core.IO.RoadGraphLoader.LoadFromFeatures(Helpers.Helper.GetFeatures(roadLayer.DataSource));
                         }
                         catch (Exception ex)
@@ -555,7 +555,7 @@ namespace UrbanEcho.FileManagement
             try
             {
                 layer = new MemoryLayer("Vehicles");
-
+                /*
                 int vehiclesAdded = 0;
                 Random random = new Random();
 
@@ -602,15 +602,33 @@ namespace UrbanEcho.FileManagement
                         {
                             if (roadNodeFrom != null && roadNodeTo != null)
                             {
+                                double randomValue = Random.Shared.NextDouble();
+                                double truckRatio = 0.1f;
+                                bool isTruck = false;
+                                if (randomValue <= truckRatio)
+                                {
+                                    isTruck = true;
+                                }
+
                                 MPoint mPoint = new MPoint(roadNodeFrom.X, roadNodeFrom.Y);
                                 PointFeature pf = new PointFeature(mPoint);
+
                                 pf["VehicleNumber"] = vehiclesAdded;
-                                pf["VehicleType"] = "Car" + random.Next(0, VehicleStyles.NumberOFCarColors);
                                 pf["Hidden"] = "true";
                                 pf["Angle"] = 0.0f;
+                                string type = "RegularCar";
+                                if (!isTruck)
+                                {
+                                    pf["VehicleType"] = "Car" + random.Next(0, VehicleStyles.NumberOFCarColors);
+                                }
+                                else
+                                {
+                                    pf["VehicleType"] = "Truck" + random.Next(0, VehicleStyles.NumberOFTruckColors);
+                                    type = "TransportTruck";
+                                }
                                 //Vehicle groups used so we don't raycast and update velocities every frame (was slowing down fps)
                                 //currently vehicle groups just set as 1 so vehicle groups is bypassed
-                                Vehicle vehicle = new Vehicle(pf, edge, "RegularCar", vehiclesAdded % Helper.NumberOfVehicleGroups);
+                                Vehicle vehicle = new Vehicle(pf, edge, type, vehiclesAdded % Helper.NumberOfVehicleGroups, Sim.Sim.RoadGraph);
 
                                 if (vehicle.IsCreated)
                                 {
@@ -627,7 +645,7 @@ namespace UrbanEcho.FileManagement
                             }
                         }
                     }
-                }
+                }*/
 
                 layer.Features = VehicleFeatures;
 
@@ -759,6 +777,7 @@ namespace UrbanEcho.FileManagement
 
                     GraphLayerFeatures.Add(pf);
                 }*/
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), "Started adding intersection bodies"));
 
                 if (ProjectLayers.CreateRoadIntersections())
                 {
@@ -1002,16 +1021,18 @@ namespace UrbanEcho.FileManagement
                     MRect extent = map.Navigator.Viewport.ToExtent();
 
                     List<IFeature> copyOfVehiclesFeatures = new List<IFeature>();
-
-                    foreach (IFeature v in VehicleFeatures)
+                    lock (Sim.Sim.LockAddNewVehicleFeature)
                     {
-                        if (map.Navigator.Viewport.Resolution <= vehicleLayer.MaxVisible)
+                        foreach (IFeature v in VehicleFeatures)
                         {
-                            if (v is PointFeature pf)
+                            if (map.Navigator.Viewport.Resolution <= vehicleLayer.MaxVisible)
                             {
-                                if (extent.Contains(pf.Point))
+                                if (v is PointFeature pf)
                                 {
-                                    copyOfVehiclesFeatures.Add((IFeature)pf.Clone());
+                                    if (extent.Contains(pf.Point))
+                                    {
+                                        copyOfVehiclesFeatures.Add((IFeature)pf.Clone());
+                                    }
                                 }
                             }
                         }

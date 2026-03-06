@@ -23,6 +23,7 @@ namespace UrbanEcho.Styles
 
         private Random random = new Random();
         public static int NumberOFCarColors = 20;
+        public static int NumberOFTruckColors = 3;
 
         public VehicleStyles()
         {
@@ -38,8 +39,11 @@ namespace UrbanEcho.Styles
                 {
                     for (int i = 0; i < NumberOFCarColors; i++)
                     {
-                        Styles.Add($"Car{i}", CreateImageStyle(projectName, "Car.svg", VehicleSettings.CarLength, 48));
+                        Styles.Add($"Car{i}", CreateImageStyle(projectName, "Car.svg", VehicleSettings.CarLength, VehicleSettings.CarImageWidth, Color.AntiqueWhite, true));
                     }
+                    Styles.Add($"Truck0", CreateImageStyle(projectName, "Truck.svg", VehicleSettings.TruckLength, VehicleSettings.TruckImageWidth, Color.AntiqueWhite, false));
+                    Styles.Add($"Truck1", CreateImageStyle(projectName, "Truck.svg", VehicleSettings.TruckLength, VehicleSettings.TruckImageWidth, Color.GhostWhite, false));
+                    Styles.Add($"Truck2", CreateImageStyle(projectName, "Truck.svg", VehicleSettings.TruckLength, VehicleSettings.TruckImageWidth, Color.Silver, false));
                 }
                 catch (Exception ex)
                 {
@@ -52,7 +56,7 @@ namespace UrbanEcho.Styles
             }
         }
 
-        private ImageStyle CreateImageStyle(string projectName, string fileName, float physicalCarLength, int imageWidth)
+        private ImageStyle CreateImageStyle(string projectName, string fileName, float physicalCarLength, int imageWidth, Color color, bool randomizeColor)
         {
             string sourceString = $"embedded://{projectName}.Resources.Images.VehicleIcons.{fileName}";
 
@@ -62,7 +66,7 @@ namespace UrbanEcho.Styles
                 new Image
                 {
                     Source = sourceString,
-                    SvgFillColor = new Color(random.Next(64, 235), random.Next(64, 235), random.Next(64, 235))
+                    SvgFillColor = randomizeColor ? new Color(random.Next(64, 235), random.Next(64, 235), random.Next(64, 235)) : color
                 };
 
             style.SymbolScale = physicalCarLength / (float)(imageWidth);
@@ -100,12 +104,12 @@ namespace UrbanEcho.Styles
                         }
                         else
                         {
-                            string? carType = f["VehicleType"]?.ToString();
-                            if (carType != null)
+                            string? vehicleType = f["VehicleType"]?.ToString();
+                            if (vehicleType != null)
                             {
-                                if (Styles.ContainsKey(carType))
+                                if (Styles.ContainsKey(vehicleType))
                                 {
-                                    ImageStyle style = CopyStyle((ImageStyle)Styles[carType]);
+                                    ImageStyle style = CopyStyle((ImageStyle)Styles[vehicleType]);
 
                                     float angle = -(float)f["Angle"];
                                     style.SymbolRotation = angle;
