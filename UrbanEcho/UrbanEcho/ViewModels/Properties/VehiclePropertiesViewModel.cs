@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using System;
 using UrbanEcho.Models;
 using UrbanEcho.Models.UI;
+using UrbanEcho.Services;
 using UrbanEcho.Sim;
 
 namespace UrbanEcho.ViewModels.Properties
@@ -10,6 +11,7 @@ namespace UrbanEcho.ViewModels.Properties
     public partial class VehiclePropertiesViewModel : ObservableObject, IPropertiesViewModel
     {
         private readonly Vehicle _vehicle;
+        private readonly IVehicleService _vehicleService;
 
         public string Title => "Vehicle";
         public string Subtitle => $"ID: {_vehicle.VehicleUI.Id}";
@@ -28,11 +30,12 @@ namespace UrbanEcho.ViewModels.Properties
         [ObservableProperty]
         private bool _isEditing;
 
-        public VehiclePropertiesViewModel(Vehicle vehicle)
+        public VehiclePropertiesViewModel(Vehicle vehicle, IVehicleService vehicleService)
         {
             _vehicle = vehicle;
-            StartStopCommand = new RelayCommand(() => _vehicle.IsForceStopped = !_vehicle.IsForceStopped);
-            DespawnCommand = new RelayCommand(() => _vehicle.ResetVehicleToNewPos());
+            _vehicleService = vehicleService;
+            StartStopCommand = new RelayCommand(() => _vehicleService.ToggleStop(_vehicle));
+            DespawnCommand = new RelayCommand(() => _vehicleService.Despawn(_vehicle));
         }
 
         // ACTION Commands

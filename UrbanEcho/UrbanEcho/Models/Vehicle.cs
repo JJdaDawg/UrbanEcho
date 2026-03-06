@@ -491,14 +491,15 @@ namespace UrbanEcho.Sim
             if (didFirstUpdate)//Only do the update after path initially set
             {
                 Pos = B2Api.b2Body_GetPosition(Body.BodyId);
-            if (IsForceStopped)
-            {
-                B2Api.b2Body_SetLinearVelocity(Body.BodyId, Vector2.Zero);
-                State = VehicleStates.Stopped;
-                return;
-            }
 
-            Pos = B2Api.b2Body_GetPosition(Body.BodyId);
+                if (IsForceStopped)
+                {
+                    B2Api.b2Body_SetLinearVelocity(Body.BodyId, Vector2.Zero);
+                    State = VehicleStates.Stopped;
+                    return;
+                }
+
+                Pos = B2Api.b2Body_GetPosition(Body.BodyId);
 
                 float distanceToTarget = Vector2.Distance(Pos, endPos);
 

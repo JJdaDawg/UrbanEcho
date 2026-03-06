@@ -5,6 +5,7 @@ using UrbanEcho.Events.UI;
 using UrbanEcho.Messages;
 using UrbanEcho.Models;
 using UrbanEcho.Models.UI;
+using UrbanEcho.Services;
 using UrbanEcho.Sim;
 using UrbanEcho.ViewModels.Properties;
 using static UrbanEcho.Models.TrafficSignal;
@@ -14,6 +15,7 @@ namespace UrbanEcho.ViewModels
     public partial class PropertiesPanelViewModel : ObservableObject
     {
         private readonly IPanelService _panelService;
+        private readonly IVehicleService _vehicleService;
         private bool _isOpen = true;
 
         [ObservableProperty]
@@ -44,9 +46,10 @@ namespace UrbanEcho.ViewModels
 
         public RelayCommand ToggleCommand { get; }
 
-        public PropertiesPanelViewModel(IPanelService panelService)
+        public PropertiesPanelViewModel(IPanelService panelService, IVehicleService vehicleService)
         {
             _panelService = panelService;
+            _vehicleService = vehicleService;
             ToggleCommand = new RelayCommand(Toggle);
             EditCommand = new RelayCommand(Edit);
             CancelCommand = new RelayCommand(Cancel);
@@ -57,7 +60,7 @@ namespace UrbanEcho.ViewModels
                 SelectedProperties = m.Type switch
                 {
                     MapFeatureType.Signal when m.Data is IntersectionUI i => new SignalPropertiesViewModel(i),
-                    MapFeatureType.Vehicle when m.Data is Vehicle v => new VehiclePropertiesViewModel(v),
+                    MapFeatureType.Vehicle when m.Data is Vehicle v => new VehiclePropertiesViewModel(v, _vehicleService),
                     _ => null
                 };
             });
