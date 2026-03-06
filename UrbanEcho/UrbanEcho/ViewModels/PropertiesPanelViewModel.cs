@@ -26,6 +26,16 @@ namespace UrbanEcho.ViewModels
         [NotifyPropertyChangedFor(nameof(ShowEmptyMapMessage))]
         private bool _hasProject;
 
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsNotEditing))]
+        private bool _isEditing;
+
+        public bool IsNotEditing => !IsEditing;
+
+        public RelayCommand EditCommand { get; }
+        public RelayCommand SaveCommand { get; }
+        public RelayCommand CancelCommand { get; }
+
         public bool ShowEmptyMapMessage => HasProject && !HasSelection;
 
         public string Title => SelectedProperties?.Title ?? "Properties";
@@ -38,9 +48,13 @@ namespace UrbanEcho.ViewModels
         {
             _panelService = panelService;
             ToggleCommand = new RelayCommand(Toggle);
+            EditCommand = new RelayCommand(Edit);
+            SaveCommand = new RelayCommand(Save);
+            CancelCommand = new RelayCommand(Cancel);
 
             WeakReferenceMessenger.Default.Register<MapFeatureSelectedMessage>(this, (r, m) =>
             {
+                IsEditing = false;
                 SelectedProperties = m.Type switch
                 {
                     MapFeatureType.Signal when m.Data is IntersectionUI i => new SignalPropertiesViewModel(i),
@@ -49,9 +63,32 @@ namespace UrbanEcho.ViewModels
                 };
             });
 
-            WeakReferenceMessenger.Default.Register<MapFeatureDeselectedMessage>(this, (r, m) => SelectedProperties = null);
+            WeakReferenceMessenger.Default.Register<MapFeatureDeselectedMessage>(this, (r, m) =>
+            {
+                SelectedProperties = null;
+                IsEditing = false;
+            });
+
             WeakReferenceMessenger.Default.Register<ProjectLoadedMessage>(this, (r, m) => HasProject = true);
             WeakReferenceMessenger.Default.Register<ProjectClosedMessage>(this, (r, m) => HasProject = false);
+        }
+
+        private void Edit()
+        {
+            IsEditing = true;
+            if (SelectedProperties is not null) SelectedProperties.IsEditing = true;
+        }
+
+        private void Cancel()
+        {
+            IsEditing = false;
+            if (SelectedProperties is not null) SelectedProperties.IsEditing = false;
+        }
+
+        private void Save()
+        {
+            IsEditing = false;
+            if (SelectedProperties is not null) SelectedProperties.IsEditing = false;
         }
 
         public void Toggle()

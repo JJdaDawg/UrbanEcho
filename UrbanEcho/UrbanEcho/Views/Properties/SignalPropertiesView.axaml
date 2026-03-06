@@ -9,7 +9,7 @@
 
     <StackPanel Spacing="0">
 
-        <StackPanel Margin="14,12" Spacing="8">
+        <StackPanel Margin="10,10" Spacing="8">
             <TextBlock Text="INFO" Opacity="0.5" />
             <StackPanel Spacing="2">
                 <TextBlock Text="Name" Opacity="0.5" />

@@ -21,6 +21,9 @@ public partial class RoadPropertiesViewModel : ObservableObject, IPropertiesView
 
     [ObservableProperty] private bool _showLaneEditor;
 
+    [ObservableProperty]
+    private bool _isEditing;
+
     public RelayCommand SpawnVehicleCommand { get; }
     public RelayCommand EditLanesCommand { get; }
 
