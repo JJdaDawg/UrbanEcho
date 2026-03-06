@@ -54,13 +54,13 @@ namespace UrbanEcho.Sim
         private static float simTime = 0;
 
         public static long SimFrames = 0;
+        public static long TaskUpdates = 0;
 
         public static int GroupToUpdate = 0;
 
         public static AStarPathfinder? pathfinder;
         public static List<int>? nodes;
 
-        public static bool VehiclePathsLoaded = false;
         private static bool intersectionBodiesCreated = false;
 
         public static Dictionary<int, double> NodePenalties = new Dictionary<int, double>();
@@ -74,12 +74,15 @@ namespace UrbanEcho.Sim
         public static object LockAddNewVehicleFeature = new object();
 
         private static int maxSimSpeed = 4;
-
         private static int simSpeed = 1;
+
+        private static int startingNumberOfVehicles = 4000;
+        private static int maxVehicles = 5000;
 
         private static float baseStepSize = 1 / 60.0f;
 
-        public static bool RunSimulation;
+        public static bool RunSimulation = false;
+        public static bool Paused = false;
 
         public static int SimSpeed
         {
@@ -123,14 +126,55 @@ namespace UrbanEcho.Sim
             //EventQueueForSim.Instance.Add(newProjectEvent); //will usually happen from UI
 
             FrameTimer frameTimer = new FrameTimer(false, 60);
+            bool startedSimulation = false;
 
             while (Cts.IsCancellationRequested == false)
             {
+                TaskUpdates++;
                 frameTimer.Update();
-                if (RunSimulation)
+
+                if (World.Created)
                 {
-                    simulationLoop();
+                    if (!(intersectionBodiesCreated))
+                    {
+                        EventQueueForUI.Instance.Add(new LogToConsole(mainViewModel, "Started adding intersection bodies"));
+
+                        if (ProjectLayers.CreateRoadIntersections())
+                        {
+                            SetIntersectionBodiesCreated();
+                        }
+                        EventQueueForUI.Instance.Add(new LogToConsole(mainViewModel, "Done adding intersection bodies"));
+                    }
+
+                    if (RunSimulation)
+                    {
+                        if (!startedSimulation)
+                        {
+                            startedSimulation = true;
+                            if (Vehicles.Count > 0)
+                            {
+                                EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Loading vehicle paths"));
+                                foreach (Vehicle v in Vehicles)
+                                {
+                                    v.ResetVehicleToNewPos();
+                                }
+                                EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Done adding vehicle paths"));
+                            }
+                        }
+                        simulationLoop();
+                    }
+                    if (!RunSimulation && !Paused)
+                    {
+                        startedSimulation = false;
+                    }
                 }
+
+                //Only update vehicle layer if ui queue is empty and do it every couple updates
+                if (EventQueueForUI.Instance.IsEmpty() && TaskUpdates % 2 == 0)
+                {
+                    ProjectLayers.UpdateVehicleLayer(true, MyMap);
+                }
+
                 readQueue();
 
                 if (frameTimer.ShouldShowText())
@@ -155,67 +199,33 @@ namespace UrbanEcho.Sim
 
         private static void simulationLoop()
         {
-            if (World.Created)
+            float stepSize = baseStepSize * SimSpeed;
+
+            B2Api.b2World_Step(World.WorldId, stepSize, 1);
+
+            Sim.simTime += stepSize;
+
+            Sim.SimFrames++;
+
+            if (Vehicles.Count == 0)
             {
-                if (!(intersectionBodiesCreated))
-                {
-                    if (ProjectLayers.CreateRoadIntersections())
-                    {
-                        SetIntersectionBodiesCreated();
-                    }
-                    EventQueueForUI.Instance.Add(new LogToConsole(mainViewModel, "Done adding intersection bodies"));
-                }
-
-                float stepSize = baseStepSize * SimSpeed;
-
-                B2Api.b2World_Step(World.WorldId, stepSize, 1);
-
-                Sim.simTime += stepSize;
-
-                Sim.SimFrames++;
-
+                TrySpawnVehicle(startingNumberOfVehicles);
+            }
+            else
+            {
                 TrySpawnVehicle();
+            }
 
-                Sim.GroupToUpdate = (Sim.GroupToUpdate + 1) % Helper.NumberOfVehicleGroups;
-                bool aPathNotLoaded = false;
-                if (!VehiclePathsLoaded)
-                {
-                    foreach (Vehicle v in Vehicles)
-                    {
-                        if (!v.GraphSet)
-                        {
-                            aPathNotLoaded = true;
-                            InitializeVehicle(v);
-                        }
-                    }
-                }
-                else
-                {
-                    foreach (Vehicle v in Vehicles)
-                    {
-                        v.Update();
-                    }
-                }
+            Sim.GroupToUpdate = (Sim.GroupToUpdate + 1) % Helper.NumberOfVehicleGroups;
 
-                if (!aPathNotLoaded)
-                {
-                    if (!VehiclePathsLoaded)
-                    {
-                        VehiclePathsLoaded = true;
-                        EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), "All vehicle paths loaded"));
-                    }
-                }
+            foreach (Vehicle v in Vehicles)
+            {
+                v.Update();
             }
 
             foreach (RoadIntersection roadIntersection in RoadIntersections)
             {
                 roadIntersection.UpdateTrafficRules();
-            }
-
-            //Only update vehicle layer if ui queue is empty and do it every few frames
-            if (EventQueueForUI.Instance.IsEmpty() && Sim.SimFrames % 2 == 0)
-            {
-                ProjectLayers.UpdateVehicleLayer(true, MyMap);
             }
 
             //Update property panel
@@ -225,8 +235,8 @@ namespace UrbanEcho.Sim
         private static void updatePropertyPanel()
         {
             bool flasherLastValue = Flasher;
-            //Panel updates once a second of the simulation
-            if (Sim.SimFrames % 120 > 60)
+            //Panel updates once a half second of the simulation
+            if (Sim.SimFrames % 30 > 15)
             {
                 Flasher = true;
             }
@@ -316,94 +326,117 @@ namespace UrbanEcho.Sim
                 $"[Census] Spawn manager ready: {(CensusSpawn.IsLoaded ? "OK" : "FALLBACK MODE")}"));
         }
 
-        public static void InitializeVehicle(Vehicle v)
-        {
-            if (RoadGraph is not null)
-            {
-                v.SetGraph(RoadGraph);
-            }
-        }
-
         /// <summary>
         /// Checks the SimClock and, when the spawn interval has elapsed, creates
         /// one new vehicle using the census-weighted origin node (or a random
         /// node as fallback) and adds it to the simulation.
         /// </summary>
-        private static void TrySpawnVehicle()
+        private static void TrySpawnVehicle(int numberRequestingToSpawn = 1)
         {
             if (!Clock.ShouldSpawn(simTime))
                 return;
 
             if (RoadGraph == null || !World.Created)
                 return;
-
-            int spawnNodeId;
-            if (CensusSpawn != null && CensusSpawn.IsLoaded)
-            {
-                spawnNodeId = CensusSpawn.PickWeightedSpawnNode();
-            }
-            else if (nodes != null && nodes.Count > 0)
-            {
-                spawnNodeId = nodes[spawnRng.Next(nodes.Count)];
-            }
-            else
+            if (Vehicles.Count >= maxVehicles)
             {
                 return;
             }
-
-            var outgoing = RoadGraph.GetOutgoingEdges(spawnNodeId);
-            if (outgoing.Count == 0)
+            int spaceLeft = maxVehicles - Vehicles.Count;
+            if (spaceLeft <= 0 || numberRequestingToSpawn <= 0)
+            {
                 return;
-
-            var edge = outgoing[spawnRng.Next(outgoing.Count)];
-
-            if (!RoadGraph.Nodes.TryGetValue(edge.From, out RoadNode? fromNode) || fromNode == null)
-                return;
-
-            int vehicleId = Vehicles.Count;
-            MPoint mPoint = new MPoint(fromNode.X, fromNode.Y);
-            PointFeature pf = new PointFeature(mPoint);
-            pf["VehicleNumber"] = vehicleId;
-            pf["VehicleType"] = "Car" + spawnRng.Next(0, VehicleStyles.NumberOFCarColors);
-            pf["Hidden"] = "true";
-            pf["Angle"] = 0.0f;
-
-            double randomValue = Random.Shared.NextDouble();
-            double truckRatio = 0.1f;
-            bool isTruck = false;
-            if (randomValue <= truckRatio)
+            }
+            int numberToSpawn = numberRequestingToSpawn;
+            if (numberRequestingToSpawn >= spaceLeft)
             {
-                isTruck = true;
+                numberToSpawn = spaceLeft;
             }
 
-            string type = "RegularCar";
-            if (!isTruck)
-            {
-                pf["VehicleType"] = "Car" + spawnRng.Next(0, VehicleStyles.NumberOFCarColors);
+            if (numberToSpawn > 1)
+            { //Show message if more than 1 vehicle being spawned
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Loading vehicle paths"));
             }
-            else
+            int vehiclesAddedThisSpawn = 0;
+            for (int i = 0; i < numberToSpawn; i++)
             {
-                pf["VehicleType"] = "Truck" + spawnRng.Next(0, VehicleStyles.NumberOFTruckColors);
-                type = "TransportTruck";
-            }
-
-            Vehicle vehicle = new Vehicle(pf, edge, type, vehicleId % Helper.NumberOfVehicleGroups);
-
-            if (vehicle.IsCreated)
-            {
-                Vehicles.Add(vehicle);
-                lock (LockAddNewVehicleFeature)
+                int spawnNodeId;
+                if (CensusSpawn != null && CensusSpawn.IsLoaded)
                 {
-                    ProjectLayers.VehicleFeatures.Add(pf);
+                    spawnNodeId = CensusSpawn.PickWeightedSpawnNode();
                 }
-                InitializeVehicle(vehicle);
-                EventQueueForUI.Instance.Add(new LogToConsole(mainViewModel,
-                    $"[Spawn {Clock.FormatTimeOfDay(simTime)}] Vehicle #{vehicleId} spawned at node {spawnNodeId} — total: {Vehicles.Count}"));
+                else if (nodes != null && nodes.Count > 0)
+                {
+                    spawnNodeId = nodes[spawnRng.Next(nodes.Count)];
+                }
+                else
+                {
+                    continue;
+                }
+
+                var outgoing = RoadGraph.GetOutgoingEdges(spawnNodeId);
+                if (outgoing.Count == 0)
+                    continue;
+
+                var edge = outgoing[spawnRng.Next(outgoing.Count)];
+
+                if (!RoadGraph.Nodes.TryGetValue(edge.From, out RoadNode? fromNode) || fromNode == null)
+                    continue;
+
+                int vehicleId = Vehicles.Count;
+                MPoint mPoint = new MPoint(fromNode.X, fromNode.Y);
+                PointFeature pf = new PointFeature(mPoint);
+                pf["VehicleNumber"] = vehicleId;
+                pf["VehicleType"] = "Car" + spawnRng.Next(0, VehicleStyles.NumberOFCarColors);
+                pf["Hidden"] = "true";
+                pf["Angle"] = 0.0f;
+
+                double randomValue = Random.Shared.NextDouble();
+                double truckRatio = 0.1f;
+                bool isTruck = false;
+                if (randomValue <= truckRatio)
+                {
+                    isTruck = true;
+                }
+
+                string type = "RegularCar";
+                if (!isTruck)
+                {
+                    pf["VehicleType"] = "Car" + spawnRng.Next(0, VehicleStyles.NumberOFCarColors);
+                }
+                else
+                {
+                    pf["VehicleType"] = "Truck" + spawnRng.Next(0, VehicleStyles.NumberOFTruckColors);
+                    type = "TransportTruck";
+                }
+
+                Vehicle vehicle = new Vehicle(pf, edge, type, vehicleId % Helper.NumberOfVehicleGroups, Sim.RoadGraph);
+
+                if (vehicle.IsCreated)
+                {
+                    vehiclesAddedThisSpawn++;
+                    Vehicles.Add(vehicle);
+                    lock (LockAddNewVehicleFeature)
+                    {
+                        ProjectLayers.VehicleFeatures.Add(pf);
+                    }
+                    if (i == 0)
+                    {
+                        EventQueueForUI.Instance.Add(new LogToConsole(mainViewModel,
+                            $"[Spawn {Clock.FormatTimeOfDay(simTime)}] Vehicle #{vehicleId} spawned at node {spawnNodeId} — total: {Vehicles.Count} - trying to spawn {numberToSpawn}"));
+                    }
+                }
+            }
+            if (numberToSpawn > 1)
+            {//Show message if more than 1 vehicle being spawned
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Done adding vehicle paths {vehiclesAddedThisSpawn} vehicles added this spawn"));
             }
         }
 
         public static void Clear()
         {
+            Paused = false;
+            RunSimulation = false;
             Vehicles = new List<Vehicle>();
             RoadIntersections = new List<RoadIntersection>();
             RoadGraph = null;
@@ -413,7 +446,6 @@ namespace UrbanEcho.Sim
             GroupToUpdate = 0;
             pathfinder = null;
             nodes = null;
-            VehiclePathsLoaded = false;
             intersectionBodiesCreated = false;
             NodePenalties = new Dictionary<int, double>();
             Clock.Reset();

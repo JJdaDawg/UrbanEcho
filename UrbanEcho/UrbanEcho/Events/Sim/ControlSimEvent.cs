@@ -26,16 +26,19 @@ namespace UrbanEcho.Events.Sim
             if (simControlType == SimControlType.Stop)
             {
                 UrbanEcho.Sim.Sim.RunSimulation = false;
+                UrbanEcho.Sim.Sim.Paused = false;
             }
 
             if (simControlType == SimControlType.Start)
             {
                 UrbanEcho.Sim.Sim.RunSimulation = true;
+                UrbanEcho.Sim.Sim.Paused = false;
             }
 
             if (simControlType == SimControlType.Pause)
             {
                 UrbanEcho.Sim.Sim.RunSimulation = !UrbanEcho.Sim.Sim.RunSimulation;
+                UrbanEcho.Sim.Sim.Paused = !UrbanEcho.Sim.Sim.RunSimulation;
             }
 
             if (simControlType == SimControlType.SpeedUp)

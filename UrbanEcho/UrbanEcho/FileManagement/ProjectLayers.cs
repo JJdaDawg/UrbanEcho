@@ -66,7 +66,7 @@ namespace UrbanEcho.FileManagement
 
         public static bool IsRasterVisible { get; set; } = true;
         public static bool IsIntersectionsVisible { get; set; } = true;
-        public static bool IsCensusOverlayVisible { get; set; } = true;
+        public static bool IsCensusOverlayVisible { get; set; } = false;
 
         //private static List<IFeature> RoadFeatures = new List<IFeature>();
 
@@ -555,7 +555,7 @@ namespace UrbanEcho.FileManagement
             try
             {
                 layer = new MemoryLayer("Vehicles");
-
+                /*
                 int vehiclesAdded = 0;
                 Random random = new Random();
 
@@ -628,7 +628,7 @@ namespace UrbanEcho.FileManagement
                                 }
                                 //Vehicle groups used so we don't raycast and update velocities every frame (was slowing down fps)
                                 //currently vehicle groups just set as 1 so vehicle groups is bypassed
-                                Vehicle vehicle = new Vehicle(pf, edge, type, vehiclesAdded % Helper.NumberOfVehicleGroups);
+                                Vehicle vehicle = new Vehicle(pf, edge, type, vehiclesAdded % Helper.NumberOfVehicleGroups, Sim.Sim.RoadGraph);
 
                                 if (vehicle.IsCreated)
                                 {
@@ -645,7 +645,7 @@ namespace UrbanEcho.FileManagement
                             }
                         }
                     }
-                }
+                }*/
 
                 layer.Features = VehicleFeatures;
 
@@ -777,6 +777,7 @@ namespace UrbanEcho.FileManagement
 
                     GraphLayerFeatures.Add(pf);
                 }*/
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), "Started adding intersection bodies"));
 
                 if (ProjectLayers.CreateRoadIntersections())
                 {

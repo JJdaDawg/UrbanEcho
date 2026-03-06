@@ -21,7 +21,7 @@ public partial class MapViewModel : ObservableObject
     [ObservableProperty] private Map myMap = new Map();
     [ObservableProperty] private bool isRasterVisible = true;
     [ObservableProperty] private bool isIntersectionsVisible = true;
-    [ObservableProperty] private bool isCensusOverlayVisible = true;
+    [ObservableProperty] private bool isCensusOverlayVisible = false;
 
     public MapViewModel(IMapFeatureService mapFeatureService)
     {

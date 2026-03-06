@@ -22,6 +22,8 @@ namespace UrbanEcho.ViewModels
             WeakReferenceMessenger.Default.Register<ProjectLoadedMessage>(this, (r, m) =>
             {
                 _hasProject = true;
+                IsRunning = false;
+                IsPaused = false;
                 NotifyAllCommands();
             });
 
@@ -30,6 +32,7 @@ namespace UrbanEcho.ViewModels
             {
                 _hasProject = false;
                 IsRunning = false;
+                IsPaused = false;
                 NotifyAllCommands();
             });
         }
