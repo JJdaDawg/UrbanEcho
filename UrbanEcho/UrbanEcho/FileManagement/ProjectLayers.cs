@@ -68,7 +68,7 @@ namespace UrbanEcho.FileManagement
         public static bool IsIntersectionsVisible { get; set; } = true;
         public static bool IsCensusOverlayVisible { get; set; } = true;
 
-        private static List<IFeature> RoadFeatures = new List<IFeature>();
+        //private static List<IFeature> RoadFeatures = new List<IFeature>();
 
         public static List<IFeature> VehicleFeatures = new List<IFeature>();
 
@@ -204,7 +204,7 @@ namespace UrbanEcho.FileManagement
             censusOverlayLayer = null;
             World.Clear();
             Sim.Sim.Clear();
-            RoadFeatures = new List<IFeature>();
+            //RoadFeatures = new List<IFeature>();
             VehicleFeatures = new List<IFeature>();
             DebugLayerFeatures = new List<IFeature>();
 
@@ -250,7 +250,7 @@ namespace UrbanEcho.FileManagement
                             roadLayerFirstPass = new RasterizingLayer(roadLayer);
                             roadLayerSecondPass = new RasterizingLayer(CreateRoadLayer(roadNetwork, "Roads", false, false));
 
-                            RoadFeatures = Helpers.Helper.GetFeatures(roadLayer.DataSource);
+                            //RoadFeatures = Helpers.Helper.GetFeatures(roadLayer.DataSource);
                             Sim.Sim.RoadGraph = UrbanTrafficSim.Core.IO.RoadGraphLoader.LoadFromFeatures(Helpers.Helper.GetFeatures(roadLayer.DataSource));
                         }
                         catch (Exception ex)

@@ -857,14 +857,22 @@ namespace UrbanEcho.Sim
 
         private bool OverlapCallbackIntersection(b2ShapeId shapeId, nint context)
         {
-            bool returnValue = true;
+            bool keepCheckingOverlap = true;
 
             if (shapeId != Body.ShapeId)
             {
                 intersectionOccupied = true;
             }
+            else
+            {
+                //If this vehicle is the one in the intersection don't mark it as occupied
+                //that way it will leave the intersection if no car infront and it is blocking
+                //intersection
+                intersectionOccupied = false;
+                keepCheckingOverlap = false;//Don't do any more checks if false
+            }
 
-            return returnValue;
+            return keepCheckingOverlap;
         }
 
         private void GetVehicleInFrontCount()
