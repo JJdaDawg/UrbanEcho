@@ -6,17 +6,14 @@ using Mapsui.Nts;
 using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Numerics;
-using System.Reflection.Metadata;
 using UrbanEcho.Events.UI;
 using UrbanEcho.Graph;
 using UrbanEcho.Helpers;
 using UrbanEcho.Models;
 using UrbanEcho.Models.UI;
 using UrbanEcho.Physics;
-using Point = NetTopologySuite.Geometries.Point;
 
 namespace UrbanEcho.Sim
 {
@@ -115,6 +112,9 @@ namespace UrbanEcho.Sim
         private float stoppedStartTime = 0;
         private float stoppedElaspedTime = 0;
         private bool startedStoppedTimer = false;
+
+        private TurnDirection oldTurn = TurnDirection.Straight;
+        private bool didFirstUpdate = false;//used to hide vehicles while loading up paths
 
         private float kmh = 0;
 
@@ -630,7 +630,7 @@ namespace UrbanEcho.Sim
             }
             else
             {
-                if (Kmh <= 0.1f && targetSpeed <= 0.1f)
+                if (Kmh <= 0.1f)
                 {
                     State = VehicleStates.Stopped;
 
@@ -648,15 +648,20 @@ namespace UrbanEcho.Sim
 
             if (State == VehicleStates.Accelerating)
             {
-                updateToSpeed = Math.Clamp(updateToSpeed + settings.GetAcceleration(), 0, SpeedLimit);
+                updateToSpeed = Math.Clamp(updateToSpeed + settings.GetAcceleration(), 0.0f, SpeedLimit);
             }
             if (State == VehicleStates.AtTargetSpeed)
             {
-                updateToSpeed = Math.Clamp(updateToSpeed, 0, SpeedLimit);
+                updateToSpeed = Math.Clamp(updateToSpeed, 0.0f, SpeedLimit);
             }
-            if (State == VehicleStates.Decelerating || State == VehicleStates.Stopped)//Stopped case added here to ensure vehicle doesn't slowly creep if very close to zero speed
+            if (State == VehicleStates.Decelerating)
             {
-                updateToSpeed = Math.Clamp(updateToSpeed - settings.GetDeceleration(), 0, SpeedLimit);
+                updateToSpeed = Math.Clamp(updateToSpeed - settings.GetDeceleration(), 0.0f, SpeedLimit);
+            }
+
+            if (State == VehicleStates.Stopped)
+            {
+                updateToSpeed = 0.0f;
             }
 
             if (State == VehicleStates.SlowDownForTurn)
@@ -666,9 +671,14 @@ namespace UrbanEcho.Sim
 
             float speedToUseMs = Helper.Kmh2Ms(updateToSpeed);
             Vector2 velocityToSetMs = new Vector2(currentAngle.c * speedToUseMs, currentAngle.s * speedToUseMs);
-
-            B2Api.b2Body_SetLinearVelocity(Body.BodyId, velocityToSetMs);
-
+            if (State != VehicleStates.Stopped)
+            {
+                B2Api.b2Body_SetLinearVelocity(Body.BodyId, velocityToSetMs);
+            }
+            else
+            {
+                B2Api.b2Body_SetLinearVelocity(Body.BodyId, Vector2.Zero);
+            }
             Kmh = Helper.MS2Kmh(Vector2.Dot(velocityToSetMs/*B2Api.b2Body_GetLinearVelocity(Body.BodyId)*/, new Vector2(currentAngle.c, currentAngle.s)));
             if (float.IsNaN(Kmh))
             {
@@ -810,6 +820,20 @@ namespace UrbanEcho.Sim
                     insideAnotherVehicle = false;
                 }
             }
+
+            if (didFirstUpdate == false)//Set the enabled one time after first scan
+            {
+                try
+                {
+                    feature["Hidden"] = "false";
+                }
+                catch (Exception ex)
+                {
+                    EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Vehicle missing enable feature + {ex.ToString()}"));
+                }
+            }
+
+            didFirstUpdate = true;
         }
 
         private bool OverlapCallbackVehicle(b2ShapeId shapeId, nint context)
@@ -1105,6 +1129,19 @@ namespace UrbanEcho.Sim
             {
                 hasSamePropertiesAsOldEdge = false;
             }
+
+            if (currentRoadEdge is null || Helpers.Helper.TryGetFeatureKVPToInt(currentRoadEdge.Feature, "LANES", 2) !=
+                numberOfLanes)
+            {
+                hasSamePropertiesAsOldEdge = false;
+            }
+
+            if (currentRoadEdge is null || turn != oldTurn)
+            {
+                hasSamePropertiesAsOldEdge = false;
+            }
+
+            oldTurn = turn;
 
             //if different properties allow picking a new lane
             if (!hasSamePropertiesAsOldEdge)

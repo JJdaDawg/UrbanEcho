@@ -27,7 +27,7 @@ namespace UrbanEcho.Styles
         public VehicleStyles()
         {
             Styles.Add("Default", new VectorStyle { Line = new Pen { Width = 0.25 } });
-            Styles.Add("Hidden", new VectorStyle { Fill = new Brush(Color.Transparent), Outline = new Pen(Color.Transparent) });
+            Styles.Add("Hidden", new VectorStyle { Fill = new Brush(Color.Transparent), Outline = new Pen(Color.Transparent), Enabled = false });
 
             //https://stackoverflow.com/questions/18316683/how-to-get-the-current-project-name-in-c-sharp-code
             string? projectName = Assembly.GetCallingAssembly().GetName().Name;
@@ -94,7 +94,7 @@ namespace UrbanEcho.Styles
                 {
                     try
                     {
-                        if ((bool)f["Hidden"] == true)
+                        if (f["Hidden"]?.ToString() == "true")
                         {
                             return Styles["Hidden"];
                         }

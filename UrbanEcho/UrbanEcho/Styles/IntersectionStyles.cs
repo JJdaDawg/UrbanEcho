@@ -22,7 +22,7 @@ namespace UrbanEcho.Styles
 
         public IntersectionStyles()
         {
-            Styles.Add("Default", new VectorStyle { Line = new Pen { Width = 0.25 } });
+            Styles.Add("Default", new VectorStyle { Line = new Pen { Width = 0.25 }, Enabled = false });
 
             //https://stackoverflow.com/questions/18316683/how-to-get-the-current-project-name-in-c-sharp-code
             string? projectName = Assembly.GetCallingAssembly().GetName().Name;

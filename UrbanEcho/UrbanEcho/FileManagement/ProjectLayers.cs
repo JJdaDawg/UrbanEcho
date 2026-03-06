@@ -606,7 +606,7 @@ namespace UrbanEcho.FileManagement
                                 PointFeature pf = new PointFeature(mPoint);
                                 pf["VehicleNumber"] = vehiclesAdded;
                                 pf["VehicleType"] = "Car" + random.Next(0, VehicleStyles.NumberOFCarColors);
-                                pf["Hidden"] = false;
+                                pf["Hidden"] = "true";
                                 pf["Angle"] = 0.0f;
                                 //Vehicle groups used so we don't raycast and update velocities every frame (was slowing down fps)
                                 //currently vehicle groups just set as 1 so vehicle groups is bypassed
