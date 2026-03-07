@@ -122,6 +122,7 @@ namespace UrbanEcho.Physics
             {
                 NativeHandle.Free(intPtr);
             }
+            B2Api.b2DestroyBody(BodyId);
         }
     }
 }

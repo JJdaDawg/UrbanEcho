@@ -13,7 +13,7 @@ using UrbanEcho.Sim;
 
 namespace UrbanEcho.Models
 {
-    public class RoadIntersection : IBodyParent
+    public class RoadIntersection : IBodyParent, IDisposable
     {
         public List<EdgeTrafficRule> EdgesInto;
         public List<RoadEdge> EdgesOut;
@@ -130,7 +130,7 @@ namespace UrbanEcho.Models
                 //Register Stats update event
                 foreach (EdgeTrafficRule edgeTrafficRule in returnValue.EdgesInto)
                 {
-                    edgeTrafficRule.RoadEdge.UpdateStats += returnValue.UpdateStats;
+                    edgeTrafficRule.RoadEdge.UpdateIntersectionStats += returnValue.UpdateStats;
                 }
             }
 
@@ -645,6 +645,14 @@ namespace UrbanEcho.Models
         public void ResetStats()
         {
             stats.Reset();
+        }
+
+        public void Dispose()
+        {
+            foreach (EdgeTrafficRule edgeTrafficRule in this.EdgesInto)
+            {
+                edgeTrafficRule.RoadEdge.UpdateIntersectionStats -= this.UpdateStats;
+            }
         }
     }
 }

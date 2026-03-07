@@ -171,6 +171,13 @@ namespace UrbanEcho.Sim
 
                         lock (LockChangeVehicleFeatureList)//Make sure we dont change the list if being iterated
                         {
+                            foreach (Vehicle vehicle in Vehicles)
+                            {
+                                if (vehicle.Body != null)
+                                {
+                                    vehicle.Body.Dispose(); //need to dispose to clean up IntPtr
+                                }
+                            }
                             Vehicles.Clear();
                             ProjectLayers.VehicleFeatures.Clear();
                         }
@@ -473,7 +480,22 @@ namespace UrbanEcho.Sim
         {
             Paused = false;
             RunSimulation = false;
+            foreach (Vehicle vehicle in Vehicles)
+            {
+                if (vehicle.Body != null)
+                {
+                    vehicle.Body.Dispose(); //need to dispose to clean up IntPtr
+                }
+            }
             Vehicles = new List<Vehicle>();
+            foreach (RoadIntersection roadIntersection in RoadIntersections)
+            {
+                if (roadIntersection.Body != null)
+                {
+                    roadIntersection.Body.Dispose();//need to dispose to clean up IntPtr
+                }
+                roadIntersection.Dispose();//need to dispose to clean up event subscription
+            }
             RoadIntersections = new List<RoadIntersection>();
             RoadGraph = null;
             CensusSpawn = null;
