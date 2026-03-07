@@ -637,9 +637,9 @@ namespace UrbanEcho.Models
             return this.stats;
         }
 
-        private void UpdateStats(float timeSpent)
+        private void UpdateStats(Stats incomingStats)
         {
-            stats.RecordVehicleEntered(timeSpent);
+            stats.RecordVehicleEntered(incomingStats);
         }
 
         public void ResetStats()

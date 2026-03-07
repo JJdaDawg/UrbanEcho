@@ -451,12 +451,13 @@ namespace UrbanEcho.Sim
 
         public static void ResetStats()
         {
+            /*This part is just for showing on console highest vehicle incoming stat*/
             RoadIntersection? highestIncomingVehiclesIntersection = null;
             int highestIncomingVehiclesCount = 0;
             foreach (RoadIntersection roadIntersection in RoadIntersections)
             {
                 IntersectionStats stats = roadIntersection.GetStats();
-                int incoming = stats.GetVehiclesEntered();
+                int incoming = stats.NumberOfVehiclesEntered;
                 if (incoming > highestIncomingVehiclesCount)
                 {
                     highestIncomingVehiclesCount = incoming;
@@ -469,10 +470,18 @@ namespace UrbanEcho.Sim
                 EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Intersection {highestIncomingVehiclesIntersection.Name} had the most vehicles entered with {highestIncomingVehiclesCount} vehicles entered"));
             }
 
-            //Clear Vehicles at start of simulation
+            //Clear stats at end of simulation
             foreach (RoadIntersection roadIntersection in RoadIntersections)
             {
                 roadIntersection.ResetStats();
+            }
+
+            if (Sim.RoadGraph != null)
+            {
+                foreach (RoadEdge roadEdge in Sim.RoadGraph.Edges)
+                {
+                    roadEdge.ResetStats();
+                }
             }
         }
 
@@ -484,7 +493,7 @@ namespace UrbanEcho.Sim
             {
                 if (vehicle.Body != null)
                 {
-                    vehicle.Body.Dispose(); //need to dispose to clean up IntPtr
+                    vehicle.Body.Dispose(); //need to dispose to clean up IntPtr and remove body from world
                 }
             }
             Vehicles = new List<Vehicle>();
@@ -492,9 +501,9 @@ namespace UrbanEcho.Sim
             {
                 if (roadIntersection.Body != null)
                 {
-                    roadIntersection.Body.Dispose();//need to dispose to clean up IntPtr
+                    roadIntersection.Body.Dispose();//need to dispose to clean up IntPtr and remove body from world
                 }
-                roadIntersection.Dispose();//need to dispose to clean up event subscription
+                roadIntersection.Dispose();//need to dispose to clean up event subscriptions
             }
             RoadIntersections = new List<RoadIntersection>();
             RoadGraph = null;

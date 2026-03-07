@@ -8,31 +8,43 @@ namespace UrbanEcho.Reporting
 {
     public class RoadEdgeStats
     {
-        private double averageTimeSpentHeadingTo;
-        private double totalTimeSpentHeadingTo;
-        private int numberOfVehiclesExited;
+        public double AverageTimeSpent { get; private set; }
+        public double TotalTimeSpent { get; private set; }
+        public double AverageSpeed { get; private set; }
+        private double totalSpeed;//Not useful for anywhere else just for calculating average speed
+
+        public double AverageWaitTime { get; private set; }
+        public double TotalWaitTime { get; private set; }
+
+        public int NumberOfVehiclesExited { get; private set; }
 
         public RoadEdgeStats()
         {
         }
 
-        public void RecordVehicleExited(float timeSpentEntering)
+        public void RecordVehicleExited(Stats incomingStats)
         {
-            numberOfVehiclesExited++;
-            totalTimeSpentHeadingTo += timeSpentEntering;
-            averageTimeSpentHeadingTo = totalTimeSpentHeadingTo / numberOfVehiclesExited;
+            NumberOfVehiclesExited++;
+
+            TotalTimeSpent += incomingStats.ElaspedTime;
+            AverageTimeSpent = TotalTimeSpent / NumberOfVehiclesExited;
+
+            totalSpeed += incomingStats.AverageSpeed;
+            AverageSpeed = totalSpeed / NumberOfVehiclesExited;
+
+            TotalWaitTime += incomingStats.WaitTime;
+            AverageWaitTime = TotalWaitTime / NumberOfVehiclesExited;
         }
 
         public void Reset()
         {
-            averageTimeSpentHeadingTo = 0;
-            totalTimeSpentHeadingTo = 0;
-            numberOfVehiclesExited = 0;
-        }
-
-        public int GetVehiclesExited()
-        {
-            return numberOfVehiclesExited;
+            AverageTimeSpent = 0;
+            TotalTimeSpent = 0;
+            AverageSpeed = 0;
+            totalSpeed = 0;//Not useful for anywhere else just for calculating average speed
+            AverageWaitTime = 0;
+            TotalWaitTime = 0;
+            NumberOfVehiclesExited = 0;
         }
     }
 }

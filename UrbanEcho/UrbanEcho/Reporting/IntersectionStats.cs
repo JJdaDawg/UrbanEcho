@@ -8,31 +8,43 @@ namespace UrbanEcho.Reporting
 {
     public class IntersectionStats
     {
-        private double averageTimeSpentHeadingTo;
-        private double totalTimeSpentHeadingTo;
-        private int numberOfVehiclesEntered;
+        public double AverageTimeSpent { get; private set; }
+        public double TotalTimeSpent { get; private set; }
+        public double AverageSpeed { get; private set; }
+        private double totalSpeed;//Not useful for anywhere else just for calculating average speed
+
+        public double AverageWaitTime { get; private set; }
+        public double TotalWaitTime { get; private set; }
+
+        public int NumberOfVehiclesEntered { get; private set; }
 
         public IntersectionStats()
         {
         }
 
-        public void RecordVehicleEntered(float timeSpentEntering)
+        public void RecordVehicleEntered(Stats incomingStats)
         {
-            numberOfVehiclesEntered++;
-            totalTimeSpentHeadingTo += timeSpentEntering;
-            averageTimeSpentHeadingTo = totalTimeSpentHeadingTo / numberOfVehiclesEntered;
+            NumberOfVehiclesEntered++;
+
+            TotalTimeSpent += incomingStats.ElaspedTime;
+            AverageTimeSpent = TotalTimeSpent / NumberOfVehiclesEntered;
+
+            totalSpeed += incomingStats.AverageSpeed;
+            AverageSpeed = totalSpeed / NumberOfVehiclesEntered;
+
+            TotalWaitTime += incomingStats.WaitTime;
+            AverageWaitTime = TotalWaitTime / NumberOfVehiclesEntered;
         }
 
         public void Reset()
         {
-            averageTimeSpentHeadingTo = 0;
-            totalTimeSpentHeadingTo = 0;
-            numberOfVehiclesEntered = 0;
-        }
-
-        public int GetVehiclesEntered()
-        {
-            return numberOfVehiclesEntered;
+            AverageTimeSpent = 0;
+            TotalTimeSpent = 0;
+            AverageSpeed = 0;
+            totalSpeed = 0;//Not useful for anywhere else just for calculating average speed
+            AverageWaitTime = 0;
+            TotalWaitTime = 0;
+            NumberOfVehiclesEntered = 0;
         }
     }
 }

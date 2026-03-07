@@ -1,7 +1,7 @@
 ﻿using Mapsui;
 using UrbanEcho.Reporting;
 
-public delegate void RoadEdgeStatsUpDateEvent(float timeSpent);//called by Vehicle to update how long they spent on roadEdge
+public delegate void RoadEdgeStatsUpDateEvent(Stats stats);//called by Vehicle to update how long they spent on roadEdge
 
 public sealed class RoadEdge
 {
@@ -18,8 +18,6 @@ public sealed class RoadEdge
 
     private RoadEdgeStats stats = new RoadEdgeStats();
 
-    internal delegate void MonitorEvent(string str);
-
     public RoadEdge(int from, int to, double length, RoadMetadata metadata, IFeature feature, bool isFromStartOfLineString)
     {
         From = from;
@@ -31,15 +29,15 @@ public sealed class RoadEdge
         IsFromStartOfLineString = isFromStartOfLineString;
     }
 
-    public void VehicleLeaving(float timeSpentOnRoadEdge)
+    public void VehicleLeaving(Stats incomingStats)
     {
-        UpdateIntersectionStats?.Invoke(timeSpentOnRoadEdge);
-        UpdateEdgeStats(timeSpentOnRoadEdge);
+        UpdateIntersectionStats?.Invoke(incomingStats);
+        UpdateEdgeStats(incomingStats);
     }
 
-    public void UpdateEdgeStats(float timeSpentOnRoadEdge)
+    public void UpdateEdgeStats(Stats incomingStats)
     {
-        stats.RecordVehicleExited(timeSpentOnRoadEdge);
+        stats.RecordVehicleExited(incomingStats);
     }
 
     public RoadEdgeStats GetStats()

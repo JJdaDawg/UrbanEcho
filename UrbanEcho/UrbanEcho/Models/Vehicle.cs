@@ -14,6 +14,7 @@ using UrbanEcho.Helpers;
 using UrbanEcho.Models;
 using UrbanEcho.Models.UI;
 using UrbanEcho.Physics;
+using UrbanEcho.Reporting;
 
 namespace UrbanEcho.Sim
 {
@@ -119,6 +120,8 @@ namespace UrbanEcho.Sim
         private float kmh = 0;
 
         private float currentEdgeStartTime = 0;
+        private double lastUpdateSimTime = 0;
+        private Stats stats = new Stats();
 
         public float Kmh
         {
@@ -502,7 +505,7 @@ namespace UrbanEcho.Sim
                     return;
                 }
 
-                Pos = B2Api.b2Body_GetPosition(Body.BodyId);
+                UpdateStats();
 
                 float distanceToTarget = Vector2.Distance(Pos, endPos);
 
@@ -1119,7 +1122,7 @@ namespace UrbanEcho.Sim
 
             SetLane(updatedRoadEdge, turn);
 
-            UpdateStats();
+            UpdateStatsOnNewRoad();
 
             return updatedRoadEdge;
         }
@@ -1203,16 +1206,40 @@ namespace UrbanEcho.Sim
 
         private void UpdateStats()
         {
+            double timeDelta = Sim.GetSimTime() - lastUpdateSimTime;
+
+            if (currentEdgeStartTime != 0)//only include after currentEdgeTime has been set
+            {
+                stats.ElaspedTime = Sim.GetSimTime() - currentEdgeStartTime;
+
+                lastUpdateSimTime = Sim.GetSimTime();
+
+                //Should always be a positive
+                if (timeDelta > 0)
+                {
+                    if (state == VehicleStates.Stopped)
+                    {
+                        stats.WaitTime += timeDelta;
+                    }
+
+                    stats.AverageSpeed += Kmh * timeDelta;
+                }
+            }
+        }
+
+        private void UpdateStatsOnNewRoad()
+        {
             if (currentRoadEdge != null && currentEdgeStartTime > 0)
             {
-                float elaspedTime = Sim.GetSimTime() - currentEdgeStartTime;
-                if (elaspedTime > 0)
+                if (stats.ElaspedTime > 0)
                 {
-                    currentRoadEdge.VehicleLeaving(elaspedTime);
+                    currentRoadEdge.VehicleLeaving(stats);
                 }
             }
 
             currentEdgeStartTime = Sim.GetSimTime();
+
+            stats.Reset();
         }
     }
 }
