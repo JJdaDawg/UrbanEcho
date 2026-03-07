@@ -1021,7 +1021,7 @@ namespace UrbanEcho.FileManagement
                     MRect extent = map.Navigator.Viewport.ToExtent();
 
                     List<IFeature> copyOfVehiclesFeatures = new List<IFeature>();
-                    lock (Sim.Sim.LockAddNewVehicleFeature)
+                    lock (Sim.Sim.LockChangeVehicleFeatureList)
                     {
                         foreach (IFeature v in VehicleFeatures)
                         {

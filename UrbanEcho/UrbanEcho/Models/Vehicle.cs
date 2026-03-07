@@ -118,6 +118,8 @@ namespace UrbanEcho.Sim
 
         private float kmh = 0;
 
+        private float currentEdgeStartTime = 0;
+
         public float Kmh
         {
             get
@@ -496,6 +498,7 @@ namespace UrbanEcho.Sim
                 {
                     B2Api.b2Body_SetLinearVelocity(Body.BodyId, Vector2.Zero);
                     State = VehicleStates.Stopped;
+                    Kmh = 0;
                     return;
                 }
 
@@ -1116,6 +1119,8 @@ namespace UrbanEcho.Sim
 
             SetLane(updatedRoadEdge, turn);
 
+            UpdateStats();
+
             return updatedRoadEdge;
         }
 
@@ -1194,6 +1199,20 @@ namespace UrbanEcho.Sim
                 TurnDirection.Left => 0,
                 _ => Random.Shared.Next(laneCount),
             };
+        }
+
+        private void UpdateStats()
+        {
+            if (currentRoadEdge != null && currentEdgeStartTime > 0)
+            {
+                float elaspedTime = Sim.GetSimTime() - currentEdgeStartTime;
+                if (elaspedTime > 0)
+                {
+                    currentRoadEdge.VehicleLeaving(elaspedTime);
+                }
+            }
+
+            currentEdgeStartTime = Sim.GetSimTime();
         }
     }
 }

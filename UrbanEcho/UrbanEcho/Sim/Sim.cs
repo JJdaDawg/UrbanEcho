@@ -18,6 +18,7 @@ using UrbanEcho.Graph;
 using UrbanEcho.Helpers;
 using UrbanEcho.Models;
 using UrbanEcho.Physics;
+using UrbanEcho.Reporting;
 using UrbanEcho.Styles;
 using UrbanEcho.ViewModels;
 using static UrbanEcho.FileManagement.FileTypes;
@@ -71,7 +72,7 @@ namespace UrbanEcho.Sim
 
         private static readonly Random spawnRng = new Random();
 
-        public static object LockAddNewVehicleFeature = new object();
+        public static object LockChangeVehicleFeatureList = new object();
 
         private static int maxSimSpeed = 4;
         private static int simSpeed = 1;
@@ -151,6 +152,7 @@ namespace UrbanEcho.Sim
                         if (!startedSimulation)
                         {
                             startedSimulation = true;
+
                             if (Vehicles.Count > 0)
                             {
                                 EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Loading vehicle paths"));
@@ -163,8 +165,15 @@ namespace UrbanEcho.Sim
                         }
                         simulationLoop();
                     }
-                    if (!RunSimulation && !Paused)
+                    if (!RunSimulation && !Paused && startedSimulation == true)
                     {
+                        ResetStats();//Clear all the stats
+
+                        lock (LockChangeVehicleFeatureList)//Make sure we dont change the list if being iterated
+                        {
+                            Vehicles.Clear();
+                            ProjectLayers.VehicleFeatures.Clear();
+                        }
                         startedSimulation = false;
                     }
                 }
@@ -416,7 +425,7 @@ namespace UrbanEcho.Sim
                 {
                     vehiclesAddedThisSpawn++;
                     Vehicles.Add(vehicle);
-                    lock (LockAddNewVehicleFeature)
+                    lock (LockChangeVehicleFeatureList)
                     {
                         ProjectLayers.VehicleFeatures.Add(pf);
                     }
@@ -430,6 +439,33 @@ namespace UrbanEcho.Sim
             if (numberToSpawn > 1)
             {//Show message if more than 1 vehicle being spawned
                 EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Done adding vehicle paths {vehiclesAddedThisSpawn} vehicles added this spawn"));
+            }
+        }
+
+        public static void ResetStats()
+        {
+            RoadIntersection? highestIncomingVehiclesIntersection = null;
+            int highestIncomingVehiclesCount = 0;
+            foreach (RoadIntersection roadIntersection in RoadIntersections)
+            {
+                IntersectionStats stats = roadIntersection.GetStats();
+                int incoming = stats.GetVehiclesEntered();
+                if (incoming > highestIncomingVehiclesCount)
+                {
+                    highestIncomingVehiclesCount = incoming;
+                    highestIncomingVehiclesIntersection = roadIntersection;
+                }
+            }
+            if (highestIncomingVehiclesIntersection != null)
+            {
+                //Just to test
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Intersection {highestIncomingVehiclesIntersection.Name} had the most vehicles entered with {highestIncomingVehiclesCount} vehicles entered"));
+            }
+
+            //Clear Vehicles at start of simulation
+            foreach (RoadIntersection roadIntersection in RoadIntersections)
+            {
+                roadIntersection.ResetStats();
             }
         }
 
