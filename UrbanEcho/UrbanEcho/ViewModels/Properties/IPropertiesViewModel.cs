@@ -10,6 +10,7 @@ namespace UrbanEcho.ViewModels.Properties
     {
         string Title { get; }
         string Subtitle { get; }
+        bool IsEditing { get; set; }
 
         public void UpdatePropertyView();
     }

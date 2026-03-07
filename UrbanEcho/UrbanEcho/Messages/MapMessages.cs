@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.Models;
+using UrbanEcho.Sim;
 
 namespace UrbanEcho.Messages
 {
@@ -25,5 +26,11 @@ namespace UrbanEcho.Messages
     {
         public SelectionLayer ActiveLayer { get; }
         public ActiveLayerChangedMessage(SelectionLayer activeLayer) => ActiveLayer = activeLayer;
+    }
+
+    public class TrackVehicleMessage
+    {
+        public Vehicle? Vehicle { get; }
+        public TrackVehicleMessage(Vehicle? vehicle) => Vehicle = vehicle;
     }
 }

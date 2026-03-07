@@ -33,6 +33,7 @@ public partial class App : Application
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<IClipboardService>(new ClipboardService(mainWindow));
         services.AddSingleton<IFileDialogService>(new FileDialogService(mainWindow));
+        services.AddSingleton<IVehicleService, VehicleService>();
 
         Services = services.BuildServiceProvider();
 

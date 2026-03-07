@@ -18,6 +18,9 @@ namespace UrbanEcho.ViewModels.Properties
         public string MaintainedBy => _intersection.MaintainedBy;
         public IEnumerable<string> ConnectingRoads => _intersection.ConnectingRoads;
 
+        [ObservableProperty]
+        private bool _isEditing;
+
         public SignalPropertiesViewModel(IntersectionUI intersection)
         {
             _intersection = intersection;

@@ -1,17 +1,17 @@
-﻿using Mapsui;
+﻿using CommunityToolkit.Mvvm.Messaging;
+using Mapsui;
 using System.Linq;
+using UrbanEcho.Messages;
 using UrbanEcho.Models;
 using UrbanEcho.Models.UI;
-using CommunityToolkit.Mvvm.Messaging;
-using UrbanEcho.Messages;
+using UrbanEcho.Sim;
 
 namespace UrbanEcho.Services
 {
     public interface IMapFeatureService
     {
         IntersectionUI? MapIntersection(IFeature feature);
-
-        VehicleUI? MapVehicle(IFeature feature);
+        Vehicle? MapVehicle(IFeature feature);
     }
 
     public class MapFeatureService : IMapFeatureService
@@ -46,31 +46,17 @@ namespace UrbanEcho.Services
             };
         }
 
-        public VehicleUI? MapVehicle(IFeature feature)
+        public Vehicle? MapVehicle(IFeature feature)
         {
             var rawId = feature["VehicleNumber"]?.ToString();
             if (!int.TryParse(rawId, out int vehicleId)) return null;
-
             var simVehicle = Sim.Sim.Vehicles.ElementAtOrDefault(vehicleId);
             if (simVehicle is null)
             {
                 WeakReferenceMessenger.Default.Send(new LogMessage($"Vehicle {vehicleId} not found", LogSource.Map));
                 return null;
             }
-
-            return simVehicle.VehicleUI; /* new VehicleUI
-            {
-                Id = vehicleId,
-                VehicleType = feature["VehicleType"]?.ToString() ?? string.Empty,
-                Kmh = simVehicle.Kmh,
-                SpeedLimit = simVehicle.SpeedLimit,
-                State = simVehicle.State,
-                IsWaiting = simVehicle.IsWaiting,
-                WaitingOnIntersection = simVehicle.WaitingOnIntersection,
-                VehicleInFront = simVehicle.VehicleInFront,
-                MetersFromCarInFront = simVehicle.MetersFromCarInFront,
-                RoadType = simVehicle.CurrentRoadEdge.Metadata.RoadType
-            };*/
+            return simVehicle;
         }
     }
 }
