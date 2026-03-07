@@ -11,10 +11,49 @@ namespace UrbanEcho.Graph
         /// <summary>Upper-bound speed (m/s) keeps the heuristic admissible when cost = travel time.</summary>
         private const double MaxSpeedMs = 130.0 / 3.6;
 
+        /// <summary>Flat penalty (seconds) added for every turn beyond the straight threshold.</summary>
+        private const double TurnPenaltySeconds = 8.0;
+
+        /// <summary>Angle (radians) below which a direction change is considered straight.</summary>
+        private const double StraightThreshold = Math.PI / 9.0; // 20°
+
         public AStarPathfinder(RoadGraph graph, IReadOnlyDictionary<int, double>? nodePenalties = null)
         {
             _graph = graph;
             _nodePenalties = nodePenalties;
+        }
+
+        /// <summary>
+        /// Compute the weighted routing cost for an edge, including the road-type multiplier.
+        /// </summary>
+        private static double EdgeRoutingCost(RoadEdge edge)
+        {
+            return edge.TravelTimeSeconds * edge.Metadata.RoadType.RoutingCostMultiplier();
+        }
+
+        /// <summary>
+        /// Compute the turn penalty between two consecutive edges.
+        /// Returns 0 when going straight, <see cref="TurnPenaltySeconds"/> for any significant turn.
+        /// </summary>
+        private double ComputeTurnPenalty(RoadEdge incoming, RoadEdge outgoing)
+        {
+            if (!_graph.Nodes.TryGetValue(incoming.From, out var a) ||
+                !_graph.Nodes.TryGetValue(incoming.To, out var b) ||
+                !_graph.Nodes.TryGetValue(outgoing.To, out var c))
+                return 0;
+
+            double abX = b.X - a.X, abY = b.Y - a.Y;
+            double bcX = c.X - b.X, bcY = c.Y - b.Y;
+
+            double cross = abX * bcY - abY * bcX;
+            double dot   = abX * bcX + abY * bcY;
+
+            double angle = Math.Atan2(Math.Abs(cross), dot);
+
+            if (angle < StraightThreshold)
+                return 0;
+
+            return TurnPenaltySeconds;
         }
 
         public IReadOnlyList<int> FindPath(int node_start, int node_goal)
@@ -26,6 +65,7 @@ namespace UrbanEcho.Graph
             var h = new Dictionary<int, double>();
             var f = new Dictionary<int, double>();
             var parent = new Dictionary<int, int>();
+            var parentEdge = new Dictionary<int, RoadEdge>();
 
             foreach (var node in _graph.Nodes.Keys)
                 g[node] = double.PositiveInfinity;
@@ -52,8 +92,13 @@ namespace UrbanEcho.Graph
                 {
                     int node_successor = edge.To;
 
+                    double turnPenalty = parentEdge.TryGetValue(node_current, out var prevEdge)
+                        ? ComputeTurnPenalty(prevEdge, edge)
+                        : 0;
+
                     double successor_current_cost =
-                        g[node_current] + edge.TravelTimeSeconds
+                        g[node_current] + EdgeRoutingCost(edge)
+                        + turnPenalty
                         + (_nodePenalties?.GetValueOrDefault(node_successor, 0.0) ?? 0.0);
 
                     if (successor_current_cost >= g.GetValueOrDefault(node_successor, double.PositiveInfinity)
@@ -64,6 +109,7 @@ namespace UrbanEcho.Graph
                         successor_current_cost < g[node_successor])
                     {
                         parent[node_successor] = node_current;
+                        parentEdge[node_successor] = edge;
                         g[node_successor] = successor_current_cost;
 
                         h[node_successor] = Heuristic(node_successor, node_goal);
@@ -125,8 +171,13 @@ namespace UrbanEcho.Graph
                 {
                     int node_successor = edge.To;
 
+                    double turnPenalty = parentEdge.TryGetValue(node_current, out var prevEdge)
+                        ? ComputeTurnPenalty(prevEdge, edge)
+                        : 0;
+
                     double successor_current_cost =
-                        g[node_current] + edge.TravelTimeSeconds
+                        g[node_current] + EdgeRoutingCost(edge)
+                        + turnPenalty
                         + (_nodePenalties?.GetValueOrDefault(node_successor, 0.0) ?? 0.0);
 
                     if (successor_current_cost >= g.GetValueOrDefault(node_successor, double.PositiveInfinity)
@@ -184,4 +235,3 @@ namespace UrbanEcho.Graph
         }
     }
 }
-    

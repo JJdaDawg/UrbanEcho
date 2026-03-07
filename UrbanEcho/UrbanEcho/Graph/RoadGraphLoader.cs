@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Mapsui.Nts;
+using UrbanEcho.Graph;
 
 namespace UrbanTrafficSim.Core.IO;
 
@@ -234,7 +235,10 @@ public static class RoadGraphLoader
                 && f["AADT"] != null
                 && double.TryParse(f["AADT"].ToString(), out var aadtVal)
                 ? aadtVal
-                : 0
+                : 0,
+            RoadType = f.Fields.Contains("CARTO_CLAS")
+                ? RoadTypeExtensions.ParseCartoClass(f["CARTO_CLAS"]?.ToString())
+                : RoadType.Unknown
         };
     }
 
