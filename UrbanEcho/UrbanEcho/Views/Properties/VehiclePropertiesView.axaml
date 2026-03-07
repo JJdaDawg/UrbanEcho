@@ -6,6 +6,13 @@
              mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="500"
              x:Class="UrbanEcho.VehiclePropertiesView"
              x:DataType="vm:VehiclePropertiesViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="Button.active">
+            <Setter Property="Background" Value="{DynamicResource SystemAccentColor}" />
+        </Style>
+    </UserControl.Styles>
+
     <StackPanel Spacing="0">
 
         <!-- INFO -->
@@ -62,7 +69,10 @@
         <StackPanel Orientation="Horizontal" Margin="14,0,14,12" Spacing="6">
             <Button Content="Path"  Height="26" Padding="10,0" Command="{Binding PathCommand}" />
             <Button Content="Trend" Height="26" Padding="10,0" Command="{Binding TrendCommand}" />
-            <Button Content="Track" Height="26" Padding="10,0" Command="{Binding TrackCommand}" />
+            <Button Content="Track"
+                    Height="26" Padding="10,0"
+                    Command="{Binding TrackCommand}"
+                    Classes.active="{Binding IsTracking}" />
         </StackPanel>
 
         <Separator Margin="0,0,0,0" Opacity="0.15" IsVisible="{Binding IsEditing}" />
@@ -74,7 +84,7 @@
             <StackPanel Orientation="Horizontal" Margin="14,0,14,12" Spacing="6">
                 <Button Content="Destination" Height="26" Padding="10,0" Command="{Binding DestinationCommand}" />
                 <Button Content="{Binding StartStopLabel}" Height="26" Padding="10,0" Command="{Binding StartStopCommand}" />
-                <Button Content="De-spawn"    Height="26" Padding="10,0" Command="{Binding DespawnCommand}" />
+                <Button Content="De-spawn"    Height="26" Padding="10,0" Command="{Binding RespawnCommand}" />
             </StackPanel>
         </StackPanel>
 

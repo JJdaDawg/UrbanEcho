@@ -1,6 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using System;
+using UrbanEcho.Messages;
 using UrbanEcho.Models;
 using UrbanEcho.Models.UI;
 using UrbanEcho.Services;
@@ -30,23 +32,32 @@ namespace UrbanEcho.ViewModels.Properties
         [ObservableProperty]
         private bool _isEditing;
 
+        [ObservableProperty]
+        private bool _isTracking;
+
         public VehiclePropertiesViewModel(Vehicle vehicle, IVehicleService vehicleService)
         {
             _vehicle = vehicle;
             _vehicleService = vehicleService;
             StartStopCommand = new RelayCommand(() => _vehicleService.ToggleStop(_vehicle));
-            DespawnCommand = new RelayCommand(() => _vehicleService.Despawn(_vehicle));
+            RespawnCommand = new RelayCommand(() => _vehicleService.Respawn(_vehicle));
+            TrackCommand = new RelayCommand(() =>
+            {
+                IsTracking = !IsTracking;
+                if (IsTracking) { _vehicleService.TrackVehicle(_vehicle); }
+                else { _vehicleService.StopTracking(); }
+            });
         }
 
         // ACTION Commands
         public RelayCommand PathCommand { get; } = new RelayCommand(() => { /* todo */ });
         public RelayCommand TrendCommand { get; } = new RelayCommand(() => { /* todo */ });
-        public RelayCommand TrackCommand { get; } = new RelayCommand(() => { /* todo */ });
+        public RelayCommand TrackCommand { get; }
         
         // EDIT Commands
         public RelayCommand DestinationCommand { get; } = new RelayCommand(() => { /* todo */ });
         public RelayCommand StartStopCommand { get; }
-        public RelayCommand DespawnCommand { get; }
+        public RelayCommand RespawnCommand { get; }
 
         public string StartStopLabel => _vehicle.IsForceStopped ? "Start" : "Stop";
 
