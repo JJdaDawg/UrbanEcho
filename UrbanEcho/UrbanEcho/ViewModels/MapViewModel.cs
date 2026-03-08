@@ -22,6 +22,7 @@ public partial class MapViewModel : ObservableObject
     private SelectionLayer _activeLayer = SelectionLayer.None;
 
     private Vehicle? _trackedVehicle;
+    private Vehicle? _pendingDestinationVehicle;
 
     [ObservableProperty] private Map myMap = new Map();
     [ObservableProperty] private bool isVolumeVisible = true;
@@ -36,6 +37,7 @@ public partial class MapViewModel : ObservableObject
         WeakReferenceMessenger.Default.Register<TrackVehicleMessage>(this, (r, m) => _trackedVehicle = m.Vehicle);
         WeakReferenceMessenger.Default.Register<ActiveLayerChangedMessage>(this, (r, m) => _activeLayer = m.ActiveLayer);
         WeakReferenceMessenger.Default.Register<MapFeatureDeselectedMessage>(this, (r, m) => _trackedVehicle = null);
+        WeakReferenceMessenger.Default.Register<PickDestinationMessage>(this, (r, m) => _pendingDestinationVehicle = m.Vehicle);
 
         var trackingTimer = new Avalonia.Threading.DispatcherTimer
         {
@@ -47,6 +49,13 @@ public partial class MapViewModel : ObservableObject
 
     private void OnMapTapped(object? sender, MapEventArgs e)
     {
+        if (_pendingDestinationVehicle is not null)
+        {
+            var worldPos = e.WorldPosition;
+            if (worldPos is not null) { HandleDestinationPick(_pendingDestinationVehicle, worldPos); }
+            return;
+        }
+
         var layers = new List<ILayer>();
 
         if (_activeLayer == SelectionLayer.Intersection && ProjectLayers.IntersectionLayer is not null)
@@ -94,6 +103,31 @@ public partial class MapViewModel : ObservableObject
         ProjectLayers.IsVolumeVisible = value;
         MyMap.Refresh();
         WeakReferenceMessenger.Default.Send(new LogMessage("Volume visibility toggled", LogSource.Map));
+    }
+
+    private void HandleDestinationPick(Vehicle vehicle, MPoint worldPos)
+    {
+        _pendingDestinationVehicle = null;
+        int? nearestNode = FindNearestNode(worldPos);
+        if (nearestNode is null) return;
+        vehicle.SetDestination(nearestNode.Value);
+        WeakReferenceMessenger.Default.Send(new DestinationPickedMessage());
+        WeakReferenceMessenger.Default.Send(new LogMessage($"Destination set for vehicle {vehicle.VehicleUI.Id}", LogSource.Map));
+    }
+
+    private int? FindNearestNode(MPoint worldPos)
+    {
+        if (Sim.RoadGraph is null) { return null; }
+        double bestDist = double.MaxValue;
+        int? bestNode = null;
+        foreach (var kvp in Sim.RoadGraph.Nodes)
+        {
+            double dx = kvp.Value.X - worldPos.X;
+            double dy = kvp.Value.Y - worldPos.Y;
+            double dist = dx * dx + dy * dy;
+            if (dist < bestDist) { bestDist = dist; bestNode = kvp.Key; }
+        }
+        return bestNode;
     }
 
     partial void OnIsRasterVisibleChanged(bool value)
