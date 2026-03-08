@@ -1,5 +1,6 @@
 ﻿using Avalonia.Controls.Shapes;
 using FluentIcons.Avalonia;
+using FluentIcons.Common.Internals;
 using Mapsui;
 using Mapsui.Nts;
 using Mapsui.Styles;
@@ -9,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UrbanEcho.FileManagement;
 using UrbanEcho.Helpers;
+using UrbanEcho.UI;
 
 namespace UrbanEcho.Styles
 {
@@ -101,46 +103,93 @@ namespace UrbanEcho.Styles
             {
                 style.Line.Color = new Color(148, 148, 148);
             }*/
-            if (ProjectLayers.IsVolumeVisible && !useOutline)
+            if (!useOutline)
             {
-                int vehicleCount = 0;
-                string key = Helper.TryGetFeatureKVPToString(gf, "OBJECTID", "");
-                if (!string.IsNullOrEmpty(key))
+                if (ProjectLayers.IsVolumeVisible)
                 {
-                    if (Sim.Sim.RoadFeatures.TryGetValue(key, out IFeature? dictionaryFeature))
+                    int vehicleCount = 0;
+                    string key = Helper.TryGetFeatureKVPToString(gf, "OBJECTID", "");
+                    if (!string.IsNullOrEmpty(key))
                     {
-                        if (dictionaryFeature != null)
+                        if (Sim.Sim.RoadFeatures.TryGetValue(key, out IFeature? dictionaryFeature))
                         {
-                            vehicleCount = Helper.TryGetFeatureKVPToInt(dictionaryFeature, "VehicleCount", 0);
-
-                            if (vehicleCount > 0)
+                            if (dictionaryFeature != null)
                             {
-                                ColorBlend cb = ColorBlend.TwoColors(Color.LimeGreen, Color.Red);
-                                double minAADTValue = 0;
-                                double maxAADTValue = Sim.Sim.RoadWithMaxVolume;
-                                double aadtValue = vehicleCount;
+                                vehicleCount = Helper.TryGetFeatureKVPToInt(dictionaryFeature, "VehicleCount", 0);
 
-                                double normalizedValue = 0;
-                                if (maxAADTValue - minAADTValue > 0)
+                                if (vehicleCount > 0)
                                 {
-                                    normalizedValue = (minAADTValue + aadtValue) / (maxAADTValue - minAADTValue);
-                                }
-                                Math.Clamp(normalizedValue, 0.0, 1.0);
+                                    ColorBlend cb = ColorBlend.TwoColors(Color.LimeGreen, Color.Red);
+                                    double minValue = 0;
+                                    double maxValue = Sim.Sim.RoadWithMaxVolume;
+                                    double value = vehicleCount;
 
-                                style.Line.Color = cb.GetColor(normalizedValue);
+                                    double normalizedValue = 0;
+                                    if (maxValue - minValue > 0)
+                                    {
+                                        normalizedValue = (value - minValue) / (maxValue - minValue);
+                                    }
+                                    normalizedValue = Math.Clamp(normalizedValue, 0.0, 1.0);
+
+                                    style.Line.Color = cb.GetColor(normalizedValue);
+                                }
                             }
                         }
                     }
-                }
 
-                if (vehicleCount == 0)
+                    if (vehicleCount == 0)
+                    {
+                        style.Line.Color = new Color(148, 148, 148);
+                    }
+                }
+                else
                 {
                     style.Line.Color = new Color(148, 148, 148);
                 }
             }
             else
             {
-                style.Line.Color = new Color(148, 148, 148);
+                if (ProjectLayers.IsTrafficSpeedVisible)
+                {
+                    double speed = 0;
+                    string key = Helper.TryGetFeatureKVPToString(gf, "OBJECTID", "");
+                    if (!string.IsNullOrEmpty(key))
+                    {
+                        if (Sim.Sim.RoadFeatures.TryGetValue(key, out IFeature? dictionaryFeature))
+                        {
+                            if (dictionaryFeature != null)
+                            {
+                                speed = Helper.TryGetFeatureKVPToDouble(dictionaryFeature, "Speed", 0);
+
+                                if (speed > 0)
+                                {
+                                    ColorBlend cb = ColorBlend.TwoColors(Color.FireBrick, Color.LimeGreen);
+                                    double minValue = Sim.Sim.MinForShowSpeed;
+                                    double maxValue = Sim.Sim.MaxForShowSpeed;
+                                    double value = speed;
+
+                                    double normalizedValue = 0;
+                                    if (maxValue - minValue > 0)
+                                    {
+                                        normalizedValue = (value - minValue) / (maxValue - minValue);
+                                    }
+                                    normalizedValue = Math.Clamp(normalizedValue, 0.0, 1.0);
+
+                                    style.Outline.Color = cb.GetColor(normalizedValue);
+                                }
+                            }
+                        }
+                    }
+
+                    if (speed == 0)
+                    {
+                        style.Outline.Color = Color.AntiqueWhite;
+                    }
+                }
+                else
+                {
+                    style.Outline.Color = Color.AntiqueWhite;
+                }
             }
 
             return style;

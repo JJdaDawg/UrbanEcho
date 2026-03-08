@@ -85,13 +85,16 @@
                     <MenuItem Header="Traffic Volume"
                               IsChecked="{Binding Map.IsVolumeVisible}"
                               ToggleType="CheckBox"
-                              Command="{Binding Map.ToggleVolumeCommand}">
-                                
+                              Command="{Binding Map.ToggleVolumeCommand}">                                
                         <MenuItem.Icon>
 							<icon:SymbolIcon Symbol="DataBarVertical"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="Traffic Speed Heatmap">
+                    <MenuItem Header="Traffic Speed Heatmap"
+                              IsChecked="{Binding Map.IsTrafficSpeedVisible}"
+                              ToggleType="CheckBox"
+                              Command="{Binding Map.ToggleTrafficSpeedCommand}">                          
+                              
                         <MenuItem.Icon>
 							<icon:SymbolIcon Symbol="TopSpeed"/>
                         </MenuItem.Icon>
