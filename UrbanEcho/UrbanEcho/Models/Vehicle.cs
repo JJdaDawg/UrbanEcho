@@ -442,6 +442,30 @@ namespace UrbanEcho.Sim
             return counted;
         }
 
+        public void SetDestination(int goalNodeId)
+        {
+            if (graph == null) return;
+
+            var pathfinder = new AStarPathfinder(graph, Sim.NodePenalties);
+            var newPathEdges = pathfinder.FindPathEdges(currentRoadEdge.From, goalNodeId);
+
+            if (newPathEdges.Count < 1)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Could not find path to destination {goalNodeId}"));
+                return;
+            }
+
+            pathSteps = PathStepBuilder.Build(newPathEdges, graph);
+            path = new List<int> { newPathEdges[0].From };
+            for (int i = 0; i < newPathEdges.Count; i++)
+            {
+                path.Add(newPathEdges[i].To);
+            }
+
+            pathSegmentIndex = 0;
+            stepThroughPath();
+        }
+
         public RoadEdge GetRoadEdge()
         {
             return currentRoadEdge;

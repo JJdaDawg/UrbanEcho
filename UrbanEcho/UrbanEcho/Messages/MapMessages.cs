@@ -33,4 +33,12 @@ namespace UrbanEcho.Messages
         public Vehicle? Vehicle { get; }
         public TrackVehicleMessage(Vehicle? vehicle) => Vehicle = vehicle;
     }
+
+    public class PickDestinationMessage
+    {
+        public Vehicle? Vehicle { get; }
+        public PickDestinationMessage(Vehicle? vehicle) => Vehicle = vehicle;
+    }
+
+    public class DestinationPickedMessage { }
 }

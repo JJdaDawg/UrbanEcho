@@ -15,6 +15,8 @@ namespace UrbanEcho.Services
         void Respawn(Vehicle vehicle);
         void ToggleStop(Vehicle vehicle);
         void TrackVehicle(Vehicle vehicle);
+        void PickDestination(Vehicle vehicle);
+        void CancelPickDestination();
         void StopTracking();
     }
 
@@ -36,6 +38,17 @@ namespace UrbanEcho.Services
         {
             WeakReferenceMessenger.Default.Send(new TrackVehicleMessage(vehicle));
             WeakReferenceMessenger.Default.Send(new LogMessage($"Tracking vehicle {vehicle.VehicleUI.Id}", LogSource.System));
+        }
+
+        public void PickDestination(Vehicle vehicle)
+        {
+            WeakReferenceMessenger.Default.Send(new PickDestinationMessage(vehicle));
+            WeakReferenceMessenger.Default.Send(new LogMessage($"Picking destination for vehicle {vehicle.VehicleUI.Id}", LogSource.System));
+        }
+
+        public void CancelPickDestination()
+        {
+            WeakReferenceMessenger.Default.Send(new PickDestinationMessage(null));
         }
 
         public void StopTracking()
