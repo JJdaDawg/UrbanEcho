@@ -35,7 +35,7 @@
 
                 <!-- Map -->
                 <Border Grid.Row="0" Classes="focus-indicator" Focusable="True">
-                    <mapsui:MapControl Map="{Binding Map.MyMap}" x:Name="MyMapControl"/>
+                    <local:MapView />
                 </Border>
 
                 <!-- Splitter between Map and Console -->
