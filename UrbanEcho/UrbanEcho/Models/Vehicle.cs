@@ -14,6 +14,7 @@ using UrbanEcho.Helpers;
 using UrbanEcho.Models;
 using UrbanEcho.Models.UI;
 using UrbanEcho.Physics;
+using UrbanEcho.Reporting;
 
 namespace UrbanEcho.Sim
 {
@@ -117,6 +118,10 @@ namespace UrbanEcho.Sim
         private bool didFirstUpdate = false;//used to hide vehicles while loading up paths
 
         private float kmh = 0;
+
+        private float currentEdgeStartTime = 0;
+        private double lastUpdateSimTime = 0;
+        private Stats stats = new Stats();
 
         public float Kmh
         {
@@ -496,10 +501,11 @@ namespace UrbanEcho.Sim
                 {
                     B2Api.b2Body_SetLinearVelocity(Body.BodyId, Vector2.Zero);
                     State = VehicleStates.Stopped;
+                    Kmh = 0;
                     return;
                 }
 
-                Pos = B2Api.b2Body_GetPosition(Body.BodyId);
+                UpdateStats();
 
                 float distanceToTarget = Vector2.Distance(Pos, endPos);
 
@@ -1116,6 +1122,8 @@ namespace UrbanEcho.Sim
 
             SetLane(updatedRoadEdge, turn);
 
+            UpdateStatsOnNewRoad();
+
             return updatedRoadEdge;
         }
 
@@ -1194,6 +1202,45 @@ namespace UrbanEcho.Sim
                 TurnDirection.Left => 0,
                 _ => Random.Shared.Next(laneCount),
             };
+        }
+
+        private void UpdateStats()
+        {
+            double timeDelta = Sim.GetSimTime() - lastUpdateSimTime;
+
+            if (currentEdgeStartTime != 0)//only include after currentEdgeTime has been set
+            {
+                stats.ElaspedTime = Sim.GetSimTime() - currentEdgeStartTime;
+
+                lastUpdateSimTime = Sim.GetSimTime();
+
+                //Should always be a positive
+                if (timeDelta > 0)
+                {
+                    if (state == VehicleStates.Stopped)
+                    {
+                        stats.WaitTime += timeDelta;
+                    }
+
+                    stats.AllSpeedValues += Kmh * timeDelta;
+                }
+            }
+        }
+
+        private void UpdateStatsOnNewRoad()
+        {
+            if (currentRoadEdge != null && currentEdgeStartTime > 0)
+            {
+                if (stats.ElaspedTime > 0)
+                {
+                    stats.AverageSpeed = stats.AllSpeedValues / stats.ElaspedTime;
+                    currentRoadEdge.VehicleLeaving(stats);
+                }
+            }
+
+            currentEdgeStartTime = Sim.GetSimTime();
+
+            stats.Reset();
         }
     }
 }

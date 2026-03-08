@@ -38,7 +38,7 @@ public partial class MapViewModel : ObservableObject
 
         var trackingTimer = new Avalonia.Threading.DispatcherTimer
         {
-            Interval = TimeSpan.FromMilliseconds(16)
+            Interval = TimeSpan.FromMilliseconds(16 * 10)//Less calls allows us to zoom in and out while tracking easier
         };
         trackingTimer.Tick += (s, e) => UpdateTracking();
         trackingTimer.Start();
@@ -69,10 +69,10 @@ public partial class MapViewModel : ObservableObject
     private void HandleIntersectionClick(IFeature feature)
     {
         var intersection = _mapFeatureService.MapIntersection(feature);
-        if (intersection is null) 
+        if (intersection is null)
         {
             WeakReferenceMessenger.Default.Send(new MapFeatureDeselectedMessage());
-            return; 
+            return;
         }
         WeakReferenceMessenger.Default.Send(new MapFeatureSelectedMessage(MapFeatureType.Signal, intersection));
     }
@@ -113,10 +113,13 @@ public partial class MapViewModel : ObservableObject
     {
         if (_trackedVehicle is null) return;
         var pos = _trackedVehicle.Pos;
-        MyMap.Navigator.CenterOn(new MPoint(pos.X + World.Offset.X, pos.Y + World.Offset.Y));
+        MyMap.Navigator.CenterOn(new MPoint(pos.X + World.Offset.X, pos.Y + World.Offset.Y), 16 * 100, Mapsui.Animations.Easing.Linear);
+        MyMap.Refresh();//Refresh so map is redrawn else some items don't render in after map moves
     }
 
     [RelayCommand] private void ToggleRaster() => IsRasterVisible = !IsRasterVisible;
+
     [RelayCommand] private void ToggleIntersectionDetails() => IsIntersectionsVisible = !IsIntersectionsVisible;
+
     [RelayCommand] private void ToggleCensusOverlay() => IsCensusOverlayVisible = !IsCensusOverlayVisible;
 }

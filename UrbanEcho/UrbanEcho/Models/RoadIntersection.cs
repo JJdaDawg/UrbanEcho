@@ -8,11 +8,12 @@ using System.Linq;
 using System.Numerics;
 using UrbanEcho.Events.UI;
 using UrbanEcho.Physics;
+using UrbanEcho.Reporting;
 using UrbanEcho.Sim;
 
 namespace UrbanEcho.Models
 {
-    public class RoadIntersection : IBodyParent
+    public class RoadIntersection : IBodyParent, IDisposable
     {
         public List<EdgeTrafficRule> EdgesInto;
         public List<RoadEdge> EdgesOut;
@@ -46,6 +47,8 @@ namespace UrbanEcho.Models
         private bool didSetCurrentCycleValues = true;
         private bool didSetBlockedForAllRed = false;
         private bool firstCycleInitialized = false;
+
+        private IntersectionStats stats = new IntersectionStats();
 
         public enum SignalType
         {
@@ -121,6 +124,16 @@ namespace UrbanEcho.Models
                     EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to add a intersection"));
                 }
             }
+
+            if (returnValue != null)
+            {
+                //Register Stats update event
+                foreach (EdgeTrafficRule edgeTrafficRule in returnValue.EdgesInto)
+                {
+                    edgeTrafficRule.RoadEdge.UpdateIntersectionStats += returnValue.UpdateStats;
+                }
+            }
+
             return returnValue;
         }
 
@@ -447,16 +460,7 @@ namespace UrbanEcho.Models
                                         Vector2 end = Helpers.Helper.Convert2Box2dWorldPosition(lineString.Coordinates[nextIndexForSegment].X, lineString.Coordinates[nextIndexForSegment].Y);
 
                                         double pavementWidth = 0;
-                                        //TODO: update key value and minWidth to not be hardcoded here
-                                        //pavementWidth = Helpers.Helper.TryGetFeatureKVPToDouble(gf, "PAVEMENT_W", 1);
 
-                                        //if (pavementWidth < 4)
-                                        //{
-                                        //    int lanes = Helpers.Helper.TryGetFeatureKVPToInt(gf, "LANES", 2);
-
-                                        //    pavementWidth = lanes * Helpers.Helper.DefaultLaneWidth;
-                                        //}
-                                        //pavementWidth = pavementWidth * Helpers.Helper.ExtraPavementFactor;
                                         int lanes = Helpers.Helper.TryGetFeatureKVPToInt(gf, "LANES", 2);
                                         pavementWidth = lanes * Helpers.Helper.DefaultLaneWidth * Helpers.Helper.ExtraPavementFactor;
 
@@ -625,6 +629,29 @@ namespace UrbanEcho.Models
             else
             {
                 FallBackTrafficRule.SetBlock(false);
+            }
+        }
+
+        public IntersectionStats GetStats()
+        {
+            return this.stats;
+        }
+
+        private void UpdateStats(Stats incomingStats)
+        {
+            stats.RecordVehicleEntered(incomingStats);
+        }
+
+        public void ResetStats()
+        {
+            stats.Reset();
+        }
+
+        public void Dispose()
+        {
+            foreach (EdgeTrafficRule edgeTrafficRule in this.EdgesInto)
+            {
+                edgeTrafficRule.RoadEdge.UpdateIntersectionStats -= this.UpdateStats;
             }
         }
     }

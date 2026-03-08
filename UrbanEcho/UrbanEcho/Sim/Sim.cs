@@ -18,6 +18,7 @@ using UrbanEcho.Graph;
 using UrbanEcho.Helpers;
 using UrbanEcho.Models;
 using UrbanEcho.Physics;
+using UrbanEcho.Reporting;
 using UrbanEcho.Styles;
 using UrbanEcho.ViewModels;
 using static UrbanEcho.FileManagement.FileTypes;
@@ -71,7 +72,7 @@ namespace UrbanEcho.Sim
 
         private static readonly Random spawnRng = new Random();
 
-        public static object LockAddNewVehicleFeature = new object();
+        public static object LockChangeVehicleFeatureList = new object();
 
         private static int maxSimSpeed = 4;
         private static int simSpeed = 1;
@@ -151,6 +152,7 @@ namespace UrbanEcho.Sim
                         if (!startedSimulation)
                         {
                             startedSimulation = true;
+
                             if (Vehicles.Count > 0)
                             {
                                 EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Loading vehicle paths"));
@@ -163,8 +165,22 @@ namespace UrbanEcho.Sim
                         }
                         simulationLoop();
                     }
-                    if (!RunSimulation && !Paused)
+                    if (!RunSimulation && !Paused && startedSimulation == true)
                     {
+                        ResetStats();//Clear all the stats
+
+                        lock (LockChangeVehicleFeatureList)//Make sure we dont change the list if being iterated
+                        {
+                            foreach (Vehicle vehicle in Vehicles)
+                            {
+                                if (vehicle.Body != null)
+                                {
+                                    vehicle.Body.Dispose(); //need to dispose to clean up IntPtr
+                                }
+                            }
+                            Vehicles.Clear();
+                            ProjectLayers.VehicleFeatures.Clear();
+                        }
                         startedSimulation = false;
                     }
                 }
@@ -416,7 +432,7 @@ namespace UrbanEcho.Sim
                 {
                     vehiclesAddedThisSpawn++;
                     Vehicles.Add(vehicle);
-                    lock (LockAddNewVehicleFeature)
+                    lock (LockChangeVehicleFeatureList)
                     {
                         ProjectLayers.VehicleFeatures.Add(pf);
                     }
@@ -433,11 +449,65 @@ namespace UrbanEcho.Sim
             }
         }
 
+        public static void ResetStats()
+        {
+            /*This part is just for showing on console highest vehicle incoming stat*/
+            RoadIntersection? highestIncomingVehiclesIntersection = null;
+            int highestIncomingVehiclesCount = 0;
+            foreach (RoadIntersection roadIntersection in RoadIntersections)
+            {
+                IntersectionStats stats = roadIntersection.GetStats();
+                int incoming = stats.NumberOfVehiclesEntered;
+                if (incoming > highestIncomingVehiclesCount)
+                {
+                    highestIncomingVehiclesCount = incoming;
+                    highestIncomingVehiclesIntersection = roadIntersection;
+                }
+            }
+            if (highestIncomingVehiclesIntersection != null)
+            {
+                //Just to test
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Intersection {highestIncomingVehiclesIntersection.Name} had the most vehicles entered with {highestIncomingVehiclesCount} vehicles entered"));
+            }
+            if (RoadGraph != null)
+            {
+                Report.Export(RoadIntersections, RoadGraph);
+            }
+            //Clear stats at end of simulation
+            foreach (RoadIntersection roadIntersection in RoadIntersections)
+            {
+                roadIntersection.ResetStats();
+            }
+
+            if (Sim.RoadGraph != null)
+            {
+                foreach (RoadEdge roadEdge in Sim.RoadGraph.Edges)
+                {
+                    roadEdge.ResetStats();
+                }
+            }
+        }
+
         public static void Clear()
         {
             Paused = false;
             RunSimulation = false;
+            foreach (Vehicle vehicle in Vehicles)
+            {
+                if (vehicle.Body != null)
+                {
+                    vehicle.Body.Dispose(); //need to dispose to clean up IntPtr and remove body from world
+                }
+            }
             Vehicles = new List<Vehicle>();
+            foreach (RoadIntersection roadIntersection in RoadIntersections)
+            {
+                if (roadIntersection.Body != null)
+                {
+                    roadIntersection.Body.Dispose();//need to dispose to clean up IntPtr and remove body from world
+                }
+                roadIntersection.Dispose();//need to dispose to clean up event subscriptions
+            }
             RoadIntersections = new List<RoadIntersection>();
             RoadGraph = null;
             CensusSpawn = null;

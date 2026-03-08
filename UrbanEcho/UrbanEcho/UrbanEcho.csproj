@@ -45,6 +45,7 @@
     </PackageReference>
     <PackageReference Include="Box2dNet" Version="3.1.8.7" />
     <PackageReference Include="BruTile.MbTiles" Version="6.0.0" />
+    <PackageReference Include="ClosedXML.Report" Version="0.2.12" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="FluentAvaloniaUI" Version="2.1.0" />
     <PackageReference Include="FluentIcons.Avalonia" Version="2.0.318" />
@@ -165,6 +166,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Resources\ShapeFiles\Traffic_Volumes\Traffic_Volumes.shx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\Templates\template.xlsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
