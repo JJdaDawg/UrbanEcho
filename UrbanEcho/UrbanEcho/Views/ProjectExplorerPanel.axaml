@@ -40,6 +40,9 @@
                         <ToggleButton Content="Vehicles"
                                       IsChecked="{Binding IsVehicleLayerActive}"
                                       Command="{Binding SelectVehicleLayerCommand}" />
+                        <ToggleButton Content="Roads"
+                                      IsChecked="{Binding IsRoadLayerActive}"
+                                      Command="{Binding SelectRoadLayerCommand}" />
                     </StackPanel>
                 </StackPanel>
             </Grid>

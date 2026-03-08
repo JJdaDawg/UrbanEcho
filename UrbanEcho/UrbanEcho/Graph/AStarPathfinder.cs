@@ -7,6 +7,7 @@ namespace UrbanEcho.Graph
     {
         private readonly RoadGraph _graph;
         private readonly IReadOnlyDictionary<int, double>? _nodePenalties;
+        private readonly bool _isTruck;
 
         /// <summary>Upper-bound speed (m/s) keeps the heuristic admissible when cost = travel time.</summary>
         private const double MaxSpeedMs = 130.0 / 3.6;
@@ -17,17 +18,21 @@ namespace UrbanEcho.Graph
         /// <summary>Angle (radians) below which a direction change is considered straight.</summary>
         private const double StraightThreshold = Math.PI / 9.0; // 20°
 
-        public AStarPathfinder(RoadGraph graph, IReadOnlyDictionary<int, double>? nodePenalties = null)
+        public AStarPathfinder(RoadGraph graph, IReadOnlyDictionary<int, double>? nodePenalties = null, bool isTruck = false)
         {
             _graph = graph;
             _nodePenalties = nodePenalties;
+            _isTruck = isTruck;
         }
 
         /// <summary>
         /// Compute the weighted routing cost for an edge, including the road-type multiplier.
+        /// Returns <see cref="double.PositiveInfinity"/> for closed edges so A* never routes through them.
         /// </summary>
-        private static double EdgeRoutingCost(RoadEdge edge)
+        private double EdgeRoutingCost(RoadEdge edge)
         {
+            if (edge.IsClosed) return double.PositiveInfinity;
+            if (_isTruck && !edge.Metadata.TruckAllowance) return double.PositiveInfinity;
             return edge.TravelTimeSeconds * edge.Metadata.RoadType.RoutingCostMultiplier();
         }
 

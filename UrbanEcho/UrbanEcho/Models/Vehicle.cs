@@ -80,6 +80,8 @@ namespace UrbanEcho.Sim
 
         public bool IsCreated = false;
 
+        public bool IsTruck { get; }
+
         private int prevIndexLineString;
         private int indexLineString;
 
@@ -249,6 +251,7 @@ namespace UrbanEcho.Sim
             VehicleUI.Id = Helper.TryGetFeatureKVPToInt(feature, "VehicleNumber", 0);
 
             settings = new VehicleSettings(carType);
+            IsTruck = carType == "TransportTruck";
             currentTrafficRule = TrafficRule.SetDefaultTrafficRule();
 
             this.currentRoadEdge = SetCurrentRoadEdge(currentRoadEdge);
@@ -308,7 +311,7 @@ namespace UrbanEcho.Sim
                 ResetVehicleToNewPos();
                 return;
             }
-            var pathfinder = new AStarPathfinder(graph, Sim.NodePenalties);
+            var pathfinder = new AStarPathfinder(graph, Sim.NodePenalties, IsTruck);
             int goalNode = TrafficVolumeLoader.PickWeightedDestination(graph, currentNodeId);
 
             var newPathEdges = pathfinder.FindPathEdges(currentNodeId, goalNode);
@@ -447,7 +450,7 @@ namespace UrbanEcho.Sim
         {
             if (graph == null) return;
 
-            var pathfinder = new AStarPathfinder(graph, Sim.NodePenalties);
+            var pathfinder = new AStarPathfinder(graph, Sim.NodePenalties, IsTruck);
             var newPathEdges = pathfinder.FindPathEdges(currentRoadEdge.From, goalNodeId);
 
             if (newPathEdges.Count < 1)
@@ -470,6 +473,35 @@ namespace UrbanEcho.Sim
         public RoadEdge GetRoadEdge()
         {
             return currentRoadEdge;
+        }
+
+        /// <summary>
+        /// If <paramref name="closedEdge"/> appears in the vehicle's remaining route (or is the
+        /// edge currently being traversed), discards the stale path and builds a new one from
+        /// the current destination node, which A* will automatically route around the closed edge.
+        /// </summary>
+        public void RerouteAroundEdge(RoadEdge closedEdge)
+        {
+            if (pathSteps == null) return;
+
+            bool needsReroute = currentRoadEdge.Feature == closedEdge.Feature;
+
+            if (!needsReroute)
+            {
+                for (int i = pathSegmentIndex; i < pathSteps.Count; i++)
+                {
+                    if (pathSteps[i].Edge.Feature == closedEdge.Feature)
+                    {
+                        needsReroute = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!needsReroute) return;
+
+            setNewPath(currentRoadEdge.To);
+            pathSegmentIndex = 0;
         }
 
         public bool IsCollidedVehicleSameEdgeOrIntersection(RoadEdge otherVehicleEdge)
@@ -1126,7 +1158,7 @@ namespace UrbanEcho.Sim
 
         private RoadEdge SetCurrentRoadEdge(RoadEdge updatedRoadEdge, TurnDirection turn = TurnDirection.Straight)
         {
-            float newSpeedLimit = Helper.TryGetFeatureKVPToFloat(updatedRoadEdge.Feature, "SPEED_LIMI", SpeedLimit);
+            float newSpeedLimit = (float)(updatedRoadEdge.Metadata.SpeedLimit * 3.6);
             if (newSpeedLimit < 30.0f)
             {
                 newSpeedLimit = 30.0f;

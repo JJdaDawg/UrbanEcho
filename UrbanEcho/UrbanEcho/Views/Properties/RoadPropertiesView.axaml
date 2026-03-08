@@ -22,7 +22,7 @@
             <StackPanel Margin="0" Spacing="6">
 
                 <TextBlock Text="Road Status" />
-                <StackPanel Orientation="Horizontal" Spacing="4" IsEnabled="{Binding IsEditMode}">
+                <StackPanel Orientation="Horizontal" Spacing="4" IsEnabled="{Binding IsEditing}">
                     <ToggleButton Content="Open" IsChecked="{Binding IsRoadOpen}" />
                     <ToggleButton Content="Closed" IsChecked="{Binding !IsRoadOpen}" />
                 </StackPanel>
@@ -31,16 +31,16 @@
                 <NumericUpDown Value="{Binding SpeedLimit}"
                                Minimum="0"
                                Maximum="130"
-                               IsEnabled="{Binding IsEditMode}" />
+                               IsEnabled="{Binding IsEditing}" />
 
                 <TextBlock Text="Truck Allowance" />
-                <ToggleButton Content="Trucks Allowed" IsEnabled="{Binding IsEditMode}" IsChecked="{Binding TruckAllowance}" />
+                <ToggleButton Content="Trucks Allowed" IsEnabled="{Binding IsEditing}" IsChecked="{Binding TruckAllowance}" />
 
             </StackPanel>
         </Expander>
 
         <!-- Actions -->
-        <Expander Header="Actions" IsExpanded="True" IsVisible="{Binding IsEditMode}">
+        <Expander Header="Actions" IsExpanded="True" IsVisible="{Binding IsEditing}">
             <StackPanel Margin="0" Spacing="2">
                 <Button Content="Spawn Vehicle"
                         Command="{Binding SpawnVehicleCommand}"
@@ -49,7 +49,7 @@
         </Expander>
 
         <!-- Lane Editor -->
-        <Expander Header="Lanes" IsExpanded="True" IsVisible="{Binding IsEditMode}">
+        <Expander Header="Lanes" IsExpanded="True" IsVisible="{Binding IsEditing}">
             <StackPanel Margin="0" Spacing="2">
                 <Button Content="Open Lane Editor"
                         Command="{Binding EditLanesCommand}"

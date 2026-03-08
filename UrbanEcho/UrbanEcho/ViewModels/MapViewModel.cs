@@ -3,6 +3,8 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Mapsui;
 using Mapsui.Layers;
+using Mapsui.Nts;
+using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,7 +38,16 @@ public partial class MapViewModel : ObservableObject
         MyMap.Tapped += OnMapTapped;
         WeakReferenceMessenger.Default.Register<TrackVehicleMessage>(this, (r, m) => _trackedVehicle = m.Vehicle);
         WeakReferenceMessenger.Default.Register<ActiveLayerChangedMessage>(this, (r, m) => _activeLayer = m.ActiveLayer);
-        WeakReferenceMessenger.Default.Register<MapFeatureDeselectedMessage>(this, (r, m) => _trackedVehicle = null);
+        WeakReferenceMessenger.Default.Register<MapFeatureDeselectedMessage>(this, (r, m) =>
+        {
+            _trackedVehicle = null;
+            ProjectLayers.SetRoadSelection(null, MyMap);
+        });
+        WeakReferenceMessenger.Default.Register<MapFeatureSelectedMessage>(this, (r, m) =>
+        {
+            if (m.Type != MapFeatureType.Road)
+                ProjectLayers.SetRoadSelection(null, MyMap);
+        });
         WeakReferenceMessenger.Default.Register<PickDestinationMessage>(this, (r, m) => _pendingDestinationVehicle = m.Vehicle);
 
         var trackingTimer = new Avalonia.Threading.DispatcherTimer
@@ -57,6 +68,13 @@ public partial class MapViewModel : ObservableObject
         }
 
         var layers = new List<ILayer>();
+
+        if (_activeLayer == SelectionLayer.Road)
+        {
+            var worldPos = e.WorldPosition;
+            if (worldPos is not null) HandleRoadClick(worldPos);
+            return;
+        }
 
         if (_activeLayer == SelectionLayer.Intersection && ProjectLayers.IntersectionLayer is not null)
         {
@@ -96,6 +114,40 @@ public partial class MapViewModel : ObservableObject
             return;
         }
         WeakReferenceMessenger.Default.Send(new MapFeatureSelectedMessage(MapFeatureType.Vehicle, vehicle));
+    }
+
+    private const double RoadSelectionThreshold = 200.0;
+
+    private void HandleRoadClick(MPoint worldPos)
+    {
+        var edge = FindNearestEdge(worldPos);
+        if (edge is null)
+        {
+            WeakReferenceMessenger.Default.Send(new MapFeatureDeselectedMessage());
+            return;
+        }
+        WeakReferenceMessenger.Default.Send(new MapFeatureSelectedMessage(MapFeatureType.Road, edge));
+        ProjectLayers.SetRoadSelection(edge.Feature, MyMap);
+    }
+
+    private RoadEdge? FindNearestEdge(MPoint worldPos)
+    {
+        if (Sim.RoadGraph is null) return null;
+
+        var clickPoint = new Point(worldPos.X, worldPos.Y);
+        RoadEdge? best = null;
+        double bestDist = RoadSelectionThreshold;
+
+        foreach (var edge in Sim.RoadGraph.Edges)
+        {
+            if (edge.Feature is GeometryFeature gf && gf.Geometry is LineString ls)
+            {
+                double d = ls.Distance(clickPoint);
+                if (d < bestDist) { bestDist = d; best = edge; }
+            }
+        }
+
+        return best;
     }
 
     partial void OnIsVolumeVisibleChanged(bool value)

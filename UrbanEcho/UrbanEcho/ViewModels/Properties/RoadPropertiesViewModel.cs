@@ -2,12 +2,15 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Mapsui.Nts.Editing;
+using System;
 using UrbanEcho.Messages;
 
 namespace UrbanEcho.ViewModels.Properties;
 
 public partial class RoadPropertiesViewModel : ObservableObject, IPropertiesViewModel
 {
+    private readonly RoadEdge _edge;
+
     public string Title => "Road";
     public string Subtitle => RoadName;
 
@@ -27,8 +30,15 @@ public partial class RoadPropertiesViewModel : ObservableObject, IPropertiesView
     public RelayCommand SpawnVehicleCommand { get; }
     public RelayCommand EditLanesCommand { get; }
 
-    public RoadPropertiesViewModel()
+    public RoadPropertiesViewModel(RoadEdge edge)
     {
+        _edge = edge;
+        RoadName = edge.Metadata.RoadName;
+        Aadt = edge.Metadata.TrafficVolume > 0 ? ((int)edge.Metadata.TrafficVolume).ToString() : "N/A";
+        SpeedLimit = (int)Math.Round(edge.Metadata.SpeedLimit * 3.6);
+        IsRoadOpen = !edge.IsClosed;
+        TruckAllowance = edge.Metadata.TruckAllowance;
+
         WeakReferenceMessenger.Default.Register<EditModeChangedMessage>(this, (r, m) =>
         {
             IsEditMode = m.IsEditMode;
@@ -37,6 +47,28 @@ public partial class RoadPropertiesViewModel : ObservableObject, IPropertiesView
 
         SpawnVehicleCommand = new RelayCommand(SpawnVehicle);
         EditLanesCommand = new RelayCommand(EditLanes);
+    }
+
+    partial void OnIsRoadOpenChanged(bool value)
+    {
+        if (!IsEditing) return;
+
+        if (value)
+            UrbanEcho.Sim.Sim.OpenRoad(_edge);
+        else
+            UrbanEcho.Sim.Sim.CloseRoad(_edge);
+    }
+
+    partial void OnSpeedLimitChanged(int value)
+    {
+        if (!IsEditing) return;
+        UrbanEcho.Sim.Sim.SetSpeedLimit(_edge, value / 3.6);
+    }
+
+    partial void OnTruckAllowanceChanged(bool value)
+    {
+        if (!IsEditing) return;
+        UrbanEcho.Sim.Sim.SetTruckAllowance(_edge, value);
     }
 
     private void SpawnVehicle()

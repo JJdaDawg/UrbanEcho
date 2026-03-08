@@ -61,6 +61,7 @@ namespace UrbanEcho.ViewModels
                 {
                     MapFeatureType.Signal when m.Data is IntersectionUI i => new SignalPropertiesViewModel(i),
                     MapFeatureType.Vehicle when m.Data is Vehicle v => new VehiclePropertiesViewModel(v, _vehicleService),
+                    MapFeatureType.Road when m.Data is RoadEdge edge => new RoadPropertiesViewModel(edge),
                     _ => null
                 };
             });

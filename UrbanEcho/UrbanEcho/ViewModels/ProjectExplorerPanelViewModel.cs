@@ -15,16 +15,19 @@ public partial class ProjectExplorerPanelViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsIntersectionLayerActive))]
     [NotifyPropertyChangedFor(nameof(IsVehicleLayerActive))]
+    [NotifyPropertyChangedFor(nameof(IsRoadLayerActive))]
     private SelectionLayer _activeLayer = SelectionLayer.None;
 
     [ObservableProperty] private bool _hasProject;
 
     public bool IsIntersectionLayerActive => ActiveLayer == SelectionLayer.Intersection;
     public bool IsVehicleLayerActive => ActiveLayer == SelectionLayer.Vehicle;
+    public bool IsRoadLayerActive => ActiveLayer == SelectionLayer.Road;
 
     public RelayCommand ToggleCommand { get; }
     public RelayCommand SelectIntersectionLayerCommand { get; }
     public RelayCommand SelectVehicleLayerCommand { get; }
+    public RelayCommand SelectRoadLayerCommand { get; }
 
     public ProjectExplorerPanelViewModel(IPanelService panelService)
     {
@@ -32,6 +35,7 @@ public partial class ProjectExplorerPanelViewModel : ObservableObject
         ToggleCommand = new RelayCommand(Toggle);
         SelectIntersectionLayerCommand = new RelayCommand(() => ActiveLayer = IsIntersectionLayerActive ? SelectionLayer.None : SelectionLayer.Intersection);
         SelectVehicleLayerCommand = new RelayCommand(() => ActiveLayer = IsVehicleLayerActive ? SelectionLayer.None : SelectionLayer.Vehicle);
+        SelectRoadLayerCommand = new RelayCommand(() => ActiveLayer = IsRoadLayerActive ? SelectionLayer.None : SelectionLayer.Road);
         WeakReferenceMessenger.Default.Register<ProjectLoadedMessage>(this, (r, m) => HasProject = true);
         WeakReferenceMessenger.Default.Register<ProjectClosedMessage>(this, (r, m) => HasProject = false);
     }

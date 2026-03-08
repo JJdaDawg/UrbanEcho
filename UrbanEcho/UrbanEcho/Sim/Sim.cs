@@ -219,6 +219,92 @@ namespace UrbanEcho.Sim
             return simTime;
         }
 
+        /// <summary>
+        /// Marks every edge that belongs to the same physical road as <paramref name="edge"/> as
+        /// closed (covers both travel directions), then reroutes every vehicle whose remaining
+        /// path includes that road.
+        /// </summary>
+        public static void CloseRoad(RoadEdge edge)
+        {
+            if (RoadGraph is null) return;
+
+            foreach (var e in RoadGraph.Edges)
+            {
+                if (e.Feature == edge.Feature)
+                    e.Close();
+            }
+
+            lock (LockChangeVehicleFeatureList)
+            {
+                foreach (Vehicle vehicle in Vehicles)
+                    vehicle.RerouteAroundEdge(edge);
+            }
+        }
+
+        /// <summary>
+        /// Reopens every edge that belongs to the same physical road as <paramref name="edge"/>
+        /// so A* can route through it again.
+        /// </summary>
+        public static void OpenRoad(RoadEdge edge)
+        {
+            if (RoadGraph is null) return;
+
+            foreach (var e in RoadGraph.Edges)
+            {
+                if (e.Feature == edge.Feature)
+                    e.Open();
+            }
+        }
+
+        /// <summary>
+        /// Updates truck allowance on every edge sharing <paramref name="edge"/>'s feature and,
+        /// when restricting trucks, reroutes any truck whose remaining path uses that road.
+        /// </summary>
+        public static void SetTruckAllowance(RoadEdge edge, bool allow)
+        {
+            if (RoadGraph is null) return;
+
+            foreach (var e in RoadGraph.Edges)
+            {
+                if (e.Feature == edge.Feature)
+                    e.Metadata.TruckAllowance = allow;
+            }
+
+            if (!allow)
+            {
+                lock (LockChangeVehicleFeatureList)
+                {
+                    foreach (Vehicle vehicle in Vehicles)
+                    {
+                        if (vehicle.IsTruck)
+                            vehicle.RerouteAroundEdge(edge);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Updates the speed limit on every edge sharing <paramref name="edge"/>'s feature and
+        /// immediately applies the new limit to any vehicle currently travelling on that road.
+        /// </summary>
+        public static void SetSpeedLimit(RoadEdge edge, double speedMs)
+        {
+            edge.Metadata.SpeedLimit = speedMs;
+
+            float speedKmh = (float)(speedMs * 3.6);
+            if (speedKmh < 30.0f) speedKmh = 30.0f;
+            float corrected = Helper.DoMapCorrection(speedKmh);
+
+            lock (LockChangeVehicleFeatureList)
+            {
+                foreach (Vehicle vehicle in Vehicles)
+                {
+                    if (vehicle.GetRoadEdge().Feature == edge.Feature)
+                        vehicle.SpeedLimit = corrected;
+                }
+            }
+        }
+
         private static void simulationLoop()
         {
             float stepSize = baseStepSize * SimSpeed;

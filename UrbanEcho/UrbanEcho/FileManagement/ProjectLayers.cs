@@ -45,6 +45,7 @@ namespace UrbanEcho.FileManagement
         private static RasterizingLayer? roadLayerSecondPass;
         private static Layer? intersectionLayer;
         private static MemoryLayer? vehicleLayer;
+        private static MemoryLayer? roadSelectionLayer;
 
         private static RasterizingLayer? debugLayer;
 
@@ -200,6 +201,7 @@ namespace UrbanEcho.FileManagement
             roadLayerSecondPass = null;
             intersectionLayer = null;
             vehicleLayer = null;
+            roadSelectionLayer = null;
             debugLayer = null;
             censusOverlayLayer = null;
             World.Clear();
@@ -382,6 +384,35 @@ namespace UrbanEcho.FileManagement
         public static bool IsIntersectionsCreated()
         {
             return intersectionLoaded;
+        }
+
+        private static MemoryLayer CreateRoadSelectionLayer()
+        {
+            return new MemoryLayer("Road Selection")
+            {
+                Style = new VectorStyle
+                {
+                    Line = new Pen
+                    {
+                        Color = Color.FromArgb(220, 0, 200, 255),
+                        Width = 6,
+                        PenStrokeCap = PenStrokeCap.Round,
+                        StrokeJoin = StrokeJoin.Round
+                    }
+                },
+                Features = new List<IFeature>()
+            };
+        }
+
+        public static void SetRoadSelection(IFeature? feature, Map? map)
+        {
+            if (roadSelectionLayer == null) return;
+
+            roadSelectionLayer.Features = feature is not null
+                ? new List<IFeature> { feature }
+                : new List<IFeature>();
+
+            map?.Refresh();
         }
 
         //https://github.com/BruTile/BruTile
@@ -1011,6 +1042,10 @@ namespace UrbanEcho.FileManagement
             {
                 myMap?.Layers.Add(roadLayerSecondPass);
             }
+
+            if (roadSelectionLayer == null)
+                roadSelectionLayer = CreateRoadSelectionLayer();
+            myMap?.Layers.Add(roadSelectionLayer);
             if (IsCensusOverlayVisible && censusOverlayLayer != null)
             {
                 myMap?.Layers.Add(censusOverlayLayer);

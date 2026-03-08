@@ -18,6 +18,11 @@ public sealed class RoadEdge
 
     public bool IsFromStartOfLineString { get; }
 
+    public bool IsClosed { get; private set; }
+
+    public void Close() => IsClosed = true;
+    public void Open()  => IsClosed = false;
+
     private RecordedStats stats = new RecordedStats();
 
     public RoadEdge(int from, int to, double length, RoadMetadata metadata, IFeature feature, bool isFromStartOfLineString)
