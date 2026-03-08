@@ -25,6 +25,7 @@ public partial class MapViewModel : ObservableObject
     private Vehicle? _pendingDestinationVehicle;
 
     [ObservableProperty] private Map myMap = new Map();
+    [ObservableProperty] private bool isVolumeVisible = true;
     [ObservableProperty] private bool isRasterVisible = true;
     [ObservableProperty] private bool isIntersectionsVisible = true;
     [ObservableProperty] private bool isCensusOverlayVisible = false;
@@ -97,6 +98,13 @@ public partial class MapViewModel : ObservableObject
         WeakReferenceMessenger.Default.Send(new MapFeatureSelectedMessage(MapFeatureType.Vehicle, vehicle));
     }
 
+    partial void OnIsVolumeVisibleChanged(bool value)
+    {
+        ProjectLayers.IsVolumeVisible = value;
+        MyMap.Refresh();
+        WeakReferenceMessenger.Default.Send(new LogMessage("Volume visibility toggled", LogSource.Map));
+    }
+
     private void HandleDestinationPick(Vehicle vehicle, MPoint worldPos)
     {
         _pendingDestinationVehicle = null;
@@ -152,6 +160,8 @@ public partial class MapViewModel : ObservableObject
     }
 
     [RelayCommand] private void ToggleRaster() => IsRasterVisible = !IsRasterVisible;
+
+    [RelayCommand] private void ToggleVolume() => IsVolumeVisible = !IsVolumeVisible;
 
     [RelayCommand] private void ToggleIntersectionDetails() => IsIntersectionsVisible = !IsIntersectionsVisible;
 

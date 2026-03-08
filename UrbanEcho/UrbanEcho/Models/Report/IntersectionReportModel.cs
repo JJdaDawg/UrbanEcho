@@ -16,9 +16,9 @@ namespace UrbanEcho.Models.Report
         public double AverageWaitTime { get; private set; }
         public double TotalWaitTime { get; private set; }
 
-        public int NumberOfVehiclesEntered { get; private set; }
+        public int VehicleCount { get; private set; }
 
-        public IntersectionReportModel(string intersectionName, IntersectionStats stats)
+        public IntersectionReportModel(string intersectionName, RecordedStats stats)
         {
             IntersectionName = intersectionName;
             AverageTimeSpent = stats.AverageTimeSpent;
@@ -26,7 +26,7 @@ namespace UrbanEcho.Models.Report
             AverageSpeed = stats.AverageSpeed;
             AverageWaitTime = stats.AverageWaitTime;
             TotalWaitTime = stats.TotalWaitTime;
-            NumberOfVehiclesEntered = stats.NumberOfVehiclesEntered;
+            VehicleCount = stats.VehicleCount;
         }
     }
 }

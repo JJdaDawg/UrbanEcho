@@ -48,6 +48,8 @@ namespace UrbanEcho.Sim
 
         public static List<RoadIntersection> RoadIntersections = new List<RoadIntersection>();
 
+        public static Dictionary<string, IFeature> RoadFeatures = new Dictionary<string, IFeature>();
+
         public static RoadGraph? RoadGraph;
 
         public static CensusSpawnManager? CensusSpawn;
@@ -84,6 +86,10 @@ namespace UrbanEcho.Sim
 
         public static bool RunSimulation = false;
         public static bool Paused = false;
+
+        private const int startingVolume = 100;
+        public static int RoadWithMaxVolume = startingVolume; //Set to 100 at start used for displaying traffic volumes
+                                                              //And is reset at start of simulation
 
         public static int SimSpeed
         {
@@ -456,8 +462,8 @@ namespace UrbanEcho.Sim
             int highestIncomingVehiclesCount = 0;
             foreach (RoadIntersection roadIntersection in RoadIntersections)
             {
-                IntersectionStats stats = roadIntersection.GetStats();
-                int incoming = stats.NumberOfVehiclesEntered;
+                RecordedStats stats = roadIntersection.GetStats();
+                int incoming = stats.VehicleCount;
                 if (incoming > highestIncomingVehiclesCount)
                 {
                     highestIncomingVehiclesCount = incoming;
@@ -473,6 +479,8 @@ namespace UrbanEcho.Sim
             {
                 Report.Export(RoadIntersections, RoadGraph);
             }
+
+            RoadWithMaxVolume = startingVolume;
             //Clear stats at end of simulation
             foreach (RoadIntersection roadIntersection in RoadIntersections)
             {
@@ -509,6 +517,7 @@ namespace UrbanEcho.Sim
                 roadIntersection.Dispose();//need to dispose to clean up event subscriptions
             }
             RoadIntersections = new List<RoadIntersection>();
+            RoadFeatures = new Dictionary<string, IFeature>();
             RoadGraph = null;
             CensusSpawn = null;
             simTime = 0;

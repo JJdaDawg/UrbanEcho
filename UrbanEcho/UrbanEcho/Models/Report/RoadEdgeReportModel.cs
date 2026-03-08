@@ -18,9 +18,9 @@ namespace UrbanEcho.Models.Report
         public double AverageWaitTime { get; private set; }
         public double TotalWaitTime { get; private set; }
 
-        public int NumberOfVehiclesExited { get; private set; }
+        public int VehicleCount { get; private set; }
 
-        public RoadEdgeReportModel(string roadName, string fromName, string toName, RoadEdgeStats stats)
+        public RoadEdgeReportModel(string roadName, string fromName, string toName, RecordedStats stats)
         {
             RoadName = roadName;
             FromRoadName = fromName;
@@ -30,7 +30,7 @@ namespace UrbanEcho.Models.Report
             AverageSpeed = stats.AverageSpeed;
             AverageWaitTime = stats.AverageWaitTime;
             TotalWaitTime = stats.TotalWaitTime;
-            NumberOfVehiclesExited = stats.NumberOfVehiclesExited;
+            VehicleCount = stats.VehicleCount;
         }
     }
 }

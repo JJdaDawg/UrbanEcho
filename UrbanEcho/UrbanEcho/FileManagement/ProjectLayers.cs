@@ -63,7 +63,7 @@ namespace UrbanEcho.FileManagement
         private static bool isZoomedToLayer = false;
 
         private static ProjectFile? currentProjectFile = new ProjectFile();
-
+        public static bool IsVolumeVisible { get; set; } = true;
         public static bool IsRasterVisible { get; set; } = true;
         public static bool IsIntersectionsVisible { get; set; } = true;
         public static bool IsCensusOverlayVisible { get; set; } = false;
@@ -246,12 +246,37 @@ namespace UrbanEcho.FileManagement
                         {
                             ShapeFile roadNetwork = new ShapeFile(currentProjectFile.RoadLayerPath);
                             EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Load Road Shape File"));
-                            Layer roadLayer = CreateRoadLayer(roadNetwork, "Road Outline", true, false);
-                            roadLayerFirstPass = new RasterizingLayer(roadLayer);
-                            roadLayerSecondPass = new RasterizingLayer(CreateRoadLayer(roadNetwork, "Roads", false, false));
+                            if (roadNetwork != null)
+                            {
+                                Layer? roadLayer = CreateRoadLayer(roadNetwork, "Road Outline", true);
+                                if (roadLayer != null)
+                                {
+                                    roadLayerFirstPass = new RasterizingLayer(roadLayer);
+                                    Layer? roadLayer2 = CreateRoadLayer(roadNetwork, "Roads", false);
+                                    if (roadLayer2 != null)
+                                    {
+                                        roadLayerSecondPass = new RasterizingLayer(roadLayer2);
+                                    }
+                                    if (roadLayer.DataSource != null)
+                                    {
+                                        List<IFeature> RoadFeatures = Helpers.Helper.GetFeatures(roadLayer.DataSource);
+                                        Sim.Sim.RoadFeatures = new Dictionary<string, IFeature>();
+                                        foreach (IFeature feature in RoadFeatures)
+                                        {
+                                            string key = Helper.TryGetFeatureKVPToString(feature, "OBJECTID", "");
 
-                            //RoadFeatures = Helpers.Helper.GetFeatures(roadLayer.DataSource);
-                            Sim.Sim.RoadGraph = UrbanTrafficSim.Core.IO.RoadGraphLoader.LoadFromFeatures(Helpers.Helper.GetFeatures(roadLayer.DataSource));
+                                            if (!string.IsNullOrEmpty(key))
+                                            {
+                                                IFeature newFeature = feature.Copy();
+                                                newFeature["VehicleCount"] = 0;
+                                                Sim.Sim.RoadFeatures.TryAdd(key, newFeature);
+                                            }
+                                        }
+
+                                        Sim.Sim.RoadGraph = UrbanTrafficSim.Core.IO.RoadGraphLoader.LoadFromFeatures(Helpers.Helper.GetFeatures(roadLayer.DataSource));
+                                    }
+                                }
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -502,7 +527,7 @@ namespace UrbanEcho.FileManagement
             return true;
         }
 
-        public static Layer? CreateRoadLayer(IProvider source, string name, bool doOutline, bool showAADT)
+        public static Layer? CreateRoadLayer(IProvider source, string name, bool doOutline)
         {
             Layer? layer = null;
             try
@@ -517,7 +542,7 @@ namespace UrbanEcho.FileManagement
                 layer = new Layer(name);
                 layer.DataSource = projectingProvider;
 
-                RoadStyles roadStyle = new RoadStyles(doOutline, showAADT);
+                RoadStyles roadStyle = new RoadStyles(doOutline);
 
                 layer.Style = roadStyle.CreateThemeStyle();
 

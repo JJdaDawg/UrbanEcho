@@ -1,28 +1,24 @@
 ﻿using Avalonia.Controls.Shapes;
 using FluentIcons.Avalonia;
+using Mapsui;
 using Mapsui.Nts;
 using Mapsui.Styles;
 using Mapsui.Styles.Thematics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UrbanEcho.FileManagement;
+using UrbanEcho.Helpers;
 
 namespace UrbanEcho.Styles
 {
     public class RoadStyles
     {
         private bool useOutline;
-        private bool useAADT;
 
-        public RoadStyles(bool useOutline, bool useAADT)
+        public RoadStyles(bool useOutline)
         {
             this.useOutline = useOutline;
-            this.useAADT = useAADT;
-        }
-
-        public void SetUseAADT(bool useAADT)
-        {
-            this.useAADT = useAADT;
         }
 
         private VectorStyle CreateVectorStyle(GeometryFeature gf)
@@ -77,6 +73,7 @@ namespace UrbanEcho.Styles
                 style.Outline.Width = 0;
             }
 
+            /* old (we used aadt from file before)
             //TODO: make AADT not hardcoded
             if (gf.Fields.Contains("AADT") && useAADT)
             {
@@ -96,6 +93,47 @@ namespace UrbanEcho.Styles
                     style.Line.Color = cb.GetColor(normalizedValue);
                 }
                 else
+                {
+                    style.Line.Color = new Color(148, 148, 148);
+                }
+            }
+            else
+            {
+                style.Line.Color = new Color(148, 148, 148);
+            }*/
+            if (ProjectLayers.IsVolumeVisible && !useOutline)
+            {
+                int vehicleCount = 0;
+                string key = Helper.TryGetFeatureKVPToString(gf, "OBJECTID", "");
+                if (!string.IsNullOrEmpty(key))
+                {
+                    if (Sim.Sim.RoadFeatures.TryGetValue(key, out IFeature? dictionaryFeature))
+                    {
+                        if (dictionaryFeature != null)
+                        {
+                            vehicleCount = Helper.TryGetFeatureKVPToInt(dictionaryFeature, "VehicleCount", 0);
+
+                            if (vehicleCount > 0)
+                            {
+                                ColorBlend cb = ColorBlend.TwoColors(Color.LimeGreen, Color.Red);
+                                double minAADTValue = 0;
+                                double maxAADTValue = Sim.Sim.RoadWithMaxVolume;
+                                double aadtValue = vehicleCount;
+
+                                double normalizedValue = 0;
+                                if (maxAADTValue - minAADTValue > 0)
+                                {
+                                    normalizedValue = (minAADTValue + aadtValue) / (maxAADTValue - minAADTValue);
+                                }
+                                Math.Clamp(normalizedValue, 0.0, 1.0);
+
+                                style.Line.Color = cb.GetColor(normalizedValue);
+                            }
+                        }
+                    }
+                }
+
+                if (vehicleCount == 0)
                 {
                     style.Line.Color = new Color(148, 148, 148);
                 }
