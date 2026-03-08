@@ -35,27 +35,39 @@ namespace UrbanEcho.ViewModels.Properties
         [ObservableProperty]
         private bool _isTracking;
 
+        [ObservableProperty]
+        private bool _isPickingDestination;
+
         public VehiclePropertiesViewModel(Vehicle vehicle, IVehicleService vehicleService)
         {
             _vehicle = vehicle;
             _vehicleService = vehicleService;
             StartStopCommand = new RelayCommand(() => _vehicleService.ToggleStop(_vehicle));
             RespawnCommand = new RelayCommand(() => _vehicleService.Respawn(_vehicle));
+            DestinationCommand = new RelayCommand(() =>
+            {
+                IsPickingDestination = !IsPickingDestination;
+                if (IsPickingDestination) { _vehicleService.PickDestination(_vehicle); }
+                else { _vehicleService.CancelPickDestination(); }
+            });
+
             TrackCommand = new RelayCommand(() =>
             {
                 IsTracking = !IsTracking;
                 if (IsTracking) { _vehicleService.TrackVehicle(_vehicle); }
                 else { _vehicleService.StopTracking(); }
             });
+
+            WeakReferenceMessenger.Default.Register<DestinationPickedMessage>(this, (r, m) => IsPickingDestination = false);
         }
 
         // ACTION Commands
         public RelayCommand PathCommand { get; } = new RelayCommand(() => { /* todo */ });
         public RelayCommand TrendCommand { get; } = new RelayCommand(() => { /* todo */ });
         public RelayCommand TrackCommand { get; }
-        
+
         // EDIT Commands
-        public RelayCommand DestinationCommand { get; } = new RelayCommand(() => { /* todo */ });
+        public RelayCommand DestinationCommand { get; }
         public RelayCommand StartStopCommand { get; }
         public RelayCommand RespawnCommand { get; }
 
