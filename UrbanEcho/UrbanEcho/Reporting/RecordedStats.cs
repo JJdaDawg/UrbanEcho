@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace UrbanEcho.Reporting
 {
-    public class RoadEdgeStats
+    public class RecordedStats
     {
         public double AverageTimeSpent { get; private set; }
         public double TotalTimeSpent { get; private set; }
@@ -16,24 +16,24 @@ namespace UrbanEcho.Reporting
         public double AverageWaitTime { get; private set; }
         public double TotalWaitTime { get; private set; }
 
-        public int NumberOfVehiclesExited { get; private set; }
+        public int VehicleCount { get; private set; }
 
-        public RoadEdgeStats()
+        public RecordedStats()
         {
         }
 
-        public void RecordVehicleExited(Stats incomingStats)
+        public void RecordVehicle(Stats incomingStats)
         {
-            NumberOfVehiclesExited++;
+            VehicleCount++;
 
             TotalTimeSpent += incomingStats.ElaspedTime;
-            AverageTimeSpent = TotalTimeSpent / NumberOfVehiclesExited;
+            AverageTimeSpent = TotalTimeSpent / VehicleCount;
 
             totalSpeed += incomingStats.AverageSpeed;
-            AverageSpeed = totalSpeed / NumberOfVehiclesExited;
+            AverageSpeed = totalSpeed / VehicleCount;
 
             TotalWaitTime += incomingStats.WaitTime;
-            AverageWaitTime = TotalWaitTime / NumberOfVehiclesExited;
+            AverageWaitTime = TotalWaitTime / VehicleCount;
         }
 
         public void Reset()
@@ -44,7 +44,7 @@ namespace UrbanEcho.Reporting
             totalSpeed = 0;//Not useful for anywhere else just for calculating average speed
             AverageWaitTime = 0;
             TotalWaitTime = 0;
-            NumberOfVehiclesExited = 0;
+            VehicleCount = 0;
         }
     }
 }

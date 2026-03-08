@@ -82,7 +82,11 @@
                 </MenuItem>
 
                 <MenuItem Header="View">
-                    <MenuItem Header="Traffic Volume">
+                    <MenuItem Header="Traffic Volume"
+                              IsChecked="{Binding Map.IsVolumeVisible}"
+                              ToggleType="CheckBox"
+                              Command="{Binding Map.ToggleVolumeCommand}">
+                                
                         <MenuItem.Icon>
 							<icon:SymbolIcon Symbol="DataBarVertical"/>
                         </MenuItem.Icon>

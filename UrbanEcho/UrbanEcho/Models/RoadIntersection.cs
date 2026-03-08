@@ -48,7 +48,7 @@ namespace UrbanEcho.Models
         private bool didSetBlockedForAllRed = false;
         private bool firstCycleInitialized = false;
 
-        private IntersectionStats stats = new IntersectionStats();
+        private RecordedStats stats = new RecordedStats();
 
         public enum SignalType
         {
@@ -632,14 +632,14 @@ namespace UrbanEcho.Models
             }
         }
 
-        public IntersectionStats GetStats()
+        public RecordedStats GetStats()
         {
             return this.stats;
         }
 
         private void UpdateStats(Stats incomingStats)
         {
-            stats.RecordVehicleEntered(incomingStats);
+            stats.RecordVehicle(incomingStats);
         }
 
         public void ResetStats()
