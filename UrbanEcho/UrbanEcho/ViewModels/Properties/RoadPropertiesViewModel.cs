@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Mapsui.Nts.Editing;
 using System;
+using UrbanEcho.Events.Sim;
 using UrbanEcho.Messages;
 
 namespace UrbanEcho.ViewModels.Properties;
@@ -54,21 +55,21 @@ public partial class RoadPropertiesViewModel : ObservableObject, IPropertiesView
         if (!IsEditing) return;
 
         if (value)
-            UrbanEcho.Sim.Sim.OpenRoad(_edge);
+            EventQueueForSim.Instance.Add(new OpenRoadEvent(_edge));
         else
-            UrbanEcho.Sim.Sim.CloseRoad(_edge);
+            EventQueueForSim.Instance.Add(new CloseRoadEvent(_edge));
     }
 
     partial void OnSpeedLimitChanged(int value)
     {
         if (!IsEditing) return;
-        UrbanEcho.Sim.Sim.SetSpeedLimit(_edge, value / 3.6);
+        EventQueueForSim.Instance.Add(new SetSpeedLimitEvent(_edge, value / 3.6));
     }
 
     partial void OnTruckAllowanceChanged(bool value)
     {
         if (!IsEditing) return;
-        UrbanEcho.Sim.Sim.SetTruckAllowance(_edge, value);
+        EventQueueForSim.Instance.Add(new SetTruckAllowanceEvent(_edge, value));
     }
 
     private void SpawnVehicle()

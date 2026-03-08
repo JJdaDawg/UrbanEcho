@@ -8,6 +8,7 @@ using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UrbanEcho.Events.Sim;
 using UrbanEcho.Events.UI;
 using UrbanEcho.FileManagement;
 using UrbanEcho.Messages;
@@ -163,6 +164,7 @@ public partial class MapViewModel : ObservableObject
         _pendingDestinationVehicle = null;
         int? nearestNode = FindNearestNode(worldPos);
         if (nearestNode is null) return;
+        EventQueueForSim.Instance.Add(new SetDestinationEvent(vehicle, nearestNode));
         vehicle.SetDestination(nearestNode.Value);
         WeakReferenceMessenger.Default.Send(new DestinationPickedMessage());
         WeakReferenceMessenger.Default.Send(new LogMessage($"Destination set for vehicle {vehicle.VehicleUI.Id}", LogSource.Map));
