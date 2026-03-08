@@ -469,7 +469,10 @@ namespace UrbanEcho.Sim
                 //Just to test
                 EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Intersection {highestIncomingVehiclesIntersection.Name} had the most vehicles entered with {highestIncomingVehiclesCount} vehicles entered"));
             }
-
+            if (RoadGraph != null)
+            {
+                Report.Export(RoadIntersections, RoadGraph);
+            }
             //Clear stats at end of simulation
             foreach (RoadIntersection roadIntersection in RoadIntersections)
             {

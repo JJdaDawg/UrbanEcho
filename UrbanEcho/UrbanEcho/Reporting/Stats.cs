@@ -11,6 +11,7 @@ namespace UrbanEcho.Reporting
         public double ElaspedTime;
         public double WaitTime;
         public double AverageSpeed;
+        public double AllSpeedValues;
 
         public Stats()
         {

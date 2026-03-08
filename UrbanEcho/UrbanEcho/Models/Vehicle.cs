@@ -1222,7 +1222,7 @@ namespace UrbanEcho.Sim
                         stats.WaitTime += timeDelta;
                     }
 
-                    stats.AverageSpeed += Kmh * timeDelta;
+                    stats.AllSpeedValues += Kmh * timeDelta;
                 }
             }
         }
@@ -1233,6 +1233,7 @@ namespace UrbanEcho.Sim
             {
                 if (stats.ElaspedTime > 0)
                 {
+                    stats.AverageSpeed = stats.AllSpeedValues / stats.ElaspedTime;
                     currentRoadEdge.VehicleLeaving(stats);
                 }
             }
