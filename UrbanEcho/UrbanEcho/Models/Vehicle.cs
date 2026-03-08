@@ -122,6 +122,7 @@ namespace UrbanEcho.Sim
         private float currentEdgeStartTime = 0;
         private double lastUpdateSimTime = 0;
         private Stats stats = new Stats();
+        private double allSpeedValues = 0;
 
         public float Kmh
         {
@@ -1222,7 +1223,7 @@ namespace UrbanEcho.Sim
                         stats.WaitTime += timeDelta;
                     }
 
-                    stats.AllSpeedValues += Kmh * timeDelta;
+                    allSpeedValues += Kmh * timeDelta;
                 }
             }
         }
@@ -1231,15 +1232,15 @@ namespace UrbanEcho.Sim
         {
             if (currentRoadEdge != null && currentEdgeStartTime > 0)
             {
-                if (stats.ElaspedTime > 0)
+                if (stats.ElaspedTime >= 1)//Do not include very short times
                 {
-                    stats.AverageSpeed = stats.AllSpeedValues / stats.ElaspedTime;
+                    stats.AverageSpeed = allSpeedValues / stats.ElaspedTime;
                     currentRoadEdge.VehicleLeaving(stats);
                 }
             }
 
             currentEdgeStartTime = Sim.GetSimTime();
-
+            allSpeedValues = 0;
             stats.Reset();
         }
     }

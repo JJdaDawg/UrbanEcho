@@ -1,5 +1,7 @@
 ﻿using Mapsui;
+using UrbanEcho.Helpers;
 using UrbanEcho.Reporting;
+using UrbanEcho.Sim;
 
 public delegate void RoadEdgeStatsUpDateEvent(Stats stats);//called by Vehicle to update how long they spent on roadEdge
 
@@ -16,7 +18,7 @@ public sealed class RoadEdge
 
     public bool IsFromStartOfLineString { get; }
 
-    private RoadEdgeStats stats = new RoadEdgeStats();
+    private RecordedStats stats = new RecordedStats();
 
     public RoadEdge(int from, int to, double length, RoadMetadata metadata, IFeature feature, bool isFromStartOfLineString)
     {
@@ -37,10 +39,33 @@ public sealed class RoadEdge
 
     public void UpdateEdgeStats(Stats incomingStats)
     {
-        stats.RecordVehicleExited(incomingStats);
+        stats.RecordVehicle(incomingStats);
+        IncrementFeatureVolume();
     }
 
-    public RoadEdgeStats GetStats()
+    public void IncrementFeatureVolume()
+    {
+        string key = Helper.TryGetFeatureKVPToString(Feature, "OBJECTID", "");
+        if (!string.IsNullOrEmpty(key))
+        {
+            if (Sim.RoadFeatures.TryGetValue(key, out IFeature? dictionaryFeature))
+            {
+                if (dictionaryFeature != null)
+                {
+                    int vehicleCount = Helper.TryGetFeatureKVPToInt(dictionaryFeature, "VehicleCount", 0) + 1;
+
+                    dictionaryFeature["VehicleCount"] = vehicleCount;
+
+                    if (vehicleCount > Sim.RoadWithMaxVolume)
+                    {
+                        Sim.RoadWithMaxVolume = vehicleCount;
+                    }
+                }
+            }
+        }
+    }
+
+    public RecordedStats GetStats()
     {
         return stats;
     }
