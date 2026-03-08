@@ -89,7 +89,11 @@ namespace UrbanEcho.Sim
 
         private const int startingVolume = 100;
         public static int RoadWithMaxVolume = startingVolume; //Set to 100 at start used for displaying traffic volumes
-                                                              //And is reset at start of simulation
+
+        //And is reset at start of simulation
+        public static float MinForShowSpeed { get; private set; } = 20.0f;
+
+        public static float MaxForShowSpeed { get; private set; } = 90.0f;
 
         public static int SimSpeed
         {

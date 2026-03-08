@@ -46,6 +46,7 @@ public sealed class RoadEdge
     {
         stats.RecordVehicle(incomingStats);
         IncrementFeatureVolume();
+        UpdateAverageSpeed(incomingStats.AverageSpeed);
     }
 
     public void IncrementFeatureVolume()
@@ -64,6 +65,53 @@ public sealed class RoadEdge
                     if (vehicleCount > Sim.RoadWithMaxVolume)
                     {
                         Sim.RoadWithMaxVolume = vehicleCount;
+                    }
+                }
+            }
+        }
+    }
+
+    public void UpdateAverageSpeed(double incomingSpeed)
+    {
+        string key = Helper.TryGetFeatureKVPToString(Feature, "OBJECTID", "");
+        if (!string.IsNullOrEmpty(key))
+        {
+            if (Sim.RoadFeatures.TryGetValue(key, out IFeature? dictionaryFeature))
+            {
+                if (dictionaryFeature != null)
+                {
+                    if (Metadata.OneWay == true)
+                    {
+                        dictionaryFeature["Speed"] = incomingSpeed;
+                    }
+                    else
+                    {
+                        if (Metadata.FromToFlowDirection == true)
+                        {
+                            //Get the speed the other edge contributed
+                            double toFromSpeed = Helper.TryGetFeatureKVPToInt(dictionaryFeature, "ToFromSpeed", 0);
+                            if (toFromSpeed > 0)
+                            {
+                                dictionaryFeature["Speed"] = toFromSpeed / 2.0f + incomingSpeed / 2.0f;
+                            }
+                            else
+                            {
+                                dictionaryFeature["Speed"] = incomingSpeed;
+                            }
+                        }
+                        else
+                        {
+                            double fromToSpeed = Helper.TryGetFeatureKVPToInt(dictionaryFeature, "FromToSpeed", 0);
+
+                            if (fromToSpeed > 0)
+                            {
+                                dictionaryFeature["Speed"] = fromToSpeed / 2.0f + incomingSpeed / 2.0f;
+                            }
+                            else
+                            {
+                                dictionaryFeature["Speed"] = incomingSpeed;
+                            }
+                        }
                     }
                 }
             }

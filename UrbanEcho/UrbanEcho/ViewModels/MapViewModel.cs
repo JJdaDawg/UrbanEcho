@@ -28,6 +28,7 @@ public partial class MapViewModel : ObservableObject
 
     [ObservableProperty] private Map myMap = new Map();
     [ObservableProperty] private bool isVolumeVisible = true;
+    [ObservableProperty] private bool isTrafficSpeedVisible = true;
     [ObservableProperty] private bool isRasterVisible = true;
     [ObservableProperty] private bool isIntersectionsVisible = true;
     [ObservableProperty] private bool isCensusOverlayVisible = false;
@@ -182,6 +183,13 @@ public partial class MapViewModel : ObservableObject
         return bestNode;
     }
 
+    partial void OnIsTrafficSpeedVisibleChanged(bool value)
+    {
+        ProjectLayers.IsTrafficSpeedVisible = value;
+        MyMap.Refresh();
+        WeakReferenceMessenger.Default.Send(new LogMessage("Traffic speed visibility toggled", LogSource.Map));
+    }
+
     partial void OnIsRasterVisibleChanged(bool value)
     {
         ProjectLayers.IsRasterVisible = value;
@@ -214,6 +222,8 @@ public partial class MapViewModel : ObservableObject
     [RelayCommand] private void ToggleRaster() => IsRasterVisible = !IsRasterVisible;
 
     [RelayCommand] private void ToggleVolume() => IsVolumeVisible = !IsVolumeVisible;
+
+    [RelayCommand] private void ToggleTrafficSpeed() => IsTrafficSpeedVisible = !IsTrafficSpeedVisible;
 
     [RelayCommand] private void ToggleIntersectionDetails() => IsIntersectionsVisible = !IsIntersectionsVisible;
 

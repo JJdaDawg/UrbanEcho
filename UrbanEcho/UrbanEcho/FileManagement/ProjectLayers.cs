@@ -65,6 +65,7 @@ namespace UrbanEcho.FileManagement
 
         private static ProjectFile? currentProjectFile = new ProjectFile();
         public static bool IsVolumeVisible { get; set; } = true;
+        public static bool IsTrafficSpeedVisible { get; set; } = true;
         public static bool IsRasterVisible { get; set; } = true;
         public static bool IsIntersectionsVisible { get; set; } = true;
         public static bool IsCensusOverlayVisible { get; set; } = false;
@@ -271,6 +272,9 @@ namespace UrbanEcho.FileManagement
                                             {
                                                 IFeature newFeature = feature.Copy();
                                                 newFeature["VehicleCount"] = 0;
+                                                newFeature["FromToSpeed"] = 0.0;
+                                                newFeature["ToFromSpeed"] = 0.0;
+                                                newFeature["Speed"] = 0.0;
                                                 Sim.Sim.RoadFeatures.TryAdd(key, newFeature);
                                             }
                                         }
