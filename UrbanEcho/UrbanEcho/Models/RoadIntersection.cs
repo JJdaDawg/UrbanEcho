@@ -204,6 +204,27 @@ namespace UrbanEcho.Models
                                 firstPairedEdges.Add(edgeTrafficRule2);
                             }
                         }
+                        else //Try another compare that is not exactly same name
+                        {
+                            if (roadName1 != null && roadName2 != null)
+                            {
+                                if (roadName1.Length > 4 && roadName2.Length > 4)
+                                {
+                                    //Do just a short name compare
+                                    if (roadName1.Substring(0, 4) == roadName2.Substring(0, 4))
+                                    {
+                                        if (!firstPairedEdges.Contains(edgeTrafficRule1))
+                                        {
+                                            firstPairedEdges.Add(edgeTrafficRule1);
+                                        }
+                                        if (!firstPairedEdges.Contains(edgeTrafficRule2))
+                                        {
+                                            firstPairedEdges.Add(edgeTrafficRule2);
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 //no pairs found try matching by using closest aadt values

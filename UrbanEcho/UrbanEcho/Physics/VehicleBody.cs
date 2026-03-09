@@ -7,6 +7,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using UrbanEcho.Events.UI;
 using UrbanEcho.Helpers;
 using UrbanEcho.Models;
 using UrbanEcho.Sim;
@@ -25,6 +26,7 @@ namespace UrbanEcho.Physics
         private nint intPtr;
 
         private Vector2[] vertices;
+        private bool bodyCreated;
 
         public VehicleBody(Vehicle parent, FRect rect)
         {
@@ -38,6 +40,7 @@ namespace UrbanEcho.Physics
 
             bodyDef.angularDamping = 0.01f;
             BodyId = b2CreateBody(World.WorldId, bodyDef);
+            bodyCreated = true;
             b2ShapeDef shapeDef = b2DefaultShapeDef();
             b2Polygon polygon = Helper.CreatePolygon([new(-rect.Width / 2, -rect.Height / 2), new(-rect.Width / 2, rect.Height / 2), new(rect.Width / 2, rect.Height / 2), new(rect.Width / 2, -rect.Height / 2)]);
             vertices = new Vector2[polygon.count];
@@ -61,11 +64,23 @@ namespace UrbanEcho.Physics
 
         public void Dispose()
         {
-            if (intPtr != nint.Zero)
+            try
             {
-                NativeHandle.Free(intPtr);
+                if (intPtr != nint.Zero)
+                {
+                    NativeHandle.Free(intPtr);
+                }
+                if (bodyCreated)
+                {
+                    B2Api.b2DestroyBody(BodyId);
+                    bodyCreated = false;
+                }
             }
-            B2Api.b2DestroyBody(BodyId);
+            catch (Exception e)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(),
+               $"Failed to destroy vehicle body: {BodyId.ToString()}"));
+            }
         }
     }
 }
