@@ -139,6 +139,19 @@ namespace UrbanEcho.FileManagement
             }
         }
 
+        public static MRect? TryGetBackgroundExtent()
+        {
+            MRect? returnValue = null;
+            if (backgroundLoaded)
+            {
+                if (backgroundMBTile != null)
+                {
+                    returnValue = backgroundMBTile.Extent;
+                }
+            }
+            return returnValue;
+        }
+
         public static void LoadRoadFile(string path)
         {
             if (currentProjectFile != null)
@@ -331,9 +344,9 @@ namespace UrbanEcho.FileManagement
 
                 if (vehicleRequiresLoading && intersectionLoaded && roadLoaded)
                 {
-                    MemoryLayer tempDebugLayer = CreateDebugLayer();//use this layer for testing
-                    tempDebugLayer.Features = DebugLayerFeatures;
-                    debugLayer = new RasterizingLayer(tempDebugLayer);
+                    //MemoryLayer tempDebugLayer = CreateDebugLayer();//use this layer for testing
+                    //tempDebugLayer.Features = DebugLayerFeatures;
+                    //debugLayer = new RasterizingLayer(tempDebugLayer);
                     ////TODO: if we are going to load new road network we should probably destroy box
                     ///2d world and dispose any handles created in the
                     ///IntersectionBody file. Then create a new world and make new shapes again
@@ -1067,11 +1080,11 @@ namespace UrbanEcho.FileManagement
             {
                 myMap?.Layers.Add(vehicleLayer);
             }
-
+            /*
             if (debugLayer != null)
             {
                 myMap?.Layers.Add(debugLayer);
-            }
+            }*/
 
             Map? map = Sim.Sim.MyMap;
             if (map != null)

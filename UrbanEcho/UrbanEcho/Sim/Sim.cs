@@ -321,7 +321,7 @@ namespace UrbanEcho.Sim
 
             if (Vehicles.Count == 0)
             {
-                TrySpawnVehicle(startingNumberOfVehicles);
+                TrySpawnVehicle(startingNumberOfVehicles, false);
             }
             else
             {
@@ -443,11 +443,13 @@ namespace UrbanEcho.Sim
         /// one new vehicle using the census-weighted origin node (or a random
         /// node as fallback) and adds it to the simulation.
         /// </summary>
-        private static void TrySpawnVehicle(int numberRequestingToSpawn = 1)
+        private static void TrySpawnVehicle(int numberRequestingToSpawn = 1, bool waitOnSpawnTimer = true)
         {
-            if (!Clock.ShouldSpawn(simTime))
-                return;
-
+            if (waitOnSpawnTimer)
+            {
+                if (!Clock.ShouldSpawn(simTime))
+                    return;
+            }
             if (RoadGraph == null || !World.Created)
                 return;
             if (Vehicles.Count >= maxVehicles)
@@ -583,6 +585,18 @@ namespace UrbanEcho.Sim
                 {
                     roadEdge.ResetStats();
                 }
+            }
+
+            foreach (IFeature feature in RoadFeatures.Values)
+            {
+                feature["VehicleCount"] = 0;
+                feature["FromToSpeed"] = 0.0;
+                feature["ToFromSpeed"] = 0.0;
+                feature["Speed"] = 0.0;
+            }
+            if (MyMap != null)
+            {
+                EventQueueForUI.Instance.Add(new RefreshMapEvent(MyMap));
             }
         }
 

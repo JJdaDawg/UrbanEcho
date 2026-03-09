@@ -98,7 +98,15 @@ namespace UrbanEcho.Reporting
                 //MemoryStream ms = mapRenderer.RenderToBitmapStream(mvm.Map.MyMap);
                 MRect? mRect = map.Extent;
 
-                if (mRect != null)
+                if (mRect == null)
+                {
+                    mRect = ProjectLayers.TryGetBackgroundExtent();//Fallback to reading background extent if failed to get map extents
+                }
+                if (mRect != null && double.IsNaN(mRect.Centroid.X))
+                {
+                    mRect = ProjectLayers.TryGetBackgroundExtent();//Fallback to reading background extent if failed to get map extents
+                }
+                if (mRect != null && !double.IsNaN(mRect.Centroid.X))//Only create the image if we could get the extents
                 {
                     double resolution = Math.Max(mRect.Width / 1024, mRect.Height / 768);
                     Viewport viewport = new Viewport(mRect.Centroid.X, mRect.Centroid.Y, resolution, 0, 1024, 768);
