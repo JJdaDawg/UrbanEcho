@@ -59,7 +59,7 @@ namespace UrbanEcho.Styles
                     Source = sourceString,
                 };
 
-            style.SymbolScale = 1.25f;
+            //style.SymbolScale = 1.25f; commented out use default symbol scale
 
             return style;
         }

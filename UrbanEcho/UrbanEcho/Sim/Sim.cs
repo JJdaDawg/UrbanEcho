@@ -590,22 +590,8 @@ namespace UrbanEcho.Sim
         {
             Paused = false;
             RunSimulation = false;
-            foreach (Vehicle vehicle in Vehicles)
-            {
-                if (vehicle.Body != null)
-                {
-                    vehicle.Body.Dispose(); //need to dispose to clean up IntPtr and remove body from world
-                }
-            }
+            World.Clear(); //Reset world and Destroy all existing bodies
             Vehicles = new List<Vehicle>();
-            foreach (RoadIntersection roadIntersection in RoadIntersections)
-            {
-                if (roadIntersection.Body != null)
-                {
-                    roadIntersection.Body.Dispose();//need to dispose to clean up IntPtr and remove body from world
-                }
-                roadIntersection.Dispose();//need to dispose to clean up event subscriptions
-            }
             RoadIntersections = new List<RoadIntersection>();
             RoadFeatures = new Dictionary<string, IFeature>();
             RoadGraph = null;
