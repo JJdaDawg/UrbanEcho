@@ -44,7 +44,6 @@ namespace UrbanEcho.Reporting
             //https://github.com/ClosedXML/ClosedXML.Report
             try
             {
-                ExportMapImage();
                 //https://closedxml.io/ClosedXML.Report/docs/en/Flat-tables.html
 
                 //https://github.com/ClosedXML/ClosedXML.Report
@@ -116,11 +115,11 @@ namespace UrbanEcho.Reporting
                 }
                 if (mRect != null && !double.IsNaN(mRect.Centroid.X))//Only create the image if we could get the extents
                 {
-                    double resolution = Math.Max(mRect.Width / 1024, mRect.Height / 768);
+                    double resolution = Math.Max((mRect.Width / 1024), (mRect.Height / 768));
                     Viewport viewport = new Viewport(mRect.Centroid.X, mRect.Centroid.Y, resolution, 0, 1024, 768);
                     Mapsui.Rendering.Skia.MapRenderer mapRenderer = new Mapsui.Rendering.Skia.MapRenderer();
 
-                    ms = mapRenderer.RenderToBitmapStream(viewport, map.Layers, map.RenderService, Mapsui.Styles.Color.White);
+                    ms = mapRenderer.RenderToBitmapStream(viewport, map.Layers, map.RenderService, Mapsui.Styles.Color.White, 1);
 
                     try
                     {
