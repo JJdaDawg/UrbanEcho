@@ -7,9 +7,11 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using UrbanEcho.Events.UI;
 using UrbanEcho.Helpers;
 using UrbanEcho.Models;
 using UrbanEcho.Sim;
+using UrbanEcho.ViewModels;
 using static Box2dNet.Interop.B2Api;
 
 namespace UrbanEcho.Physics
@@ -21,7 +23,7 @@ namespace UrbanEcho.Physics
         public b2BodyId BodyId;
 
         //Used for when no connection points line up with intersection
-        private static float defaultSize = 17.0f * Helper.MapCorrection;
+        private static float defaultSize = 30.0f;
 
         public b2Polygon polygon;
 
@@ -30,6 +32,8 @@ namespace UrbanEcho.Physics
         private nint intPtr;
 
         private Vector2[] vertices;
+
+        private bool bodyCreated;
 
         public IntersectionBody(RoadIntersection parent, List<(Vector2 pos, float width)> connectingPoints)
         {
@@ -40,6 +44,7 @@ namespace UrbanEcho.Physics
             bodyDef.type = b2BodyType.b2_staticBody;
 
             BodyId = b2CreateBody(World.WorldId, bodyDef);
+            bodyCreated = true;
             b2ShapeDef shapeDef = b2DefaultShapeDef();
             shapeDef.isSensor = true;
 
@@ -118,11 +123,23 @@ namespace UrbanEcho.Physics
 
         public void Dispose()
         {
-            if (intPtr != nint.Zero)
+            try
             {
-                NativeHandle.Free(intPtr);
+                if (intPtr != nint.Zero)
+                {
+                    NativeHandle.Free(intPtr);
+                }
+                if (bodyCreated)
+                {
+                    B2Api.b2DestroyBody(BodyId);
+                    bodyCreated = false;
+                }
             }
-            B2Api.b2DestroyBody(BodyId);
+            catch (Exception e)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(),
+               $"Failed to destroy intersection body: {BodyId.ToString()}"));
+            }
         }
     }
 }

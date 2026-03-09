@@ -205,8 +205,8 @@ namespace UrbanEcho.FileManagement
             roadSelectionLayer = null;
             debugLayer = null;
             censusOverlayLayer = null;
-            World.Clear();
-            Sim.Sim.Clear();
+
+            Sim.Sim.Clear(); //Clear all the existing lists
             //RoadFeatures = new List<IFeature>();
             VehicleFeatures = new List<IFeature>();
             DebugLayerFeatures = new List<IFeature>();
@@ -331,9 +331,9 @@ namespace UrbanEcho.FileManagement
 
                 if (vehicleRequiresLoading && intersectionLoaded && roadLoaded)
                 {
-                    //MemoryLayer tempDebugLayer = CreateDebugLayer();//use this layer for testing
-                    //tempDebugLayer.Features = DebugLayerFeatures;
-                    //debugLayer = new RasterizingLayer(tempDebugLayer);
+                    MemoryLayer tempDebugLayer = CreateDebugLayer();//use this layer for testing
+                    tempDebugLayer.Features = DebugLayerFeatures;
+                    debugLayer = new RasterizingLayer(tempDebugLayer);
                     ////TODO: if we are going to load new road network we should probably destroy box
                     ///2d world and dispose any handles created in the
                     ///IntersectionBody file. Then create a new world and make new shapes again
@@ -360,6 +360,10 @@ namespace UrbanEcho.FileManagement
                             if (System.IO.File.Exists(defaultCensusPath))
                             {
                                 Sim.Sim.InitializeCensusSpawning(defaultCensusPath);
+                                if (currentProjectFile != null)
+                                {
+                                    currentProjectFile.CensusLayerPath = defaultCensusPath;
+                                }
                             }
                         }
                     }
@@ -1063,11 +1067,11 @@ namespace UrbanEcho.FileManagement
             {
                 myMap?.Layers.Add(vehicleLayer);
             }
-            /*
+
             if (debugLayer != null)
             {
                 myMap?.Layers.Add(debugLayer);
-            }*/
+            }
 
             Map? map = Sim.Sim.MyMap;
             if (map != null)

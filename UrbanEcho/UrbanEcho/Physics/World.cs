@@ -48,6 +48,7 @@ namespace UrbanEcho.Physics
                 {
                     r.Body.Dispose();
                 }
+                r.Dispose();//need to dispose to clean up event subscriptions
             }
 
             foreach (Vehicle v in Sim.Sim.Vehicles)
