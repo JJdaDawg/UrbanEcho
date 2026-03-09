@@ -569,7 +569,20 @@ namespace UrbanEcho.Sim
             }
             if (RoadGraph != null)
             {
-                Report.Export(RoadIntersections, RoadGraph);
+                Map? map = MyMap;
+                if (map != null)
+                {
+                    EventQueueForUI.Instance.Add(new ZoomEvent(map));
+                    Thread.Sleep(1000);//Give time for map to zoom out so export image looks correct
+                    foreach (ILayer layer in map.Layers)
+                    {
+                        while (layer.Busy)
+                        {
+                            Thread.Sleep(100);//Wait until all layers are not busy
+                        }
+                    }
+                    Report.Export(RoadIntersections, RoadGraph);
+                }
             }
 
             RoadWithMaxVolume = startingVolume;

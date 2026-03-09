@@ -947,7 +947,16 @@ namespace UrbanEcho.FileManagement
             }
 
             MRect? extent = map.Extent;
-            if (extent != null)
+
+            if (extent == null)
+            {
+                extent = ProjectLayers.TryGetBackgroundExtent();//Fallback to reading background extent if failed to get map extents
+            }
+            if (extent != null && double.IsNaN(extent.Centroid.X))
+            {
+                extent = ProjectLayers.TryGetBackgroundExtent();//Fallback to reading background extent if failed to get map extents
+            }
+            if (extent != null && !double.IsNaN(extent.Centroid.X))//Only create the image if we could get the extents
             {
                 MRect panBounds = extent;
 
@@ -963,6 +972,9 @@ namespace UrbanEcho.FileManagement
 
                         map.Navigator.CenterOnAndZoomTo(new MPoint(extent.MinX + (extent.MaxX - extent.MinX) / 2,
                             extent.MinY + (extent.MaxY - extent.MinY) / 2), 15.0);
+                        double resolution = Math.Max(extent.Width / 1024, extent.Height / 768);
+                        Viewport viewport = new Viewport(extent.Centroid.X, extent.Centroid.Y, resolution, 0, 1024, 768);
+                        map.RefreshData(viewport);
                     }
                 }
 

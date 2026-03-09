@@ -1,4 +1,5 @@
 ﻿using ClosedXML.Report;
+using ClosedXML.Report.Options;
 using Mapsui;
 using Mapsui.Layers;
 using Mapsui.Rendering;
@@ -60,6 +61,12 @@ namespace UrbanEcho.Reporting
                     template.AddVariable("Project", projectFileName);
                     template.AddVariable("Intersections", intersectionReportModels);
                     template.AddVariable("Roads", roadEdgeReportModels);
+
+                    MemoryStream? ms = ExportMapImage();
+                    if (ms != null)
+                    {
+                        template.AddVariable("MapImage", ms);
+                    }
                     template.Generate();
                 }
                 /*
@@ -83,8 +90,9 @@ namespace UrbanEcho.Reporting
             }
         }
 
-        public static void ExportMapImage()
+        public static MemoryStream? ExportMapImage()
         {
+            MemoryStream? ms = null;
             MainViewModel? mvm = Sim.Sim.GetMainViewModel();
             bool savedFile = false;
             if (mvm != null)
@@ -111,7 +119,8 @@ namespace UrbanEcho.Reporting
                     double resolution = Math.Max(mRect.Width / 1024, mRect.Height / 768);
                     Viewport viewport = new Viewport(mRect.Centroid.X, mRect.Centroid.Y, resolution, 0, 1024, 768);
                     Mapsui.Rendering.Skia.MapRenderer mapRenderer = new Mapsui.Rendering.Skia.MapRenderer();
-                    MemoryStream ms = mapRenderer.RenderToBitmapStream(viewport, map.Layers, map.RenderService, Mapsui.Styles.Color.White);
+
+                    ms = mapRenderer.RenderToBitmapStream(viewport, map.Layers, map.RenderService, Mapsui.Styles.Color.White);
 
                     try
                     {
@@ -133,6 +142,8 @@ namespace UrbanEcho.Reporting
                     EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Image of map for report was not saved"));
                 }
             }
+
+            return ms;
         }
     }
 }
