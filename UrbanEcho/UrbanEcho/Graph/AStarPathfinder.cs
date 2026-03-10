@@ -19,7 +19,7 @@ namespace UrbanEcho.Graph
         private const double StraightThreshold = Math.PI / 9.0; // 20°
 
         /// <summary>Angle (radians) at or above which a direction change is treated as a U-turn and blocked.</summary>
-        private const double UTurnThreshold = Math.PI * 5.0 / 6.0; // 150°
+        private const double UTurnThreshold = 120.0f * (MathF.PI / 180.0f);// Math.PI * 5.0 / 6.0; // 150°
 
         public AStarPathfinder(RoadGraph graph, IReadOnlyDictionary<int, double>? nodePenalties = null, bool isTruck = false)
         {
@@ -54,9 +54,9 @@ namespace UrbanEcho.Graph
             double bcX = c.X - b.X, bcY = c.Y - b.Y;
 
             double cross = abX * bcY - abY * bcX;
-            double dot   = abX * bcX + abY * bcY;
+            double dot = abX * bcX + abY * bcY;
 
-            double angle = Math.Atan2(Math.Abs(cross), dot);
+            double angle = Math.Abs(Math.Atan2(Math.Abs(cross), dot));
 
             if (angle >= UTurnThreshold)
                 return double.PositiveInfinity;
