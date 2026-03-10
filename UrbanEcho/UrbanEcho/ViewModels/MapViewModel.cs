@@ -8,6 +8,7 @@ using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using UrbanEcho.Events.Sim;
 using UrbanEcho.Events.UI;
 using UrbanEcho.FileManagement;
@@ -32,7 +33,11 @@ public partial class MapViewModel : ObservableObject
     [ObservableProperty] private bool isTrafficSpeedVisible = true;
     [ObservableProperty] private bool isRasterVisible = true;
     [ObservableProperty] private bool isIntersectionsVisible = true;
-    [ObservableProperty] private bool isCensusOverlayVisible = false;
+    [ObservableProperty] private bool isCensusOverlayVisible = true;
+    [ObservableProperty] private bool isRoadVisible = true;
+
+    private int giveTimeForZoomingOut;
+    private double currentResolution;
 
     public MapViewModel(IMapFeatureService mapFeatureService)
     {
@@ -199,6 +204,13 @@ public partial class MapViewModel : ObservableObject
         WeakReferenceMessenger.Default.Send(new LogMessage("Raster background image toggled", LogSource.Map));
     }
 
+    partial void OnIsRoadVisibleChanged(bool value)
+    {
+        ProjectLayers.IsRoadVisible = value;
+        ProjectLayers.AddLayers(MyMap);
+        WeakReferenceMessenger.Default.Send(new LogMessage("Road Layer toggled", LogSource.Map));
+    }
+
     partial void OnIsIntersectionsVisibleChanged(bool value)
     {
         ProjectLayers.IsIntersectionsVisible = value;
@@ -217,13 +229,45 @@ public partial class MapViewModel : ObservableObject
     {
         if (_trackedVehicle is null) return;
         var pos = _trackedVehicle.Pos;
-        MyMap.Navigator.CenterOn(new MPoint(pos.X + World.Offset.X, pos.Y + World.Offset.Y), 16 * 100, Mapsui.Animations.Easing.Linear);
+        Vector2 currentPosViewportCenter = UrbanEcho.Helpers.Helper.Convert2Box2dWorldPosition(MyMap.Navigator.Viewport.CenterX, MyMap.Navigator.Viewport.CenterY);
+        if (giveTimeForZoomingOut == 0)//If zero then not in middle of flyover
+        {
+            if (Vector2.Distance(currentPosViewportCenter, pos) >= 2000.0f)//If center of viewport 2km away from tracked vehicle do flyover
+            {
+                currentResolution = MyMap.Navigator.Viewport.Resolution;
+                MyMap.Navigator.ZoomTo(15, 16 * 10 * 10, Mapsui.Animations.Easing.CubicOut);
+                //If vehicle moved to new position from where tracking is do flyover and skip trying to center on vehicle
+                giveTimeForZoomingOut = 1;
+            }
+            else
+            {
+                MyMap.Navigator.CenterOn(new MPoint(pos.X + World.Offset.X, pos.Y + World.Offset.Y), 16 * 10, Mapsui.Animations.Easing.Linear);
+            }
+        }
+        else
+        {//If vehicle moved to new position from where tracking is do flyover and skip trying to center on vehicle
+            giveTimeForZoomingOut++;
+            if (giveTimeForZoomingOut == 5)
+            {
+                MyMap.Navigator.CenterOn(new MPoint(pos.X + World.Offset.X, pos.Y + World.Offset.Y), 16 * 10 * 10, Mapsui.Animations.Easing.CubicInOut);
+            }
+            if (giveTimeForZoomingOut == 15)
+            {
+                MyMap.Navigator.ZoomTo(currentResolution, 16 * 10 * 15, Mapsui.Animations.Easing.CubicOut);
+            }
+            if (giveTimeForZoomingOut >= 30)
+            {
+                giveTimeForZoomingOut = 0;
+            }
+        }
         MyMap.Refresh();//Refresh so map is redrawn else some items don't render in after map moves
     }
 
     [RelayCommand] private void ToggleRaster() => IsRasterVisible = !IsRasterVisible;
 
     [RelayCommand] private void ToggleVolume() => IsVolumeVisible = !IsVolumeVisible;
+
+    [RelayCommand] private void ToggleRoad() => IsRoadVisible = !IsRoadVisible;
 
     [RelayCommand] private void ToggleTrafficSpeed() => IsTrafficSpeedVisible = !IsTrafficSpeedVisible;
 

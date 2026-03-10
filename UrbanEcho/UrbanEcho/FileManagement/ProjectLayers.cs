@@ -43,6 +43,7 @@ namespace UrbanEcho.FileManagement
 
         private static RasterizingLayer? roadLayerFirstPass;
         private static RasterizingLayer? roadLayerSecondPass;
+        private static RasterizingLayer? roadLabelLayer;
         private static Layer? intersectionLayer;
         private static MemoryLayer? vehicleLayer;
         private static MemoryLayer? roadSelectionLayer;
@@ -67,10 +68,10 @@ namespace UrbanEcho.FileManagement
         public static bool IsVolumeVisible { get; set; } = true;
         public static bool IsTrafficSpeedVisible { get; set; } = true;
         public static bool IsRasterVisible { get; set; } = true;
-        public static bool IsIntersectionsVisible { get; set; } = true;
-        public static bool IsCensusOverlayVisible { get; set; } = false;
+        public static bool IsRoadVisible { get; set; } = true;
 
-        //private static List<IFeature> RoadFeatures = new List<IFeature>();
+        public static bool IsIntersectionsVisible { get; set; } = true;
+        public static bool IsCensusOverlayVisible { get; set; } = true;
 
         public static List<IFeature> VehicleFeatures = new List<IFeature>();
 
@@ -213,6 +214,7 @@ namespace UrbanEcho.FileManagement
             backgroundMBTile = null;
             roadLayerFirstPass = null;
             roadLayerSecondPass = null;
+            roadLabelLayer = null;
             intersectionLayer = null;
             vehicleLayer = null;
             roadSelectionLayer = null;
@@ -273,6 +275,12 @@ namespace UrbanEcho.FileManagement
                                     {
                                         roadLayerSecondPass = new RasterizingLayer(roadLayer2);
                                     }
+                                    Layer? setRoadLabelLayer = CreateRoadLabelLayer(roadNetwork, "Road Labels");
+                                    if (setRoadLabelLayer != null)
+                                    {
+                                        roadLabelLayer = new RasterizingLayer(setRoadLabelLayer);
+                                    }
+
                                     if (roadLayer.DataSource != null)
                                     {
                                         List<IFeature> RoadFeatures = Helpers.Helper.GetFeatures(roadLayer.DataSource);
@@ -607,6 +615,35 @@ namespace UrbanEcho.FileManagement
             return layer;
         }
 
+        public static Layer? CreateRoadLabelLayer(IProvider source, string name)
+        {
+            Layer? layer = null;
+            try
+            {
+                source.CRS = "EPSG:4326";
+
+                ProjectingProvider projectingProvider = new ProjectingProvider(source)
+                {
+                    CRS = "EPSG:3857"
+                };
+
+                layer = new Layer(name);
+                layer.MaxVisible = 1.5f;
+                layer.DataSource = projectingProvider;
+
+                RoadLabelStyles labelStyle = new RoadLabelStyles();
+
+                layer.Style = labelStyle.CreateThemeStyle();
+
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Created Road Label Layer"));
+            }
+            catch (Exception ex)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to create road label layer {ex.ToString()}"));
+            }
+            return layer;
+        }
+
         public static MemoryLayer? CreateVehicleLayer()
         {
             MemoryLayer? layer = null;
@@ -805,7 +842,8 @@ namespace UrbanEcho.FileManagement
                 var layer = new MemoryLayer("Census Zones");
                 layer.Features = features;
                 layer.Opacity = 0.45f;
-
+                layer.MinVisible = 3.0f;
+                layer.MaxVisible = 15.0f;
                 layer.Style = new ThemeStyle(f =>
                 {
                     double intensity = 0.0;
@@ -1067,13 +1105,21 @@ namespace UrbanEcho.FileManagement
             {
                 myMap?.Layers.Add(backgroundMBTile);
             }
-            if (roadLayerFirstPass != null)
+            if (IsRoadVisible)
             {
-                myMap?.Layers.Add(roadLayerFirstPass);
-            }
-            if (roadLayerSecondPass != null)
-            {
-                myMap?.Layers.Add(roadLayerSecondPass);
+                if (roadLayerFirstPass != null)
+                {
+                    myMap?.Layers.Add(roadLayerFirstPass);
+                }
+                if (roadLayerSecondPass != null)
+                {
+                    myMap?.Layers.Add(roadLayerSecondPass);
+                }
+
+                if (roadLabelLayer != null)
+                {
+                    myMap?.Layers.Add(roadLabelLayer);
+                }
             }
 
             if (roadSelectionLayer == null)
@@ -1092,11 +1138,11 @@ namespace UrbanEcho.FileManagement
             {
                 myMap?.Layers.Add(vehicleLayer);
             }
-            /*
+
             if (debugLayer != null)
             {
                 myMap?.Layers.Add(debugLayer);
-            }*/
+            }
 
             Map? map = Sim.Sim.MyMap;
             if (map != null)

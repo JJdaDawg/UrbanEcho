@@ -108,6 +108,10 @@
                                   IsChecked="{Binding Map.IsRasterVisible}"
                                   ToggleType="CheckBox"
                                   Command="{Binding Map.ToggleRasterCommand}"/>
+                        <MenuItem Header="Road Layer"
+                                  IsChecked="{Binding Map.IsRoadVisible}"
+                                  ToggleType="CheckBox"
+                                  Command="{Binding Map.ToggleRoadCommand}"/>
                         <MenuItem Header="Census Overlay"
                                   IsChecked="{Binding Map.IsCensusOverlayVisible}"
                                   ToggleType="CheckBox"

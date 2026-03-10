@@ -483,7 +483,7 @@ namespace UrbanEcho.Models
                                         double pavementWidth = 0;
 
                                         int lanes = Helpers.Helper.TryGetFeatureKVPToInt(gf, "LANES", 2);
-                                        pavementWidth = lanes * Helpers.Helper.DefaultLaneWidth * Helpers.Helper.ExtraPavementFactor;
+                                        pavementWidth = lanes * Helpers.Helper.DefaultLaneWidth * Helpers.Helper.ExtraPavementFactor * 1.25f;//Add bit extra for misaligned intersection points
 
                                         if (checkingOutGoing)
                                         {

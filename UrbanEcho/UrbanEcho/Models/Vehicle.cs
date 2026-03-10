@@ -104,6 +104,10 @@ namespace UrbanEcho.Sim
 
         private int intersectionInFrontCount = 0;
         private bool hasClearedIntersection = true;
+        private float hasClearedAtTime = 0;
+        private float hasClearedElaspedTime = 0;
+        private bool usingShorterRayForTurn = false;
+        private float rayLengthSpeedFactor = 0.05f;
         private bool intersectionOccupied = false;
 
         private int lanePicked = 1;
@@ -615,6 +619,7 @@ namespace UrbanEcho.Sim
 
                                     queryFilter.maskBits = (ulong)ShapeCategories.Vehicle;
                                     intersectionOccupied = false;
+
                                     B2Api.b2World_OverlapShape(World.WorldId, b2ShapeProxy, queryFilter, overlapDelegateIntersection, 1);
 
                                     if (!(intersectionOccupied))
@@ -759,9 +764,20 @@ namespace UrbanEcho.Sim
                         //Vector2 calcRayStart = new Vector2(Pos.X, Pos.Y);
 
                         b2Rot angleForRay = b2Rot.FromAngle(currentFloatAngle);
-                        rayDistance = 15.0f;
+
+                        //use shorter ray if turning inside a intersection so it doesn't stop for vehicles
+                        //that are waiting on other side of turn while car is making a right
+                        if (!usingShorterRayForTurn)
+                        {
+                            //use longer ray if cleared intersection
+                            rayDistance = rayLengthSpeedFactor * Kmh + 5.0f + ((Sim.SimSpeed - 1) * 3.5f);
+                        }
+                        else
+                        {
+                            rayDistance = 5.0f;
+                        }
                         ray = new Ray(calcRayStart, new Vector2(angleForRay.c * rayDistance, angleForRay.s * rayDistance));
-                        ResetVehicleInFrontCount();//Has to be before the raycast else will always be false
+                        ResetVehicleInFrontCount();//Has to be before the raycast else will always be zero value
 
                         queryFilter.maskBits = (ulong)ShapeCategories.Vehicle;
                         b2RayResult rayResult = B2Api.b2World_CastRayClosest(World.WorldId, ray.Start, ray.Translation, queryFilter);
@@ -792,7 +808,7 @@ namespace UrbanEcho.Sim
                         //Only query intersections if no car already in front
                         if (vehicleInFrontCount == 0)
                         {
-                            rayDistance = 15.0f;
+                            rayDistance = 15.0f + ((Sim.SimSpeed - 1) * 3.5f);
                             ray = new Ray(calcRayStart, new Vector2(angleForRay.c * rayDistance, angleForRay.s * rayDistance));
                             intersectionInFrontCount = 0;
                             queryFilter.maskBits = (ulong)ShapeCategories.Intersection;
@@ -824,7 +840,17 @@ namespace UrbanEcho.Sim
 
                     if (intersectionInFrontCount == 0)
                     {
-                        hasClearedIntersection = true;
+                        if (hasClearedIntersection == false)
+                        {
+                            hasClearedIntersection = true;
+                            hasClearedAtTime = Sim.GetSimTime();
+                            usingShorterRayForTurn = true;
+                        }
+                        if (state == VehicleStates.AtTargetSpeed || hasClearedElaspedTime > 15.0f)
+                        {
+                            usingShorterRayForTurn = false;
+                        }
+                        hasClearedElaspedTime = Sim.GetSimTime() - hasClearedAtTime;
                     }
                     else
                     {
@@ -961,10 +987,11 @@ namespace UrbanEcho.Sim
                 {
                     startNode = TrafficVolumeLoader.PickWeightedDestination(graph, -1);
                 }
+                usingShorterRayForTurn = false;
             }
             else
             {
-                startNode = currentRoadEdge.From;
+                startNode = currentRoadEdge.To;//TODO: .From before need to confirm if correct now
             }
 
             goalNode = TrafficVolumeLoader.PickWeightedDestination(graph, startNode); //  we donmt use goal node here but it is needed to call pick weighted destination which also sets the path for the vehicle
