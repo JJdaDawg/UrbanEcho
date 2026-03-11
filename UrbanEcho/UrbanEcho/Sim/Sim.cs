@@ -322,6 +322,10 @@ namespace UrbanEcho.Sim
             if (Vehicles.Count == 0)
             {
                 TrySpawnVehicle(startingNumberOfVehicles, false);
+                foreach (Vehicle v in Vehicles)
+                {
+                    v.ResetStats();//Reset stats at start else the loading time is included when many are loaded
+                }
             }
             else
             {
