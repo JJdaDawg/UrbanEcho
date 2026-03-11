@@ -42,6 +42,7 @@ public partial class ProjectExplorerPanelViewModel : ObservableObject
 
     partial void OnActiveLayerChanged(SelectionLayer value)
     {
+        WeakReferenceMessenger.Default.Send(new MapFeatureDeselectedMessage());
         WeakReferenceMessenger.Default.Send(new ActiveLayerChangedMessage(value));
     }
 

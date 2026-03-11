@@ -22,10 +22,9 @@
             <StackPanel Margin="0" Spacing="6">
 
                 <TextBlock Text="Road Status" />
-                <StackPanel Orientation="Horizontal" Spacing="4" IsEnabled="{Binding IsEditing}">
-                    <ToggleButton Content="Open" IsChecked="{Binding IsRoadOpen}" />
-                    <ToggleButton Content="Closed" IsChecked="{Binding !IsRoadOpen}" />
-                </StackPanel>
+                <ToggleSwitch OnContent="Open" OffContent="Closed"
+                              IsChecked="{Binding IsRoadOpen}"
+                              IsEnabled="{Binding IsEditing}" />
 
                 <TextBlock Text="Speed Limit" />
                 <NumericUpDown Value="{Binding SpeedLimit}"
