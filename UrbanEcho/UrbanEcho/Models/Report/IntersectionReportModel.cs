@@ -9,17 +9,22 @@ namespace UrbanEcho.Models.Report
 {
     public class IntersectionReportModel
     {
-        public string IntersectionName;
-        public double AverageTimeSpent { get; private set; }
-        public double TotalTimeSpent { get; private set; }
-        public double AverageSpeed { get; private set; }
-        public double AverageWaitTime { get; private set; }
-        public double TotalWaitTime { get; private set; }
+        public string IntersectionName { get; set; } = "";
+        public double AverageTimeSpent { get; set; }
+        public double TotalTimeSpent { get; set; }
+        public double AverageSpeed { get; set; }
+        public double AverageWaitTime { get; set; }
+        public double TotalWaitTime { get; set; }
 
-        public int VehicleCount { get; private set; }
+        public int VehicleCount { get; set; }
 
-        public IntersectionReportModel(string intersectionName, RecordedStats stats)
+        public List<RoadEdgeReportModel> Edges { get; set; } = new List<RoadEdgeReportModel>();
+
+        public string BlankString { get; set; } = "";//For template
+
+        public IntersectionReportModel(string intersectionName, RecordedStats stats, List<RoadEdgeReportModel> edges)
         {
+            Edges = edges;
             IntersectionName = intersectionName;
             AverageTimeSpent = stats.AverageTimeSpent;
             TotalTimeSpent = stats.TotalTimeSpent;

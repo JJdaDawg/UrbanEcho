@@ -1311,6 +1311,11 @@ namespace UrbanEcho.Sim
             }
         }
 
+        public void ResetStats()
+        {
+            stats.Reset();
+        }
+
         private void UpdateStatsOnNewRoad()
         {
             if (currentRoadEdge != null && currentEdgeStartTime > 0)

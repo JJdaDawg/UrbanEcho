@@ -12,13 +12,13 @@ namespace UrbanEcho.Models.Report
         public string RoadName;
         public string FromRoadName;
         public string ToRoadName;
-        public double AverageTimeSpent { get; private set; }
-        public double TotalTimeSpent { get; private set; }
-        public double AverageSpeed { get; private set; }
-        public double AverageWaitTime { get; private set; }
-        public double TotalWaitTime { get; private set; }
+        public double AverageTimeSpent { get; set; }
+        public double TotalTimeSpent { get; set; }
+        public double AverageSpeed { get; set; }
+        public double AverageWaitTime { get; set; }
+        public double TotalWaitTime { get; set; }
 
-        public int VehicleCount { get; private set; }
+        public int VehicleCount { get; set; }
 
         public RoadEdgeReportModel(string roadName, string fromName, string toName, RecordedStats stats)
         {

@@ -22,24 +22,47 @@ using UrbanEcho.ViewModels;
 
 namespace UrbanEcho.Reporting
 {
-    public static class Report
+    public class Report
     {
-        public static void Export(List<RoadIntersection> roadIntersections, RoadGraph roadGraph)
+        public List<RoadEdgeReportModel> RoadEdgeReport { get; set; } = new List<RoadEdgeReportModel>();
+
+        public IntersectionReport TheReport { get; set; } = new IntersectionReport();
+
+        public void Export(List<RoadIntersection> roadIntersections, RoadGraph roadGraph)
         {
-            List<IntersectionReportModel> intersectionReportModels = new List<IntersectionReportModel>();
-            List<RoadEdgeReportModel> roadEdgeReportModels = new List<RoadEdgeReportModel>();
+            TheReport.Intersections = new List<IntersectionReportModel>();
+
+            RoadEdgeReport = new List<RoadEdgeReportModel>();
 
             foreach (RoadIntersection roadIntersection in roadIntersections)
             {
-                intersectionReportModels.Add(new IntersectionReportModel(roadIntersection.Name, roadIntersection.GetStats()));
+                if (roadIntersection.EdgesInto.Count == 0) continue;
+
+                List<RoadEdgeReportModel> edges = new List<RoadEdgeReportModel>();
+
+                foreach (EdgeTrafficRule edgeTrafficRule in roadIntersection.EdgesInto)
+                {
+                    RoadEdge roadEdge = edgeTrafficRule.RoadEdge;
+                    edges.Add(new RoadEdgeReportModel(roadEdge.Metadata.RoadName, Helpers.Helper.TryGetFeatureKVPToString(roadEdge.Feature, "FROM_STREE", "None"),
+                    Helpers.Helper.TryGetFeatureKVPToString(roadEdge.Feature, "TO_STREET", "None"), roadEdge.GetStats()));
+                }
+                edges.Sort((roadEdgeReport1, roadEdgeReport2) => roadEdgeReport2.VehicleCount.CompareTo(roadEdgeReport1.VehicleCount));
+                IntersectionReportModel intersectionReportModel = new IntersectionReportModel(roadIntersection.Name, roadIntersection.GetStats(), edges);
+
+                TheReport.Intersections.Add(intersectionReportModel);
             }
+
+            TheReport.Intersections.Sort((intersectionReport1, intersectionReport2) => intersectionReport2.VehicleCount.CompareTo(intersectionReport1.VehicleCount));
+
             if (Sim.Sim.RoadGraph != null)
             {
                 foreach (RoadEdge roadEdge in Sim.Sim.RoadGraph.Edges)
                 {
-                    roadEdgeReportModels.Add(new RoadEdgeReportModel(roadEdge.Metadata.RoadName, Helpers.Helper.TryGetFeatureKVPToString(roadEdge.Feature, "FROM_STREE", "None"),
+                    RoadEdgeReport.Add(new RoadEdgeReportModel(roadEdge.Metadata.RoadName, Helpers.Helper.TryGetFeatureKVPToString(roadEdge.Feature, "FROM_STREE", "None"),
                         Helpers.Helper.TryGetFeatureKVPToString(roadEdge.Feature, "TO_STREET", "None"), roadEdge.GetStats()));
                 }
+
+                RoadEdgeReport.Sort((roadEdgeReport1, roadEdgeReport2) => roadEdgeReport2.VehicleCount.CompareTo(roadEdgeReport1.VehicleCount));
             }
             //https://github.com/ClosedXML/ClosedXML.Report
             try
@@ -51,15 +74,15 @@ namespace UrbanEcho.Reporting
                 //https://stackoverflow.com/questions/12500091/datetime-tostring-format-that-can-be-used-in-a-filename-or-extension
                 string outputFile = @$".\Output\Report-{DateTime.Now.ToString("MM-dd-yyyy_hh-mm-ss-tt")}.xlsx";
                 var template = new XLTemplate(@".\Resources\Templates\template.xlsx");
-
+                //intersectionReport.Intersections[0].EachEdge.Edges[0].AverageSpeed = 0;
                 template.AddVariable("Date", DateTime.Now.ToString());
                 ProjectFile? projectFile = ProjectLayers.GetProject();
                 if (projectFile != null)
                 {
                     string projectFileName = projectFile.PathForThisFile;
                     template.AddVariable("Project", projectFileName);
-                    template.AddVariable("Intersections", intersectionReportModels);
-                    template.AddVariable("Roads", roadEdgeReportModels);
+                    template.AddVariable("TheReport", TheReport);
+                    template.AddVariable("Roads", RoadEdgeReport);
 
                     MemoryStream? ms = ExportMapImage();
                     if (ms != null)
@@ -89,7 +112,7 @@ namespace UrbanEcho.Reporting
             }
         }
 
-        public static MemoryStream? ExportMapImage()
+        public MemoryStream? ExportMapImage()
         {
             MemoryStream? ms = null;
             MainViewModel? mvm = Sim.Sim.GetMainViewModel();

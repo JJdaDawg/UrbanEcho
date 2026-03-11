@@ -63,7 +63,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Resources\ProjectFiles\clippedProject.uep">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\ProjectFiles\clippedProjectWithLandCover.uep">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Resources\ProjectFiles\myFile.uep">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\ProjectFiles\myFile2.uep">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Resources\Rasters\Aerial2.mbtiles">

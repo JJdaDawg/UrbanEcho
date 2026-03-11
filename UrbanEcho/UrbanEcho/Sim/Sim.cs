@@ -534,11 +534,13 @@ namespace UrbanEcho.Sim
                     {
                         ProjectLayers.VehicleFeatures.Add(pf);
                     }
-                    if (i == 0)
-                    {
-                        EventQueueForUI.Instance.Add(new LogToConsole(mainViewModel,
-                            $"[Spawn {Clock.FormatTimeOfDay(simTime)}] Vehicle #{vehicleId} spawned at node {spawnNodeId} — total: {Vehicles.Count} - trying to spawn {numberToSpawn}"));
-                    }
+                    //if (i == 0)
+                    //{
+                    //    EventQueueForUI.Instance.Add(new LogToConsole(mainViewModel,
+                    //        $"[Spawn {Clock.FormatTimeOfDay(simTime)}] Vehicle #{vehicleId} spawned at node {spawnNodeId} — total: {Vehicles.Count} - trying to spawn {numberToSpawn}"));
+                    //}
+
+                    vehicle.Update();//Call once so path is loaded
                 }
             }
             if (numberToSpawn > 1)
@@ -581,7 +583,9 @@ namespace UrbanEcho.Sim
                             Thread.Sleep(100);//Wait until all layers are not busy
                         }
                     }
-                    Report.Export(RoadIntersections, RoadGraph);
+                    EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Generating Report"));
+                    Report report = new Report();
+                    report.Export(RoadIntersections, RoadGraph);
                 }
             }
 
@@ -606,6 +610,11 @@ namespace UrbanEcho.Sim
                 feature["FromToSpeed"] = 0.0;
                 feature["ToFromSpeed"] = 0.0;
                 feature["Speed"] = 0.0;
+            }
+
+            foreach (Vehicle vehicle in Sim.Vehicles)
+            {
+                vehicle.ResetStats();
             }
             if (MyMap != null)
             {
