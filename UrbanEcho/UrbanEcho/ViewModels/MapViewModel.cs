@@ -237,40 +237,77 @@ public partial class MapViewModel : ObservableObject
 
     public void UpdateTracking()
     {
-        if (_trackedVehicle is null) return;
-        var pos = _trackedVehicle.Pos;
-        Vector2 currentPosViewportCenter = UrbanEcho.Helpers.Helper.Convert2Box2dWorldPosition(MyMap.Navigator.Viewport.CenterX, MyMap.Navigator.Viewport.CenterY);
-        if (giveTimeForZoomingOut == 0)//If zero then not in middle of flyover
+        if (_trackedVehicle is null)
         {
-            if (Vector2.Distance(currentPosViewportCenter, pos) >= 2000.0f)//If center of viewport 2km away from tracked vehicle do flyover
+            if (ProjectLayers.PinLayer != null)
             {
-                currentResolution = MyMap.Navigator.Viewport.Resolution;
-                MyMap.Navigator.ZoomTo(15, 16 * 10 * 10, Mapsui.Animations.Easing.CubicOut);
-                //If vehicle moved to new position from where tracking is do flyover and skip trying to center on vehicle
-                giveTimeForZoomingOut = 1;
+                if (ProjectLayers.PinLayer.Enabled)
+                {
+                    ProjectLayers.PinLayer.Enabled = false;
+                }
             }
-            else
-            {
-                MyMap.Navigator.CenterOn(new MPoint(pos.X + World.Offset.X, pos.Y + World.Offset.Y), 16 * 10, Mapsui.Animations.Easing.Linear);
-            }
+            return;
         }
         else
-        {//If vehicle moved to new position from where tracking is do flyover and skip trying to center on vehicle
-            giveTimeForZoomingOut++;
-            if (giveTimeForZoomingOut == 5)
+        {
+            var pos = _trackedVehicle.Pos;
+
+            if (ProjectLayers.PinLayer != null)
             {
-                MyMap.Navigator.CenterOn(new MPoint(pos.X + World.Offset.X, pos.Y + World.Offset.Y), 16 * 10 * 10, Mapsui.Animations.Easing.CubicInOut);
+                if (!ProjectLayers.PinLayer.Enabled)
+                {
+                    ProjectLayers.PinLayer.Enabled = true;
+                }
+                if (ProjectLayers.PinLayerFeatures.Count > 0)
+                {
+                    List<IFeature> pinFeatures = new List<IFeature>();
+                    MPoint mPoint = new MPoint(pos.X + World.Offset.X, pos.Y + World.Offset.Y);
+                    if (ProjectLayers.PinLayerFeatures[0] is PointFeature pf)
+                    {
+                        pf.Point.X = mPoint.X;
+                        pf.Point.Y = mPoint.Y;
+                        PointFeature newPoint = (PointFeature)pf.Clone();
+                        pinFeatures.Add(newPoint);
+                        ProjectLayers.PinLayer.Features = pinFeatures;
+                        ProjectLayers.PinLayer.DataHasChanged();
+                    }
+                }
             }
-            if (giveTimeForZoomingOut == 15)
+
+            Vector2 currentPosViewportCenter = UrbanEcho.Helpers.Helper.Convert2Box2dWorldPosition(MyMap.Navigator.Viewport.CenterX, MyMap.Navigator.Viewport.CenterY);
+            if (giveTimeForZoomingOut == 0)//If zero then not in middle of flyover
             {
-                MyMap.Navigator.ZoomTo(currentResolution, 16 * 10 * 15, Mapsui.Animations.Easing.CubicOut);
+                if (Vector2.Distance(currentPosViewportCenter, pos) >= 2000.0f)//If center of viewport 2km away from tracked vehicle do flyover
+                {
+                    currentResolution = MyMap.Navigator.Viewport.Resolution;
+                    MyMap.Navigator.ZoomTo(15, 16 * 10 * 10, Mapsui.Animations.Easing.CubicOut);
+                    //If vehicle moved to new position from where tracking is do flyover and skip trying to center on vehicle
+                    giveTimeForZoomingOut = 1;
+                }
+                else
+                {
+                    MyMap.Navigator.CenterOn(new MPoint(pos.X + World.Offset.X, pos.Y + World.Offset.Y), 16 * 10, Mapsui.Animations.Easing.Linear);
+                }
             }
-            if (giveTimeForZoomingOut >= 30)
-            {
-                giveTimeForZoomingOut = 0;
+            else
+            {//If vehicle moved to new position from where tracking is do flyover and skip trying to center on vehicle
+                giveTimeForZoomingOut++;
+                if (giveTimeForZoomingOut == 5)
+                {
+                    MyMap.Navigator.CenterOn(new MPoint(pos.X + World.Offset.X, pos.Y + World.Offset.Y), 16 * 10 * 10, Mapsui.Animations.Easing.CubicInOut);
+                }
+                if (giveTimeForZoomingOut == 15)
+                {
+                    MyMap.Navigator.ZoomTo(currentResolution, 16 * 10 * 15, Mapsui.Animations.Easing.CubicOut);
+                }
+                if (giveTimeForZoomingOut >= 30)
+                {
+                    giveTimeForZoomingOut = 0;
+                }
             }
+
+            MyMap.Refresh();//Refresh so map is redrawn else some items don't render in after map moves
         }
-        MyMap.Refresh();//Refresh so map is redrawn else some items don't render in after map moves
     }
 
     [RelayCommand] private void ToggleRaster() => IsRasterVisible = !IsRasterVisible;

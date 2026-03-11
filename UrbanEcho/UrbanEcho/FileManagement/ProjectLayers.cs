@@ -84,6 +84,9 @@ namespace UrbanEcho.FileManagement
         public static Layer? IntersectionLayer => intersectionLayer;
         public static MemoryLayer? VehicleLayer => vehicleLayer;
 
+        public static MemoryLayer? PinLayer;
+        public static List<IFeature> PinLayerFeatures = new List<IFeature>();
+
         public static void LoadProject(string path)
         {
             ProjectFile? openProject = ProjectFile.Open(path);
@@ -219,6 +222,7 @@ namespace UrbanEcho.FileManagement
             roadLabelLayer = null;
             intersectionLayer = null;
             vehicleLayer = null;
+            PinLayer = null;
             roadSelectionLayer = null;
             pathOverlayLayer = null;
             if (pathBlinkTimer != null) { pathBlinkTimer.Stop(); pathBlinkTimer = null; }
@@ -398,7 +402,7 @@ namespace UrbanEcho.FileManagement
                     }
 
                     vehicleLayer = CreateVehicleLayer();
-
+                    PinLayer = CreatePinLayer();
                     // Build census zone overlay if census data was loaded
                     if (Sim.Sim.CensusSpawn != null && Sim.Sim.CensusSpawn.IsLoaded)
                     {
@@ -944,6 +948,36 @@ namespace UrbanEcho.FileManagement
             }
         }
 
+        public static MemoryLayer? CreatePinLayer()
+        {
+            MemoryLayer? layer = null;
+
+            try
+            {
+                layer = new MemoryLayer("PinLayer");
+                MPoint mPoint = new MPoint(World.Offset.X, World.Offset.Y);
+                PointFeature feature = new PointFeature(mPoint);
+
+                PinLayerFeatures.Clear();
+                PinLayerFeatures.Add(feature);
+
+                layer.Features = PinLayerFeatures;
+
+                layer.Opacity = 1.0f;
+
+                PinStyles pinStyles = new PinStyles();
+                layer.Style = pinStyles.CreateThemeStyle();
+
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Created Pin Layer"));
+            }
+            catch (Exception ex)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to create Pin Layer {ex.ToString()}"));
+            }
+
+            return layer;
+        }
+
         public static MemoryLayer? CreateDebugLayer()
         {
             MemoryLayer? layer = null;
@@ -1209,6 +1243,11 @@ namespace UrbanEcho.FileManagement
             if (vehicleLayer != null)
             {
                 myMap?.Layers.Add(vehicleLayer);
+            }
+
+            if (PinLayer != null)
+            {
+                myMap?.Layers.Add(PinLayer);
             }
 
             if (debugLayer != null)
