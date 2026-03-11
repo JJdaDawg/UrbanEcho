@@ -28,7 +28,10 @@ namespace UrbanEcho.Reporting
 
         public IntersectionReport TheReport { get; set; } = new IntersectionReport();
 
-        public void Export(List<RoadIntersection> roadIntersections, RoadGraph roadGraph)
+        public static Task? ReportTask { get; set; }
+        public static bool TaskStarted { get; set; } = false;
+
+        public Report(List<RoadIntersection> roadIntersections, RoadGraph roadGraph, bool fullReport = false)
         {
             TheReport.Intersections = new List<IntersectionReportModel>();
 
@@ -39,14 +42,16 @@ namespace UrbanEcho.Reporting
                 if (roadIntersection.EdgesInto.Count == 0) continue;
 
                 List<RoadEdgeReportModel> edges = new List<RoadEdgeReportModel>();
-
-                foreach (EdgeTrafficRule edgeTrafficRule in roadIntersection.EdgesInto)
+                if (fullReport)
                 {
-                    RoadEdge roadEdge = edgeTrafficRule.RoadEdge;
-                    edges.Add(new RoadEdgeReportModel(roadEdge.Metadata.RoadName, Helpers.Helper.TryGetFeatureKVPToString(roadEdge.Feature, "FROM_STREE", "None"),
-                    Helpers.Helper.TryGetFeatureKVPToString(roadEdge.Feature, "TO_STREET", "None"), roadEdge.GetStats()));
+                    foreach (EdgeTrafficRule edgeTrafficRule in roadIntersection.EdgesInto)
+                    {
+                        RoadEdge roadEdge = edgeTrafficRule.RoadEdge;
+                        edges.Add(new RoadEdgeReportModel(roadEdge.Metadata.RoadName, Helpers.Helper.TryGetFeatureKVPToString(roadEdge.Feature, "FROM_STREE", "None"),
+                        Helpers.Helper.TryGetFeatureKVPToString(roadEdge.Feature, "TO_STREET", "None"), roadEdge.GetStats()));
+                    }
+                    edges.Sort((roadEdgeReport1, roadEdgeReport2) => roadEdgeReport2.VehicleCount.CompareTo(roadEdgeReport1.VehicleCount));
                 }
-                edges.Sort((roadEdgeReport1, roadEdgeReport2) => roadEdgeReport2.VehicleCount.CompareTo(roadEdgeReport1.VehicleCount));
                 IntersectionReportModel intersectionReportModel = new IntersectionReportModel(roadIntersection.Name, roadIntersection.GetStats(), edges);
 
                 TheReport.Intersections.Add(intersectionReportModel);
@@ -64,6 +69,18 @@ namespace UrbanEcho.Reporting
 
                 RoadEdgeReport.Sort((roadEdgeReport1, roadEdgeReport2) => roadEdgeReport2.VehicleCount.CompareTo(roadEdgeReport1.VehicleCount));
             }
+            if (ReportTask == null || ReportTask.IsCompleted)
+            {
+                ReportTask = Task.Factory.StartNew(new Action(() => Export(fullReport)), Sim.Sim.Cts.Token);
+            }
+            else
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Unable to create a report (report export has not completed a previous export)"));
+            }
+        }
+
+        private void Export(bool fullReport)
+        {
             //https://github.com/ClosedXML/ClosedXML.Report
             try
             {
@@ -73,31 +90,33 @@ namespace UrbanEcho.Reporting
 
                 //https://stackoverflow.com/questions/12500091/datetime-tostring-format-that-can-be-used-in-a-filename-or-extension
                 string outputFile = @$".\Output\Report-{DateTime.Now.ToString("MM-dd-yyyy_hh-mm-ss-tt")}.xlsx";
-                var template = new XLTemplate(@".\Resources\Templates\template.xlsx");
-                //intersectionReport.Intersections[0].EachEdge.Edges[0].AverageSpeed = 0;
+                XLTemplate? template = null;
+
+                if (fullReport)
+                {
+                    template = new XLTemplate(@".\Resources\Templates\template.xlsx");
+                }
+                else
+                {
+                    template = new XLTemplate(@".\Resources\Templates\templateSmall.xlsx");
+                }
+
                 template.AddVariable("Date", DateTime.Now.ToString());
                 ProjectFile? projectFile = ProjectLayers.GetProject();
                 if (projectFile != null)
                 {
                     string projectFileName = projectFile.PathForThisFile;
                     template.AddVariable("Project", projectFileName);
-                    template.AddVariable("TheReport", TheReport);
-                    template.AddVariable("Roads", RoadEdgeReport);
-
                     MemoryStream? ms = ExportMapImage();
                     if (ms != null)
                     {
                         template.AddVariable("MapImage", ms);
                     }
+                    template.AddVariable("TheReport", TheReport);
+                    template.AddVariable("Roads", RoadEdgeReport);
+
                     template.Generate();
                 }
-                /*
-                foreach (RoadIntersection r in roadIntersections)
-                {
-                    template.AddVariable(r.Name);
-                    template.Generate();
-                    break;
-                }*/
 
                 template.SaveAs(outputFile);
 
@@ -112,7 +131,7 @@ namespace UrbanEcho.Reporting
             }
         }
 
-        public MemoryStream? ExportMapImage()
+        private MemoryStream? ExportMapImage()
         {
             MemoryStream? ms = null;
             MainViewModel? mvm = Sim.Sim.GetMainViewModel();
@@ -122,10 +141,6 @@ namespace UrbanEcho.Reporting
                 Map map = mvm.Map.MyMap;
                 //https://github.com/Mapsui/Mapsui/blob/98c282bfc8873332c44f551f42f22a7791be5b97/Mapsui.Rendering.Skia/MapRenderer.cs#L87
 
-                //MemoryStream? memoryStream = Mapsui.Rendering.Skia.MapRenderer.RenderToBitmapStream(mvm.Map.MyMap.Navigator.Viewport, mvm.Map.MyMap.Layers,
-                //Mapsui.Styles.Color.White);
-
-                //MemoryStream ms = mapRenderer.RenderToBitmapStream(mvm.Map.MyMap);
                 MRect? mRect = map.Extent;
 
                 if (mRect == null)
@@ -138,8 +153,8 @@ namespace UrbanEcho.Reporting
                 }
                 if (mRect != null && !double.IsNaN(mRect.Centroid.X))//Only create the image if we could get the extents
                 {
-                    double resolution = Math.Max((mRect.Width / 1024), (mRect.Height / 768));
-                    Viewport viewport = new Viewport(mRect.Centroid.X, mRect.Centroid.Y, resolution, 0, 1024, 768);
+                    double resolution = Math.Max((mRect.Width / 512), (mRect.Height / 384));
+                    Viewport viewport = new Viewport(mRect.Centroid.X, mRect.Centroid.Y, resolution, 0, 512, 384);
                     Mapsui.Rendering.Skia.MapRenderer mapRenderer = new Mapsui.Rendering.Skia.MapRenderer();
 
                     ms = mapRenderer.RenderToBitmapStream(viewport, map.Layers, map.RenderService, Mapsui.Styles.Color.White, 1);

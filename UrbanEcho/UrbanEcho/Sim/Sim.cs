@@ -584,8 +584,7 @@ namespace UrbanEcho.Sim
                         }
                     }
                     EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Generating Report"));
-                    Report report = new Report();
-                    report.Export(RoadIntersections, RoadGraph);
+                    Report report = new Report(RoadIntersections, RoadGraph);
                 }
             }
 
@@ -651,6 +650,14 @@ namespace UrbanEcho.Sim
                 if (Sim.SimTask != null)
                 {
                     Sim.SimTask.Wait();
+
+                    if (Report.ReportTask != null)
+                    {
+                        if (!Report.ReportTask.IsCompleted)
+                        {
+                            Report.ReportTask.Wait();
+                        }
+                    }
 
                     foreach (RoadIntersection r in Sim.RoadIntersections)
                     {
