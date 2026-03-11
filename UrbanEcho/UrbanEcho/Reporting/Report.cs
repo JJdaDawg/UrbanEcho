@@ -37,6 +37,8 @@ namespace UrbanEcho.Reporting
 
             RoadEdgeReport = new List<RoadEdgeReportModel>();
 
+            MemoryStream? ms = ExportMapImage();
+
             foreach (RoadIntersection roadIntersection in roadIntersections)
             {
                 if (roadIntersection.EdgesInto.Count == 0) continue;
@@ -71,7 +73,7 @@ namespace UrbanEcho.Reporting
             }
             if (ReportTask == null || ReportTask.IsCompleted)
             {
-                ReportTask = Task.Factory.StartNew(new Action(() => Export(fullReport)), Sim.Sim.Cts.Token);
+                ReportTask = Task.Factory.StartNew(new Action(() => Export(fullReport, ms)), Sim.Sim.Cts.Token);
             }
             else
             {
@@ -79,7 +81,7 @@ namespace UrbanEcho.Reporting
             }
         }
 
-        private void Export(bool fullReport)
+        private void Export(bool fullReport, MemoryStream? ms)
         {
             //https://github.com/ClosedXML/ClosedXML.Report
             try
@@ -107,7 +109,7 @@ namespace UrbanEcho.Reporting
                 {
                     string projectFileName = projectFile.PathForThisFile;
                     template.AddVariable("Project", projectFileName);
-                    MemoryStream? ms = ExportMapImage();
+
                     if (ms != null)
                     {
                         template.AddVariable("MapImage", ms);
@@ -153,8 +155,8 @@ namespace UrbanEcho.Reporting
                 }
                 if (mRect != null && !double.IsNaN(mRect.Centroid.X))//Only create the image if we could get the extents
                 {
-                    double resolution = Math.Max((mRect.Width / 512), (mRect.Height / 384));
-                    Viewport viewport = new Viewport(mRect.Centroid.X, mRect.Centroid.Y, resolution, 0, 512, 384);
+                    double resolution = Math.Max((mRect.Width / 1024), (mRect.Height / 768));
+                    Viewport viewport = new Viewport(mRect.Centroid.X, mRect.Centroid.Y, resolution, 0, 1024, 768);
                     Mapsui.Rendering.Skia.MapRenderer mapRenderer = new Mapsui.Rendering.Skia.MapRenderer();
 
                     ms = mapRenderer.RenderToBitmapStream(viewport, map.Layers, map.RenderService, Mapsui.Styles.Color.White, 1);

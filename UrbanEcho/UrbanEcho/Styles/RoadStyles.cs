@@ -103,51 +103,50 @@ namespace UrbanEcho.Styles
             {
                 style.Line.Color = new Color(148, 148, 148);
             }*/
-            if (!useOutline)
+
+            if (ProjectLayers.IsVolumeVisible)//Render the color for line on both layers (if only second layer done report doesn't show volume correct)
             {
-                if (ProjectLayers.IsVolumeVisible)
+                int vehicleCount = 0;
+                string key = Helper.TryGetFeatureKVPToString(gf, "OBJECTID", "");
+                if (!string.IsNullOrEmpty(key))
                 {
-                    int vehicleCount = 0;
-                    string key = Helper.TryGetFeatureKVPToString(gf, "OBJECTID", "");
-                    if (!string.IsNullOrEmpty(key))
+                    if (Sim.Sim.RoadFeatures.TryGetValue(key, out IFeature? dictionaryFeature))
                     {
-                        if (Sim.Sim.RoadFeatures.TryGetValue(key, out IFeature? dictionaryFeature))
+                        if (dictionaryFeature != null)
                         {
-                            if (dictionaryFeature != null)
+                            vehicleCount = Helper.TryGetFeatureKVPToInt(dictionaryFeature, "VehicleCount", 0);
+
+                            if (vehicleCount > 0)
                             {
-                                vehicleCount = Helper.TryGetFeatureKVPToInt(dictionaryFeature, "VehicleCount", 0);
+                                ColorBlend cb = ColorBlend.TwoColors(Color.LimeGreen, Color.Red);
+                                double minValue = 0;
+                                double maxValue = Sim.Sim.RoadWithMaxVolume;
+                                double value = vehicleCount;
 
-                                if (vehicleCount > 0)
+                                double normalizedValue = 0;
+                                if (maxValue - minValue > 0)
                                 {
-                                    ColorBlend cb = ColorBlend.TwoColors(Color.LimeGreen, Color.Red);
-                                    double minValue = 0;
-                                    double maxValue = Sim.Sim.RoadWithMaxVolume;
-                                    double value = vehicleCount;
-
-                                    double normalizedValue = 0;
-                                    if (maxValue - minValue > 0)
-                                    {
-                                        normalizedValue = (value - minValue) / (maxValue - minValue);
-                                    }
-                                    normalizedValue = Math.Clamp(normalizedValue, 0.0, 1.0);
-
-                                    style.Line.Color = cb.GetColor(normalizedValue);
+                                    normalizedValue = (value - minValue) / (maxValue - minValue);
                                 }
+                                normalizedValue = Math.Clamp(normalizedValue, 0.0, 1.0);
+
+                                style.Line.Color = cb.GetColor(normalizedValue);
                             }
                         }
                     }
-
-                    if (vehicleCount == 0)
-                    {
-                        style.Line.Color = new Color(148, 148, 148);
-                    }
                 }
-                else
+
+                if (vehicleCount == 0)
                 {
                     style.Line.Color = new Color(148, 148, 148);
                 }
             }
             else
+            {
+                style.Line.Color = new Color(148, 148, 148);
+            }
+
+            if (useOutline)
             {
                 if (ProjectLayers.IsTrafficSpeedVisible)
                 {

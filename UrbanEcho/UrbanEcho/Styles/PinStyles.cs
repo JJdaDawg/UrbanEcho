@@ -56,7 +56,9 @@ namespace UrbanEcho.Styles
                     Source = sourceString,
                     SvgFillColor = Color.PowderBlue
                 };
-
+            RelativeOffset relativeOffset = new RelativeOffset();
+            relativeOffset.Y = 0.5;
+            style.RelativeOffset = relativeOffset;
             return style;
         }
 
