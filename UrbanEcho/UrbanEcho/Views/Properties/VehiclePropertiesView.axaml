@@ -67,7 +67,9 @@
         <TextBlock Text="ACTIONS" Opacity="0.4" FontWeight="SemiBold"
                    Margin="14,10,14,8" />
         <StackPanel Orientation="Horizontal" Margin="14,0,14,12" Spacing="6">
-            <Button Content="Path"  Height="26" Padding="10,0" Command="{Binding PathCommand}" />
+            <Button Content="Path"  Height="26" Padding="10,0"
+                    Command="{Binding PathCommand}"
+                    Classes.active="{Binding IsShowingPath}" />
             <Button Content="Trend" Height="26" Padding="10,0" Command="{Binding TrendCommand}" />
             <Button Content="Track"
                     Height="26" Padding="10,0"

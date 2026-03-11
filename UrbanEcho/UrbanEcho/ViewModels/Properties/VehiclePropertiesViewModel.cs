@@ -38,6 +38,9 @@ namespace UrbanEcho.ViewModels.Properties
         [ObservableProperty]
         private bool _isPickingDestination;
 
+        [ObservableProperty]
+        private bool _isShowingPath;
+
         public VehiclePropertiesViewModel(Vehicle vehicle, IVehicleService vehicleService)
         {
             _vehicle = vehicle;
@@ -58,11 +61,18 @@ namespace UrbanEcho.ViewModels.Properties
                 else { _vehicleService.StopTracking(); }
             });
 
+            PathCommand = new RelayCommand(() =>
+            {
+                IsShowingPath = !IsShowingPath;
+                if (IsShowingPath) { _vehicleService.ShowPath(_vehicle); }
+                else { _vehicleService.HidePath(); }
+            });
+
             WeakReferenceMessenger.Default.Register<DestinationPickedMessage>(this, (r, m) => IsPickingDestination = false);
         }
 
         // ACTION Commands
-        public RelayCommand PathCommand { get; } = new RelayCommand(() => { /* todo */ });
+        public RelayCommand PathCommand { get; }
         public RelayCommand TrendCommand { get; } = new RelayCommand(() => { /* todo */ });
         public RelayCommand TrackCommand { get; }
 

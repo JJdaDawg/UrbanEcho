@@ -47,6 +47,8 @@ namespace UrbanEcho.FileManagement
         private static Layer? intersectionLayer;
         private static MemoryLayer? vehicleLayer;
         private static MemoryLayer? roadSelectionLayer;
+        private static MemoryLayer? pathOverlayLayer;
+        private static Avalonia.Threading.DispatcherTimer? pathBlinkTimer;
 
         private static RasterizingLayer? debugLayer;
 
@@ -218,6 +220,8 @@ namespace UrbanEcho.FileManagement
             intersectionLayer = null;
             vehicleLayer = null;
             roadSelectionLayer = null;
+            pathOverlayLayer = null;
+            if (pathBlinkTimer != null) { pathBlinkTimer.Stop(); pathBlinkTimer = null; }
             debugLayer = null;
             censusOverlayLayer = null;
 
@@ -442,6 +446,70 @@ namespace UrbanEcho.FileManagement
                 : new List<IFeature>();
 
             map?.Refresh();
+        }
+
+        private static MemoryLayer CreatePathOverlayLayer()
+        {
+            return new MemoryLayer("Path Overlay")
+            {
+                Style = new VectorStyle
+                {
+                    Line = new Pen
+                    {
+                        Color = Color.FromArgb(200, 255, 180, 0),
+                        Width = 4,
+                        PenStyle = PenStyle.ShortDash,
+                        PenStrokeCap = PenStrokeCap.Round,
+                        StrokeJoin = StrokeJoin.Round
+                    }
+                },
+                Features = new List<IFeature>()
+            };
+        }
+
+        public static void SetPathOverlay(IReadOnlyList<IFeature>? features, Map? map)
+        {
+            if (pathOverlayLayer == null) return;
+
+            if (features is null || features.Count == 0)
+            {
+                pathOverlayLayer.Features = new List<IFeature>();
+                //StopPathBlink();
+                map?.Refresh();
+                return;
+            }
+
+            pathOverlayLayer.Features = new List<IFeature>(features);
+            //StartPathBlink(map);
+            map?.Refresh();
+        }
+
+        private static void StartPathBlink(Map? map)
+        {
+            if (pathBlinkTimer != null) return;
+
+            pathBlinkTimer = new Avalonia.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(600)
+            };
+            pathBlinkTimer.Tick += (s, e) =>
+            {
+                if (pathOverlayLayer == null) return;
+                pathOverlayLayer.Enabled = !pathOverlayLayer.Enabled;
+                map?.Refresh();
+            };
+            pathBlinkTimer.Start();
+        }
+
+        private static void StopPathBlink()
+        {
+            if (pathBlinkTimer != null)
+            {
+                pathBlinkTimer.Stop();
+                pathBlinkTimer = null;
+            }
+            if (pathOverlayLayer != null)
+                pathOverlayLayer.Enabled = true;
         }
 
         //https://github.com/BruTile/BruTile
@@ -1125,6 +1193,10 @@ namespace UrbanEcho.FileManagement
             if (roadSelectionLayer == null)
                 roadSelectionLayer = CreateRoadSelectionLayer();
             myMap?.Layers.Add(roadSelectionLayer);
+
+            if (pathOverlayLayer == null)
+                pathOverlayLayer = CreatePathOverlayLayer();
+            myMap?.Layers.Add(pathOverlayLayer);
             if (IsCensusOverlayVisible && censusOverlayLayer != null)
             {
                 myMap?.Layers.Add(censusOverlayLayer);

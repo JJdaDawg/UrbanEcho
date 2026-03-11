@@ -41,4 +41,12 @@ namespace UrbanEcho.Messages
     }
 
     public class DestinationPickedMessage { }
+
+    public class ShowVehiclePathMessage
+    {
+        public Vehicle Vehicle { get; }
+        public ShowVehiclePathMessage(Vehicle vehicle) => Vehicle = vehicle;
+    }
+
+    public class HideVehiclePathMessage { }
 }

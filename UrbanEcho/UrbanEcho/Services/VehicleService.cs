@@ -18,6 +18,8 @@ namespace UrbanEcho.Services
         void PickDestination(Vehicle vehicle);
         void CancelPickDestination();
         void StopTracking();
+        void ShowPath(Vehicle vehicle);
+        void HidePath();
     }
 
     public class VehicleService : IVehicleService
@@ -55,6 +57,17 @@ namespace UrbanEcho.Services
         {
             WeakReferenceMessenger.Default.Send(new TrackVehicleMessage(null));
             WeakReferenceMessenger.Default.Send(new LogMessage("Stopped tracking vehicle", LogSource.System));
+        }
+
+        public void ShowPath(Vehicle vehicle)
+        {
+            WeakReferenceMessenger.Default.Send(new ShowVehiclePathMessage(vehicle));
+            WeakReferenceMessenger.Default.Send(new LogMessage($"Showing path for vehicle {vehicle.VehicleUI.Id}", LogSource.System));
+        }
+
+        public void HidePath()
+        {
+            WeakReferenceMessenger.Default.Send(new HideVehiclePathMessage());
         }
     }
 }
