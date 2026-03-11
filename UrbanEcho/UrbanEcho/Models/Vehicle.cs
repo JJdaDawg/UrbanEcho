@@ -1,6 +1,7 @@
 ﻿using Box2dNet;
 using Box2dNet.Interop;
 using ExCSS;
+using Mapsui;
 using Mapsui.Layers;
 using Mapsui.Nts;
 using NetTopologySuite.Geometries;
@@ -480,6 +481,30 @@ namespace UrbanEcho.Sim
         }
 
         /// <summary>
+        /// Returns the line-string features for the edge currently being traversed
+        /// plus every remaining edge in the vehicle's path. Used by the path overlay.
+        /// </summary>
+        public IReadOnlyList<IFeature> GetRemainingPathFeatures()
+        {
+            var features = new List<IFeature>();
+
+            // Always include the edge the vehicle is currently driving on.
+            IFeature? current = currentRoadEdge?.Feature;
+            if (current != null)
+                features.Add(current);
+
+            if (pathSteps == null) return features;
+
+            for (int i = pathSegmentIndex; i < pathSteps.Count; i++)
+            {
+                // Avoid duplicating the current edge if pathSegmentIndex hasn't advanced yet.
+                if (pathSteps[i].Edge.Feature is IFeature f && f != current)
+                    features.Add(f);
+            }
+            return features;
+        }
+
+        /// <summary>
         /// If <paramref name="closedEdge"/> appears in the vehicle's remaining route (or is the
         /// edge currently being traversed), discards the stale path and builds a new one from
         /// the current destination node, which A* will automatically route around the closed edge.
@@ -504,7 +529,28 @@ namespace UrbanEcho.Sim
 
             if (!needsReroute) return;
 
-            setNewPath(currentRoadEdge.To);
+            // Preserve the original destination so the vehicle doesn't lose its goal.
+            int originalGoal = path != null && path.Count > 1 ? path[path.Count - 1] : -1;
+            int fromNode = currentRoadEdge.To;
+
+            if (originalGoal >= 0 && graph != null)
+            {
+                var pathfinder = new AStarPathfinder(graph, Sim.NodePenalties, IsTruck);
+                var newPathEdges = pathfinder.FindPathEdges(fromNode, originalGoal);
+
+                if (newPathEdges.Count > 0)
+                {
+                    pathSteps = PathStepBuilder.Build(newPathEdges, graph);
+                    path = new List<int> { newPathEdges[0].From };
+                    for (int i = 0; i < newPathEdges.Count; i++)
+                        path.Add(newPathEdges[i].To);
+                    pathSegmentIndex = 0;
+                    return;
+                }
+            }
+
+            // Original destination is unreachable — pick a new one as a fallback.
+            setNewPath(fromNode);
             pathSegmentIndex = 0;
         }
 

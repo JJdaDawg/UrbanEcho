@@ -49,6 +49,7 @@ public partial class MapViewModel : ObservableObject
         {
             _trackedVehicle = null;
             ProjectLayers.SetRoadSelection(null, MyMap);
+            ProjectLayers.SetPathOverlay(null, MyMap);
         });
         WeakReferenceMessenger.Default.Register<MapFeatureSelectedMessage>(this, (r, m) =>
         {
@@ -56,6 +57,15 @@ public partial class MapViewModel : ObservableObject
                 ProjectLayers.SetRoadSelection(null, MyMap);
         });
         WeakReferenceMessenger.Default.Register<PickDestinationMessage>(this, (r, m) => _pendingDestinationVehicle = m.Vehicle);
+        WeakReferenceMessenger.Default.Register<ShowVehiclePathMessage>(this, (r, m) =>
+        {
+            var features = m.Vehicle.GetRemainingPathFeatures();
+            ProjectLayers.SetPathOverlay(features, MyMap);
+        });
+        WeakReferenceMessenger.Default.Register<HideVehiclePathMessage>(this, (r, m) =>
+        {
+            ProjectLayers.SetPathOverlay(null, MyMap);
+        });
 
         var trackingTimer = new Avalonia.Threading.DispatcherTimer
         {
