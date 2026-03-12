@@ -33,7 +33,9 @@
                                IsEnabled="{Binding IsEditing}" />
 
                 <TextBlock Text="Truck Allowance" />
-                <ToggleButton Content="Trucks Allowed" IsEnabled="{Binding IsEditing}" IsChecked="{Binding TruckAllowance}" />
+                <ToggleSwitch OnContent="Allowed" OffContent="Not Allowed"
+                              IsChecked="{Binding TruckAllowance}"
+                              IsEnabled="{Binding IsEditing}" />               
 
             </StackPanel>
         </Expander>

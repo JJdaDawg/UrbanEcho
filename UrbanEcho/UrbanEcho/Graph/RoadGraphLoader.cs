@@ -222,6 +222,16 @@ public static class RoadGraphLoader
             }
         }
 
+        bool truckAllowed = true;
+
+        if (f.Fields.Contains("TRUCK_ACCE"))
+        {
+            if (f["TRUCK_ACCE"]?.ToString() == "NO ACCESS")
+            {
+                truckAllowed = false;
+            }
+        }
+
         return new RoadMetadata
         {
             RoadName = f.Fields.Contains("STREET")
@@ -238,7 +248,8 @@ public static class RoadGraphLoader
                 : 0,
             RoadType = f.Fields.Contains("CARTO_CLAS")
                 ? RoadTypeExtensions.ParseCartoClass(f["CARTO_CLAS"]?.ToString())
-                : RoadType.Unknown
+                : RoadType.Unknown,
+            TruckAllowance = truckAllowed
         };
     }
 
