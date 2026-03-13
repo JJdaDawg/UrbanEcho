@@ -79,7 +79,7 @@ namespace UrbanEcho.Sim
         private static int maxSimSpeed = 4;
         private static int simSpeed = 1;
 
-        private static int startingNumberOfVehicles = 4000;
+        private static int startingNumberOfVehicles = 3000;
         private static int maxVehicles = 5000;
 
         private static float baseStepSize = 1 / 60.0f;
@@ -146,15 +146,18 @@ namespace UrbanEcho.Sim
 
                 if (World.Created)
                 {
-                    if (!(intersectionBodiesCreated))
+                    if (ProjectLayers.GetIsRoadAndIntersectionLoaded())
                     {
-                        EventQueueForUI.Instance.Add(new LogToConsole(mainViewModel, "Started adding intersection bodies"));
-
-                        if (ProjectLayers.CreateRoadIntersections())
+                        if (!(intersectionBodiesCreated) && RoadGraph != null)
                         {
-                            SetIntersectionBodiesCreated();
+                            EventQueueForUI.Instance.Add(new LogToConsole(mainViewModel, "Started adding intersection bodies"));
+
+                            if (ProjectLayers.CreateRoadIntersections())
+                            {
+                                SetIntersectionBodiesCreated();
+                            }
+                            EventQueueForUI.Instance.Add(new LogToConsole(mainViewModel, "Done adding intersection bodies"));
                         }
-                        EventQueueForUI.Instance.Add(new LogToConsole(mainViewModel, "Done adding intersection bodies"));
                     }
 
                     if (RunSimulation)

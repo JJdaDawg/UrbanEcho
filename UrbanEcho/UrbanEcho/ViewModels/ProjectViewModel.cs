@@ -131,6 +131,20 @@ namespace UrbanEcho.ViewModels
         }
 
         [RelayCommand(CanExecute = nameof(CanImportData))]
+        private void ImportOSMBackground()
+        {
+            Map? map = Sim.Sim.MyMap;
+            if (map != null)
+            {
+                LoadFileEvent loadBackgroundEvent = new LoadFileEvent(UrbanEcho.FileManagement.FileTypes.FileType.BackgroundFile, "osm", map);
+                EventQueueForSim.Instance.Add(loadBackgroundEvent);
+            }
+
+            //ProjectLayers.LoadBackgroundFile(path);
+            //WeakReferenceMessenger.Default.Send(new LogMessage($"Background loaded '{path}'", LogSource.System));
+        }
+
+        [RelayCommand(CanExecute = nameof(CanImportData))]
         private async Task ImportBackground()
         {
             var path = await _fileDialogService.OpenShapeFileAsync("Import Background", FileTypes.MbTiles);
@@ -150,7 +164,7 @@ namespace UrbanEcho.ViewModels
         [RelayCommand(CanExecute = nameof(CanImportData))]
         private async Task ImportRoads()
         {
-            var path = await _fileDialogService.OpenShapeFileAsync("Import Roads", FileTypes.ShapeFile);
+            var path = await _fileDialogService.OpenShapeFileAsync("Import Roads", FileTypes.VectorFile);
             if (path is null) return;
             //ProjectLayers.LoadRoadFile(path);
             //WeakReferenceMessenger.Default.Send(new LogMessage($"Roads loaded '{path}'", LogSource.System));
@@ -165,7 +179,7 @@ namespace UrbanEcho.ViewModels
         [RelayCommand(CanExecute = nameof(CanImportData))]
         private async Task ImportIntersections()
         {
-            var path = await _fileDialogService.OpenShapeFileAsync("Import Intersections", FileTypes.ShapeFile);
+            var path = await _fileDialogService.OpenShapeFileAsync("Import Intersections", FileTypes.VectorFile);
             if (path is null) return;
             //ProjectLayers.LoadIntersectionsFile(path);
             //WeakReferenceMessenger.Default.Send(new LogMessage($"Intersections loaded '{path}'", LogSource.System));
