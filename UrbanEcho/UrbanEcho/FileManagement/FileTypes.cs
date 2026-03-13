@@ -22,9 +22,9 @@ namespace UrbanEcho.FileManagement
             Patterns = new[] { "*.uep" }
         };
 
-        public static readonly FilePickerFileType ShapeFile = new("Shapefile")
+        public static readonly FilePickerFileType VectorFile = new("Vector File")
         {
-            Patterns = new[] { "*.shp" }
+            Patterns = new[] { "*.shp", "*.osm" }
         };
 
         public static readonly FilePickerFileType MbTiles = new("MBTiles")

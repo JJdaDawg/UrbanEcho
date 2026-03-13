@@ -42,6 +42,8 @@ namespace UrbanEcho.Sim
 
         public b2OverlapResultFcn overlapDelegateIntersection;
 
+        public b2OverlapResultFcn overlapDelegateThisVehicleInAnyIntersection;
+
         private b2ShapeId intersectionShapeLastAt;
 
         public RoadIntersection? intersectionLastAt;
@@ -110,6 +112,7 @@ namespace UrbanEcho.Sim
         private bool usingShorterRayForTurn = false;
         private float rayLengthSpeedFactor = 0.05f;
         private bool intersectionOccupied = false;
+        private bool thisVehicleIsInAIntersection = false;
 
         private int lanePicked = 1;
         private float calculatedOffsetForLane = 0.5f;
@@ -274,6 +277,7 @@ namespace UrbanEcho.Sim
 
             overlapDelegateVehicle = OverlapCallbackVehicle;
             overlapDelegateIntersection = OverlapCallbackIntersection;
+            overlapDelegateThisVehicleInAnyIntersection = OverlapCallbackThisVehicleInIntersection;
 
             queryFilter.categoryBits = 0xFFFF;
             queryFilter.maskBits = 0xFFFF;
@@ -673,6 +677,24 @@ namespace UrbanEcho.Sim
                                         WaitingOnIntersection = false;
                                         IsWaiting = false;
                                     }
+                                    else
+                                    {
+                                        //Check if this car is in any intersection if it is then we can set isWaiting to false
+
+                                        Vector2[] vehicleVertices = Body.GetShapeVertices();
+
+                                        b2ShapeProxy b2VehicleShapeProxy = B2Api.b2MakeOffsetProxy(vehicleVertices, vehicleVertices.Length, 0.0f, Pos, currentAngle);
+
+                                        queryFilter.maskBits = (ulong)ShapeCategories.Intersection;
+
+                                        thisVehicleIsInAIntersection = false;
+                                        B2Api.b2World_OverlapShape(World.WorldId, b2VehicleShapeProxy, queryFilter, overlapDelegateThisVehicleInAnyIntersection, 1);
+                                        if (thisVehicleIsInAIntersection == true)
+                                        {
+                                            WaitingOnIntersection = false;
+                                            IsWaiting = false;
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -984,6 +1006,13 @@ namespace UrbanEcho.Sim
                 }
             }
             return returnValue;//return false to terminate
+        }
+
+        private bool OverlapCallbackThisVehicleInIntersection(b2ShapeId shapeId, nint context)
+        {
+            thisVehicleIsInAIntersection = true;
+
+            return false;
         }
 
         private bool OverlapCallbackIntersection(b2ShapeId shapeId, nint context)

@@ -147,11 +147,11 @@ namespace UrbanEcho.Reporting
 
                 if (mRect == null)
                 {
-                    mRect = ProjectLayers.TryGetBackgroundExtent();//Fallback to reading background extent if failed to get map extents
+                    mRect = ProjectLayers.TryGetRoadLayerExtent();//Fallback to reading background extent if failed to get map extents
                 }
                 if (mRect != null && double.IsNaN(mRect.Centroid.X))
                 {
-                    mRect = ProjectLayers.TryGetBackgroundExtent();//Fallback to reading background extent if failed to get map extents
+                    mRect = ProjectLayers.TryGetRoadLayerExtent();//Fallback to reading background extent if failed to get map extents
                 }
                 if (mRect != null && !double.IsNaN(mRect.Centroid.X))//Only create the image if we could get the extents
                 {

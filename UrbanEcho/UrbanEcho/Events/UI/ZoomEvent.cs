@@ -24,12 +24,32 @@ namespace UrbanEcho.Events.UI
 
         public void Run()
         {
-            ProjectLayers.ZoomToLayer(map);
+            int loops = 0;
             foreach (ILayer layer in map.Layers)
             {
                 while (layer.Busy)
                 {
                     Thread.Sleep(100);//Wait until all layers are not busy
+                    loops++;
+                    if (loops > 200)
+                    {
+                        break;
+                    }
+                }
+            }
+            ProjectLayers.ZoomToLayer(map);
+            loops = 0;
+
+            foreach (ILayer layer in map.Layers)
+            {
+                while (layer.Busy)
+                {
+                    Thread.Sleep(100);//Wait until all layers are not busy
+                    loops++;
+                    if (loops > 200)
+                    {
+                        break;
+                    }
                 }
             }
         }
