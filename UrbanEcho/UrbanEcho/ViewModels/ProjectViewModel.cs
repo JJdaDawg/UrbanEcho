@@ -28,7 +28,7 @@ namespace UrbanEcho.ViewModels
         {
             var path = await _fileDialogService.OpenFileAsync();
             if (path is null) return;
-            Map? map = Sim.Sim.MyMap;
+            Map? map = MainWindow.Instance.GetMap();
             if (map != null)
             {
                 LoadFileEvent loadProjectEvent = new LoadFileEvent(UrbanEcho.FileManagement.FileTypes.FileType.ProjectFile, path, map);
@@ -95,9 +95,9 @@ namespace UrbanEcho.ViewModels
 
             //_currentProject = new ProjectFile();
             //ProjectFile.SaveAs(_currentProject, path);
-            if (Sim.Sim.MyMap != null)
+            if (MainWindow.Instance.GetMap() != null)
             {
-                NewProjectEvent newProjectEvent = new NewProjectEvent(Sim.Sim.MyMap);
+                NewProjectEvent newProjectEvent = new NewProjectEvent(MainWindow.Instance.GetMap());
                 EventQueueForSim.Instance.Add(newProjectEvent);
                 //HasProject = true;
                 //NotifyProjectCommands();
@@ -116,9 +116,9 @@ namespace UrbanEcho.ViewModels
             //NotifyProjectCommands();
             //WeakReferenceMessenger.Default.Send(new ProjectClosedMessage());
             //WeakReferenceMessenger.Default.Send(new LogMessage("Project successfully closed", LogSource.System));
-            if (Sim.Sim.MyMap != null)
+            if (MainWindow.Instance.GetMap() != null)
             {
-                NewProjectEvent newProjectEvent = new NewProjectEvent(Sim.Sim.MyMap);
+                NewProjectEvent newProjectEvent = new NewProjectEvent(MainWindow.Instance.GetMap());
                 EventQueueForSim.Instance.Add(newProjectEvent);
             }
         }
@@ -133,7 +133,7 @@ namespace UrbanEcho.ViewModels
         [RelayCommand(CanExecute = nameof(CanImportData))]
         private void ImportOSMBackground()
         {
-            Map? map = Sim.Sim.MyMap;
+            Map? map = MainWindow.Instance.GetMap();
             if (map != null)
             {
                 LoadFileEvent loadBackgroundEvent = new LoadFileEvent(UrbanEcho.FileManagement.FileTypes.FileType.BackgroundFile, "osm", map);
@@ -150,7 +150,7 @@ namespace UrbanEcho.ViewModels
             var path = await _fileDialogService.OpenShapeFileAsync("Import Background", FileTypes.MbTiles);
             if (path is null) return;
 
-            Map? map = Sim.Sim.MyMap;
+            Map? map = MainWindow.Instance.GetMap();
             if (map != null)
             {
                 LoadFileEvent loadBackgroundEvent = new LoadFileEvent(UrbanEcho.FileManagement.FileTypes.FileType.BackgroundFile, path, map);
@@ -168,7 +168,7 @@ namespace UrbanEcho.ViewModels
             if (path is null) return;
             //ProjectLayers.LoadRoadFile(path);
             //WeakReferenceMessenger.Default.Send(new LogMessage($"Roads loaded '{path}'", LogSource.System));
-            Map? map = Sim.Sim.MyMap;
+            Map? map = MainWindow.Instance.GetMap();
             if (map != null)
             {
                 LoadFileEvent loadRoadEvent = new LoadFileEvent(UrbanEcho.FileManagement.FileTypes.FileType.RoadLayerFile, path, map);
@@ -183,7 +183,7 @@ namespace UrbanEcho.ViewModels
             if (path is null) return;
             //ProjectLayers.LoadIntersectionsFile(path);
             //WeakReferenceMessenger.Default.Send(new LogMessage($"Intersections loaded '{path}'", LogSource.System));
-            Map? map = Sim.Sim.MyMap;
+            Map? map = MainWindow.Instance.GetMap();
             if (map != null)
             {
                 LoadFileEvent loadIntersectionEvent = new LoadFileEvent(UrbanEcho.FileManagement.FileTypes.FileType.IntersectionLayerFile, path, map);

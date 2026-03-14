@@ -48,7 +48,7 @@ namespace UrbanEcho.Graph
                 List<IFeature> features = Helper.GetFeatures(source);
 
                 EventQueueForUI.Instance.Add(new LogToConsole(
-                    Sim.Sim.GetMainViewModel(),
+                    MainWindow.Instance.GetMainViewModel(),
                     $"[Census] Loaded {features.Count} features from shapefile"));
 
                 double totalArea = 1;
@@ -84,7 +84,7 @@ namespace UrbanEcho.Graph
                     if (ratioOfArea > 1.0f)
                     {
                         EventQueueForUI.Instance.Add(new LogToConsole(
-               Sim.Sim.GetMainViewModel(),
+               MainWindow.Instance.GetMainViewModel(),
                $"[Census] Error with total area"));
                         ratioOfArea = 1.0f;
                     }
@@ -115,18 +115,18 @@ namespace UrbanEcho.Graph
                 zones.RemoveAll(z => z.GateNodeIds.Count == 0);
 
                 EventQueueForUI.Instance.Add(new LogToConsole(
-                    Sim.Sim.GetMainViewModel(),
+                    MainWindow.Instance.GetMainViewModel(),
                     $"[Census] {zones.Count}/{before} zones have road network nodes"));
 
                 int totalDrivers = zones.Sum(z => z.CarTruckVanDrivers);
                 EventQueueForUI.Instance.Add(new LogToConsole(
-                    Sim.Sim.GetMainViewModel(),
+                    MainWindow.Instance.GetMainViewModel(),
                     $"[Census] Total car commuters across all zones: {totalDrivers}"));
             }
             catch (Exception ex)
             {
                 EventQueueForUI.Instance.Add(new LogToConsole(
-                    Sim.Sim.GetMainViewModel(),
+                    MainWindow.Instance.GetMainViewModel(),
                     $"[Census] Failed to load census data: {ex}"));
             }
 
@@ -161,7 +161,7 @@ namespace UrbanEcho.Graph
             }
 
             EventQueueForUI.Instance.Add(new LogToConsole(
-                Sim.Sim.GetMainViewModel(),
+                MainWindow.Instance.GetMainViewModel(),
                 $"[Census] Assigned {assigned}/{graph.Nodes.Count} road nodes to census zones"));
         }
 

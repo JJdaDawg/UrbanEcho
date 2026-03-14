@@ -69,7 +69,7 @@ namespace UrbanEcho.Helpers
             }
             catch (Exception ex)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Unable to get features {ex.ToString()}"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Unable to get features {ex.ToString()}"));
 
                 return null;
             }

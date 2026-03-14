@@ -121,7 +121,7 @@ namespace UrbanEcho.Models
                 else
                 {
                     returnValue = null;
-                    EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to add a intersection"));
+                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to add a intersection"));
                 }
             }
 
@@ -434,7 +434,7 @@ namespace UrbanEcho.Models
 
             if (graph is null)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Graph was null when trying to add intersection"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Graph was null when trying to add intersection"));
             }
             else
             {
@@ -548,7 +548,7 @@ namespace UrbanEcho.Models
             else
             {
                 //gives a 0 to 1 value for where in traffic light cycle it is in
-                float cyclePostion = ((offsetTime + Sim.Sim.GetSimTime()) % trafficLightCycleTime) / trafficLightCycleTime;
+                float cyclePostion = ((offsetTime + SimManager.Instance.GetSimTime()) % trafficLightCycleTime) / trafficLightCycleTime;
                 bool isFirstPartOfCycle = (cyclePostion <= ratioForSignal);
                 if (isFirstPartOfCycle != wasFirstPartOfCycle || !firstCycleInitialized)
                 {
@@ -556,10 +556,10 @@ namespace UrbanEcho.Models
                     didSetBlockedForAllRed = false;
                     didSetCurrentCycleValues = false;
                     wasFirstPartOfCycle = isFirstPartOfCycle;
-                    timeWhenStartedCurrentPartOfCycle = Sim.Sim.GetSimTime();
+                    timeWhenStartedCurrentPartOfCycle = SimManager.Instance.GetSimTime();
                 }
 
-                if (timeWhenStartedCurrentPartOfCycle + amountOfTimeForAllRed > Sim.Sim.GetSimTime())
+                if (timeWhenStartedCurrentPartOfCycle + amountOfTimeForAllRed > SimManager.Instance.GetSimTime())
                 {
                     if (!didSetBlockedForAllRed)
                     {
@@ -611,7 +611,7 @@ namespace UrbanEcho.Models
             if (EdgesInto.Count != 0)
             {
                 //allow one incoming to unblock at a time every 3.3 seconds
-                int every2Seconds = (int)((offsetTime + Sim.Sim.GetSimTime()) * 0.3f);
+                int every2Seconds = (int)((offsetTime + SimManager.Instance.GetSimTime()) * 0.3f);
                 int edgeToUnblock = every2Seconds % (EdgesInto.Count);
 
                 for (int i = 0; i < EdgesInto.Count; i++)
@@ -636,7 +636,7 @@ namespace UrbanEcho.Models
 
             if (FallBackTrafficRule.IsNeverBlockingTraffic() == false)
             {
-                int every2Seconds = (int)((offsetTime + Sim.Sim.GetSimTime()) * 0.5f);
+                int every2Seconds = (int)((offsetTime + SimManager.Instance.GetSimTime()) * 0.5f);
                 int fallBackBlocking = (every2Seconds) % 2;
                 if (fallBackBlocking == 0)
                 {

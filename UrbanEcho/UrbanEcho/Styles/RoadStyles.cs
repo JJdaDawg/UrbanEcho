@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UrbanEcho.FileManagement;
 using UrbanEcho.Helpers;
+using UrbanEcho.Sim;
 using UrbanEcho.UI;
 
 namespace UrbanEcho.Styles
@@ -47,9 +48,9 @@ namespace UrbanEcho.Styles
 
             float resolutionFactor = 100;
 
-            if (Sim.Sim.MyMap.Navigator.Viewport.Resolution > 0.01f)
+            if (MainWindow.Instance.GetMap().Navigator.Viewport.Resolution > 0.01f)
             {
-                resolutionFactor = (float)(1.0f / Sim.Sim.MyMap.Navigator.Viewport.Resolution);
+                resolutionFactor = (float)(1.0f / MainWindow.Instance.GetMap().Navigator.Viewport.Resolution);
             }
 
             double pavementWidth = 0;
@@ -110,7 +111,7 @@ namespace UrbanEcho.Styles
                 string key = Helper.TryGetFeatureKVPToString(gf, "OBJECTID", "");
                 if (!string.IsNullOrEmpty(key))
                 {
-                    if (Sim.Sim.RoadFeatures.TryGetValue(key, out IFeature? dictionaryFeature))
+                    if (SimManager.Instance.RoadFeatures.TryGetValue(key, out IFeature? dictionaryFeature))
                     {
                         if (dictionaryFeature != null)
                         {
@@ -120,7 +121,7 @@ namespace UrbanEcho.Styles
                             {
                                 ColorBlend cb = ColorBlend.TwoColors(Color.LimeGreen, Color.Red);
                                 double minValue = 0;
-                                double maxValue = Sim.Sim.RoadWithMaxVolume;
+                                double maxValue = SimManager.Instance.RoadWithMaxVolume;
                                 double value = vehicleCount;
 
                                 double normalizedValue = 0;
@@ -154,7 +155,7 @@ namespace UrbanEcho.Styles
                     string key = Helper.TryGetFeatureKVPToString(gf, "OBJECTID", "");
                     if (!string.IsNullOrEmpty(key))
                     {
-                        if (Sim.Sim.RoadFeatures.TryGetValue(key, out IFeature? dictionaryFeature))
+                        if (SimManager.Instance.RoadFeatures.TryGetValue(key, out IFeature? dictionaryFeature))
                         {
                             if (dictionaryFeature != null)
                             {
@@ -163,8 +164,8 @@ namespace UrbanEcho.Styles
                                 if (speed > 0)
                                 {
                                     ColorBlend cb = ColorBlend.TwoColors(Color.FireBrick, Color.LimeGreen);
-                                    double minValue = Sim.Sim.MinForShowSpeed;
-                                    double maxValue = Sim.Sim.MaxForShowSpeed;
+                                    double minValue = SimManager.Instance.MinForShowSpeed;
+                                    double maxValue = SimManager.Instance.MaxForShowSpeed;
                                     double value = speed;
 
                                     double normalizedValue = 0;

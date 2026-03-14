@@ -25,32 +25,32 @@ namespace UrbanEcho.Events.Sim
         {
             if (simControlType == SimControlType.Stop)
             {
-                UrbanEcho.Sim.Sim.RunSimulation = false;
-                UrbanEcho.Sim.Sim.Paused = false;
+                SimManager.Instance.RunSimulation = false;
+                SimManager.Instance.Paused = false;
             }
 
             if (simControlType == SimControlType.Start)
             {
-                UrbanEcho.Sim.Sim.RunSimulation = true;
-                UrbanEcho.Sim.Sim.Paused = false;
+                SimManager.Instance.RunSimulation = true;
+                SimManager.Instance.Paused = false;
             }
 
             if (simControlType == SimControlType.Pause)
             {
-                UrbanEcho.Sim.Sim.RunSimulation = !UrbanEcho.Sim.Sim.RunSimulation;
-                UrbanEcho.Sim.Sim.Paused = !UrbanEcho.Sim.Sim.RunSimulation;
+                SimManager.Instance.RunSimulation = !SimManager.Instance.RunSimulation;
+                SimManager.Instance.Paused = !SimManager.Instance.RunSimulation;
             }
 
             if (simControlType == SimControlType.SpeedUp)
             {
-                UrbanEcho.Sim.Sim.SimSpeed++;
-                EventQueueForUI.Instance.Add(new LogToConsole(UrbanEcho.Sim.Sim.GetMainViewModel(), $"Simulation speed x{UrbanEcho.Sim.Sim.SimSpeed}"));
+                SimManager.Instance.SimSpeed++;
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Simulation speed x{SimManager.Instance.SimSpeed}"));
             }
 
             if (simControlType == SimControlType.SpeedDown)
             {
-                UrbanEcho.Sim.Sim.SimSpeed--;
-                EventQueueForUI.Instance.Add(new LogToConsole(UrbanEcho.Sim.Sim.GetMainViewModel(), $"Simulation speed x{UrbanEcho.Sim.Sim.SimSpeed}"));
+                SimManager.Instance.SimSpeed--;
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Simulation speed x{SimManager.Instance.SimSpeed}"));
             }
         }
     }

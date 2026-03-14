@@ -11,6 +11,7 @@ namespace UrbanEcho.Services
     public interface IMapFeatureService
     {
         IntersectionUI? MapIntersection(IFeature feature);
+
         Vehicle? MapVehicle(IFeature feature);
     }
 
@@ -20,7 +21,7 @@ namespace UrbanEcho.Services
         {
             var rawId = feature["OBJECTID"]?.ToString();
 
-            var intersections = Sim.Sim.RoadIntersections.ToList();
+            var intersections = SimManager.Instance.RoadIntersections.ToList();
             var simIntersection = intersections.FirstOrDefault(i => i.Feature["OBJECTID"]?.ToString() == rawId);
 
             if (simIntersection is null)
@@ -50,7 +51,7 @@ namespace UrbanEcho.Services
         {
             var rawId = feature["VehicleNumber"]?.ToString();
             if (!int.TryParse(rawId, out int vehicleId)) return null;
-            var simVehicle = Sim.Sim.Vehicles.ElementAtOrDefault(vehicleId);
+            var simVehicle = SimManager.Instance.GetVehicles().ElementAtOrDefault(vehicleId);
             if (simVehicle is null)
             {
                 WeakReferenceMessenger.Default.Send(new LogMessage($"Vehicle {vehicleId} not found", LogSource.Map));

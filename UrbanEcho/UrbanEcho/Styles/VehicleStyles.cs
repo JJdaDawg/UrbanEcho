@@ -47,12 +47,12 @@ namespace UrbanEcho.Styles
                 }
                 catch (Exception ex)
                 {
-                    EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Unable to add vehicle styles {ex.ToString()}"));
+                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Unable to add vehicle styles {ex.ToString()}"));
                 }
             }
             else
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Unable to get project assembly name while trying to load embedded images"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Unable to get project assembly name while trying to load embedded images"));
             }
         }
 
@@ -80,7 +80,7 @@ namespace UrbanEcho.Styles
             newStyle.Image = style.Image;
             try
             {
-                newStyle.SymbolScale = style.SymbolScale / Sim.Sim.MyMap.Navigator.Viewport.Resolution;
+                newStyle.SymbolScale = style.SymbolScale / MainWindow.Instance.GetMap().Navigator.Viewport.Resolution;
             }
             catch
             {
@@ -120,7 +120,7 @@ namespace UrbanEcho.Styles
                     }
                     catch
                     {
-                        EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Tried to show vehicle style that does not exist"));
+                        EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Tried to show vehicle style that does not exist"));
                     }
                 }
                 return null;

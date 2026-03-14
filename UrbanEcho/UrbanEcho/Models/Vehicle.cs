@@ -266,7 +266,7 @@ namespace UrbanEcho.Sim
 
             if (!settings.IsValid())
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Failed Adding Car that had {carType} as type"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed Adding Car that had {carType} as type"));
                 return;
             }
 
@@ -291,7 +291,7 @@ namespace UrbanEcho.Sim
         {
             if (path == null || pathSteps == null || graph == null || Body == null)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Could not run advance to next road"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Could not run advance to next road"));
                 return;
             }
 
@@ -309,18 +309,18 @@ namespace UrbanEcho.Sim
             pathSegmentIndex = 0;
             if (graph == null || Body == null)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Could not run advance to next road"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Could not run advance to next road"));
                 return;
             }
 
             var nodes = graph.Nodes.Keys.ToList();
             if (nodes.Count < 2)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Nodes in graph were less than 2"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Nodes in graph were less than 2"));
                 ResetVehicleToNewPos();
                 return;
             }
-            var pathfinder = new AStarPathfinder(graph, Sim.NodePenalties, IsTruck);
+            var pathfinder = new AStarPathfinder(graph, SimManager.Instance.NodePenalties, IsTruck);
             int goalNode = TrafficVolumeLoader.PickWeightedDestination(graph, currentNodeId);
 
             var newPathEdges = pathfinder.FindPathEdges(currentNodeId, goalNode);
@@ -358,7 +358,7 @@ namespace UrbanEcho.Sim
             }
             else
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Failed to advance to next road"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to advance to next road"));
                 ResetVehicleToNewPos();
                 return;
             }
@@ -416,7 +416,7 @@ namespace UrbanEcho.Sim
 
                 if (IsWaiting == true)
                 {
-                    whenToStopWaiting = Sim.GetSimTime() + minimumStopWaiting;
+                    whenToStopWaiting = SimManager.Instance.GetSimTime() + minimumStopWaiting;
                 }
             }
 
@@ -441,14 +441,14 @@ namespace UrbanEcho.Sim
 
                     if (!VehicleInFront)
                     {
-                        vehicleInFrontStartTime = Sim.GetSimTime();
+                        vehicleInFrontStartTime = SimManager.Instance.GetSimTime();
                     }
                     vehicleInFrontCount++;
                     counted = true;
 
                     if (IsWaiting == true)
                     {
-                        whenToStopWaiting = Sim.GetSimTime() + minimumStopWaiting;
+                        whenToStopWaiting = SimManager.Instance.GetSimTime() + minimumStopWaiting;
                     }
                 }
             }
@@ -459,12 +459,12 @@ namespace UrbanEcho.Sim
         {
             if (graph == null) return;
 
-            var pathfinder = new AStarPathfinder(graph, Sim.NodePenalties, IsTruck);
+            var pathfinder = new AStarPathfinder(graph, SimManager.Instance.NodePenalties, IsTruck);
             var newPathEdges = pathfinder.FindPathEdges(currentRoadEdge.From, goalNodeId);
 
             if (newPathEdges.Count < 1)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Could not find path to destination {goalNodeId}"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Could not find path to destination {goalNodeId}"));
                 return;
             }
 
@@ -539,7 +539,7 @@ namespace UrbanEcho.Sim
 
             if (originalGoal >= 0 && graph != null)
             {
-                var pathfinder = new AStarPathfinder(graph, Sim.NodePenalties, IsTruck);
+                var pathfinder = new AStarPathfinder(graph, SimManager.Instance.NodePenalties, IsTruck);
                 var newPathEdges = pathfinder.FindPathEdges(fromNode, originalGoal);
 
                 if (newPathEdges.Count > 0)
@@ -631,7 +631,7 @@ namespace UrbanEcho.Sim
                 }
                 catch
                 {
-                    EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Feature that is assigned to the vehicle is null"));
+                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Feature that is assigned to the vehicle is null"));
                 }
 
                 currentAngle = B2Api.b2Body_GetRotation(Body.BodyId);
@@ -644,7 +644,7 @@ namespace UrbanEcho.Sim
                 }
                 catch (Exception ex)
                 {
-                    EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Vehicle missing angle feature + {ex.ToString()}"));
+                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Vehicle missing angle feature + {ex.ToString()}"));
                 }
 
                 if (IsWaiting)
@@ -655,9 +655,9 @@ namespace UrbanEcho.Sim
                     }
                     else
                     {
-                        if (Sim.GetSimTime() > whenToStopWaiting)
+                        if (SimManager.Instance.GetSimTime() > whenToStopWaiting)
                         {
-                            if (Sim.GroupToUpdate == updateGroup)
+                            if (SimManager.Instance.GetGroupToUpdate() == updateGroup)
                             {
                                 if (intersectionLastAt is not null)
                                 {
@@ -728,7 +728,7 @@ namespace UrbanEcho.Sim
                         if (!startedStoppedTimer)
                         {
                             startedStoppedTimer = true;
-                            stoppedStartTime = Sim.GetSimTime();
+                            stoppedStartTime = SimManager.Instance.GetSimTime();
                         }
                     }
                     else
@@ -764,7 +764,7 @@ namespace UrbanEcho.Sim
                         if (!startedStoppedTimer)
                         {
                             startedStoppedTimer = true;
-                            stoppedStartTime = Sim.GetSimTime();
+                            stoppedStartTime = SimManager.Instance.GetSimTime();
                         }
                     }
                     else
@@ -812,17 +812,17 @@ namespace UrbanEcho.Sim
                     Kmh = 0;
                 }
 
-                if (Sim.GroupToUpdate == updateGroup)
+                if (SimManager.Instance.GetGroupToUpdate() == updateGroup)
                 {
                     Vector2[] vertices = Body.GetShapeVertices();
                     b2ShapeProxy b2ShapeProxy = B2Api.b2MakeOffsetProxy(vertices, vertices.Length, 0.0f, Pos, currentAngle);
 
                     queryFilter.maskBits = (ulong)ShapeCategories.Vehicle;
-                    if (Sim.GetSimTime() > lastTimeCheckedOverlap + overlapTestFrequency)
+                    if (SimManager.Instance.GetSimTime() > lastTimeCheckedOverlap + overlapTestFrequency)
                     {
                         B2Api.b2World_OverlapShape(World.WorldId, b2ShapeProxy, queryFilter, overlapDelegateVehicle, 1);
-                        lastTimeCheckedOverlap = Sim.GetSimTime() + (float)Random.Shared.NextDouble();//add a 1 second random offset so not all vehicles
-                                                                                                      //do this at same time
+                        lastTimeCheckedOverlap = SimManager.Instance.GetSimTime() + (float)Random.Shared.NextDouble();//add a 1 second random offset so not all vehicles
+                                                                                                                      //do this at same time
                     }
                     if (!(insideAnotherVehicle))
                     {
@@ -838,7 +838,7 @@ namespace UrbanEcho.Sim
                         if (!usingShorterRayForTurn)
                         {
                             //use longer ray if cleared intersection
-                            rayDistance = rayLengthSpeedFactor * Kmh + 5.0f + ((Sim.SimSpeed - 1) * 3.5f);
+                            rayDistance = rayLengthSpeedFactor * Kmh + 5.0f + ((SimManager.Instance.SimSpeed - 1) * 3.5f);
                         }
                         else
                         {
@@ -863,12 +863,12 @@ namespace UrbanEcho.Sim
                                 }
                                 else
                                 {
-                                    EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Should query vehicle not something else"));
+                                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Should query vehicle not something else"));
                                 }
                             }
                             else
                             {
-                                EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Shape collided with self, raycast start point incorrect"));
+                                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Shape collided with self, raycast start point incorrect"));
                             }
                         }
 
@@ -876,7 +876,7 @@ namespace UrbanEcho.Sim
                         //Only query intersections if no car already in front
                         if (vehicleInFrontCount == 0)
                         {
-                            rayDistance = 15.0f + ((Sim.SimSpeed - 1) * 3.5f);
+                            rayDistance = 15.0f + ((SimManager.Instance.SimSpeed - 1) * 3.5f);
                             ray = new Ray(calcRayStart, new Vector2(angleForRay.c * rayDistance, angleForRay.s * rayDistance));
                             intersectionInFrontCount = 0;
                             queryFilter.maskBits = (ulong)ShapeCategories.Intersection;
@@ -895,12 +895,12 @@ namespace UrbanEcho.Sim
                                     }
                                     else
                                     {
-                                        EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Should query intersection not something else"));
+                                        EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Should query intersection not something else"));
                                     }
                                 }
                                 else
                                 {
-                                    EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Shape collided with self, raycast start point incorrect"));
+                                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Shape collided with self, raycast start point incorrect"));
                                 }
                             }
                         }
@@ -911,14 +911,14 @@ namespace UrbanEcho.Sim
                         if (hasClearedIntersection == false)
                         {
                             hasClearedIntersection = true;
-                            hasClearedAtTime = Sim.GetSimTime();
+                            hasClearedAtTime = SimManager.Instance.GetSimTime();
                             usingShorterRayForTurn = true;
                         }
                         if (state == VehicleStates.AtTargetSpeed || hasClearedElaspedTime > 15.0f)
                         {
                             usingShorterRayForTurn = false;
                         }
-                        hasClearedElaspedTime = Sim.GetSimTime() - hasClearedAtTime;
+                        hasClearedElaspedTime = SimManager.Instance.GetSimTime() - hasClearedAtTime;
                     }
                     else
                     {
@@ -927,7 +927,7 @@ namespace UrbanEcho.Sim
 
                     if (State == VehicleStates.Stopped)
                     {
-                        stoppedElaspedTime = Sim.GetSimTime() - stoppedStartTime;
+                        stoppedElaspedTime = SimManager.Instance.GetSimTime() - stoppedStartTime;
 
                         if (stoppedElaspedTime > stoppedThresholdWaitTime)
                         {
@@ -948,7 +948,7 @@ namespace UrbanEcho.Sim
                     if (vehicleInFrontCount > 0)
                     {
                         VehicleInFront = true;
-                        vehicleInFrontElaspedTime = Sim.GetSimTime() - vehicleInFrontStartTime;
+                        vehicleInFrontElaspedTime = SimManager.Instance.GetSimTime() - vehicleInFrontStartTime;
 
                         if (vehicleInFrontElaspedTime > vehicleInFrontThresholdWaitTime)
                         {
@@ -978,7 +978,7 @@ namespace UrbanEcho.Sim
                 }
                 catch (Exception ex)
                 {
-                    EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Vehicle missing enable feature + {ex.ToString()}"));
+                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Vehicle missing enable feature + {ex.ToString()}"));
                 }
                 if (path == null || pathSteps == null)
                 {
@@ -1042,16 +1042,16 @@ namespace UrbanEcho.Sim
 
             if (graph == null)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Tried to set path when graph was null"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Tried to set path when graph was null"));
                 return;
             }
             if (!useCurrentPos)
             {
-                if (Sim.CensusSpawn != null)
+                if (SimManager.Instance.CensusSpawn != null)
                 {
-                    if (Sim.CensusSpawn.IsLoaded)
+                    if (SimManager.Instance.CensusSpawn.IsLoaded)
                     {
-                        startNode = Sim.CensusSpawn.PickWeightedSpawnNode();
+                        startNode = SimManager.Instance.CensusSpawn.PickWeightedSpawnNode();
                     }
                     else
                     {
@@ -1170,7 +1170,7 @@ namespace UrbanEcho.Sim
                         }
                         else
                         {
-                            EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"A line string was less than 2 points"));
+                            EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"A line string was less than 2 points"));
                         }
                     }
                     else
@@ -1365,13 +1365,13 @@ namespace UrbanEcho.Sim
 
         private void UpdateStats()
         {
-            double timeDelta = Sim.GetSimTime() - lastUpdateSimTime;
+            double timeDelta = SimManager.Instance.GetSimTime() - lastUpdateSimTime;
 
             if (currentEdgeStartTime != 0)//only include after currentEdgeTime has been set
             {
-                stats.ElaspedTime = Sim.GetSimTime() - currentEdgeStartTime;
+                stats.ElaspedTime = SimManager.Instance.GetSimTime() - currentEdgeStartTime;
 
-                lastUpdateSimTime = Sim.GetSimTime();
+                lastUpdateSimTime = SimManager.Instance.GetSimTime();
 
                 //Should always be a positive
                 if (timeDelta > 0)
@@ -1402,7 +1402,7 @@ namespace UrbanEcho.Sim
                 }
             }
 
-            currentEdgeStartTime = Sim.GetSimTime();
+            currentEdgeStartTime = SimManager.Instance.GetSimTime();
             allSpeedValues = 0;
             stats.Reset();
         }

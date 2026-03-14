@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UrbanEcho.Sim;
 
 namespace UrbanEcho.Events.Sim
 {
@@ -17,7 +18,7 @@ namespace UrbanEcho.Events.Sim
 
         public void Run()
         {
-            UrbanEcho.Sim.Sim.CloseRoad(roadEdge);
+            SimManager.Instance.CloseRoad(roadEdge);
         }
     }
 }

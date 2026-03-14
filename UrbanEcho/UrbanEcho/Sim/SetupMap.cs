@@ -34,7 +34,7 @@ namespace UrbanEcho.Sim
             }
             catch (System.Exception ex)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.GetMainViewModel(), $"Failed to remove performance Widget {ex.ToString()}"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to remove performance Widget {ex.ToString()}"));
             }
         }
     }

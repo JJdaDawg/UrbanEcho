@@ -150,13 +150,13 @@ public partial class MapViewModel : ObservableObject
 
     private RoadEdge? FindNearestEdge(MPoint worldPos)
     {
-        if (Sim.RoadGraph is null) return null;
+        if (SimManager.Instance.RoadGraph is null) return null;
 
         var clickPoint = new Point(worldPos.X, worldPos.Y);
         RoadEdge? best = null;
         double bestDist = RoadSelectionThreshold;
 
-        foreach (var edge in Sim.RoadGraph.Edges)
+        foreach (var edge in SimManager.Instance.RoadGraph.Edges)
         {
             if (edge.Feature is GeometryFeature gf && gf.Geometry is LineString ls)
             {
@@ -188,10 +188,10 @@ public partial class MapViewModel : ObservableObject
 
     private int? FindNearestNode(MPoint worldPos)
     {
-        if (Sim.RoadGraph is null) { return null; }
+        if (SimManager.Instance.RoadGraph is null) { return null; }
         double bestDist = double.MaxValue;
         int? bestNode = null;
-        foreach (var kvp in Sim.RoadGraph.Nodes)
+        foreach (var kvp in SimManager.Instance.RoadGraph.Nodes)
         {
             double dx = kvp.Value.X - worldPos.X;
             double dy = kvp.Value.Y - worldPos.Y;
@@ -238,8 +238,8 @@ public partial class MapViewModel : ObservableObject
 
     public void UpdateTracking()
     {
-        if (_trackedVehicle is null || (!(Sim.RunSimulation || Sim.Paused)))//Make sure this routine is only caused during simulation,
-                                                                            //or it can keep layers busy and prevent report running
+        if (_trackedVehicle is null || (!(SimManager.Instance.RunSimulation || SimManager.Instance.Paused)))//Make sure this routine is only caused during simulation,
+                                                                                                            //or it can keep layers busy and prevent report running
         {
             if (ProjectLayers.PinLayer != null)
             {

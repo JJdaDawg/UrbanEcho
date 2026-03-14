@@ -33,7 +33,7 @@ namespace UrbanEcho.Models
         {
             if (neverBlock && value == true)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Tried to set block traffic on signal that is set to never block"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Tried to set block traffic on signal that is set to never block"));
             }
             else
             {

@@ -62,7 +62,7 @@ public partial class App : Application
                 UIUpdate.UITask.Wait();
             }
 
-            Sim.Sim.Free();
+            SimManager.Instance.Free();
         }
         catch
         {

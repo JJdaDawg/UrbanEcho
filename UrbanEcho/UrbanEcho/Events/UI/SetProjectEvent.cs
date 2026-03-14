@@ -20,7 +20,7 @@ namespace UrbanEcho.Events.UI
 
         public void Run()
         {
-            MainViewModel? mvm = UrbanEcho.Sim.Sim.GetMainViewModel();
+            MainViewModel? mvm = MainWindow.Instance.GetMainViewModel();
             if (mvm != null)
             {
                 mvm.Project.SetProject(projectFile);
