@@ -21,7 +21,8 @@ public sealed class RoadEdge
     public bool IsClosed { get; private set; }
 
     public void Close() => IsClosed = true;
-    public void Open()  => IsClosed = false;
+
+    public void Open() => IsClosed = false;
 
     private RecordedStats stats = new RecordedStats();
 
@@ -54,7 +55,7 @@ public sealed class RoadEdge
         string key = Helper.TryGetFeatureKVPToString(Feature, "OBJECTID", "");
         if (!string.IsNullOrEmpty(key))
         {
-            if (Sim.RoadFeatures.TryGetValue(key, out IFeature? dictionaryFeature))
+            if (SimManager.Instance.RoadFeatures.TryGetValue(key, out IFeature? dictionaryFeature))
             {
                 if (dictionaryFeature != null)
                 {
@@ -62,9 +63,9 @@ public sealed class RoadEdge
 
                     dictionaryFeature["VehicleCount"] = vehicleCount;
 
-                    if (vehicleCount > Sim.RoadWithMaxVolume)
+                    if (vehicleCount > SimManager.Instance.RoadWithMaxVolume)
                     {
-                        Sim.RoadWithMaxVolume = vehicleCount;
+                        SimManager.Instance.RoadWithMaxVolume = vehicleCount;
                     }
                 }
             }
@@ -76,7 +77,7 @@ public sealed class RoadEdge
         string key = Helper.TryGetFeatureKVPToString(Feature, "OBJECTID", "");
         if (!string.IsNullOrEmpty(key))
         {
-            if (Sim.RoadFeatures.TryGetValue(key, out IFeature? dictionaryFeature))
+            if (SimManager.Instance.RoadFeatures.TryGetValue(key, out IFeature? dictionaryFeature))
             {
                 if (dictionaryFeature != null)
                 {

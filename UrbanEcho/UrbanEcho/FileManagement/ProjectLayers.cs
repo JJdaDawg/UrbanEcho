@@ -27,6 +27,7 @@ using UrbanEcho.Graph;
 using UrbanEcho.Helpers;
 using UrbanEcho.Models;
 using UrbanEcho.Physics;
+using UrbanEcho.Sim;
 using UrbanEcho.Styles;
 using Color = Mapsui.Styles.Color;
 using Exception = System.Exception;
@@ -57,10 +58,8 @@ namespace UrbanEcho.FileManagement
         private static bool intersectionRequiresLoading = false;
         private static bool vehicleRequiresLoading = true;
 
-        private static bool backgroundLoaded = false;
         private static bool roadLoaded = false;
         private static bool intersectionLoaded = false;
-        private static bool vehicleLoaded = false;
 
         private static bool isZoomedToLayer = false;
 
@@ -100,17 +99,17 @@ namespace UrbanEcho.FileManagement
 
                 if (Load(currentProjectFile))
                 {
-                    if (Sim.Sim.MyMap != null)
+                    if (MainWindow.Instance.GetMap() != null)
                     {
-                        EventQueueForUI.Instance.Add(new AddLayersEvent(Sim.Sim.MyMap));
-                        EventQueueForUI.Instance.Add(new ZoomEvent(Sim.Sim.MyMap));
+                        EventQueueForUI.Instance.Add(new AddLayersEvent(MainWindow.Instance.GetMap()));
+                        EventQueueForUI.Instance.Add(new ZoomEvent(MainWindow.Instance.GetMap()));
                     }
                 }
                 else
                 {
-                    if (Sim.Sim.MyMap != null)
+                    if (MainWindow.Instance.GetMap() != null)
                     {
-                        ClearLayers(Sim.Sim.MyMap);
+                        ClearLayers(MainWindow.Instance.GetMap());
                     }
                 }
 
@@ -134,13 +133,13 @@ namespace UrbanEcho.FileManagement
             {
                 currentProjectFile.BackgroundLayerPath = path;
                 backgroundRequiresLoading = true;
-                backgroundLoaded = false;
+
                 if (Load(currentProjectFile))
                 {
-                    if (Sim.Sim.MyMap != null)
+                    if (MainWindow.Instance.GetMap() != null)
                     {
-                        EventQueueForUI.Instance.Add(new AddLayersEvent(Sim.Sim.MyMap));
-                        EventQueueForUI.Instance.Add(new ZoomEvent(Sim.Sim.MyMap));
+                        EventQueueForUI.Instance.Add(new AddLayersEvent(MainWindow.Instance.GetMap()));
+                        EventQueueForUI.Instance.Add(new ZoomEvent(MainWindow.Instance.GetMap()));
                     }
                 }
 
@@ -171,10 +170,10 @@ namespace UrbanEcho.FileManagement
 
                 if (Load(currentProjectFile))
                 {
-                    if (Sim.Sim.MyMap != null)
+                    if (MainWindow.Instance.GetMap() != null)
                     {
-                        EventQueueForUI.Instance.Add(new AddLayersEvent(Sim.Sim.MyMap));
-                        EventQueueForUI.Instance.Add(new ZoomEvent(Sim.Sim.MyMap));
+                        EventQueueForUI.Instance.Add(new AddLayersEvent(MainWindow.Instance.GetMap()));
+                        EventQueueForUI.Instance.Add(new ZoomEvent(MainWindow.Instance.GetMap()));
                     }
                 }
 
@@ -192,10 +191,10 @@ namespace UrbanEcho.FileManagement
 
                 if (Load(currentProjectFile))
                 {
-                    if (Sim.Sim.MyMap != null)
+                    if (MainWindow.Instance.GetMap() != null)
                     {
-                        EventQueueForUI.Instance.Add(new AddLayersEvent(Sim.Sim.MyMap));
-                        EventQueueForUI.Instance.Add(new ZoomEvent(Sim.Sim.MyMap));
+                        EventQueueForUI.Instance.Add(new AddLayersEvent(MainWindow.Instance.GetMap()));
+                        EventQueueForUI.Instance.Add(new ZoomEvent(MainWindow.Instance.GetMap()));
                     }
                 }
 
@@ -215,10 +214,8 @@ namespace UrbanEcho.FileManagement
             intersectionRequiresLoading = true;
             vehicleRequiresLoading = true;
 
-            backgroundLoaded = false;
             roadLoaded = false;
             intersectionLoaded = false;
-            vehicleLoaded = false;
             backgroundLayer = null;
             roadLayerFirstPass = null;
             roadLayerSecondPass = null;
@@ -232,16 +229,12 @@ namespace UrbanEcho.FileManagement
             debugLayer = null;
             censusOverlayLayer = null;
 
-            Sim.Sim.Clear(); //Clear all the existing lists
-            //RoadFeatures = new List<IFeature>();
+            SimManager.Instance.Clear(); //Clear all the existing lists
+
             VehicleFeatures = new List<IFeature>();
             DebugLayerFeatures = new List<IFeature>();
 
-            Map? map = Sim.Sim.MyMap;
-            if (map != null)
-            {
-                map.Refresh();
-            }
+            MainWindow.Instance.GetMap().Refresh();
         }
 
         public static bool Load(ProjectFile currentProjectFile)
@@ -264,13 +257,13 @@ namespace UrbanEcho.FileManagement
                         if (backgroundLayer != null)
                         {
                             addLayer = true;
-                            backgroundLoaded = true;
+
                             backgroundRequiresLoading = false;
                         }
                     }
                     else
                     {
-                        EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Project file did not contain a background layer"));
+                        EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Project file did not contain a background layer"));
                     }
                 }
                 if (roadRequiresLoading == true)
@@ -282,7 +275,7 @@ namespace UrbanEcho.FileManagement
                             if (Path.GetExtension(currentProjectFile.RoadLayerPath) == ".shp")
                             {
                                 ShapeFile roadNetwork = new ShapeFile(currentProjectFile.RoadLayerPath);
-                                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Load Road Shape File"));
+                                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Load Road Shape File"));
                                 if (roadNetwork != null)
                                 {
                                     Layer? roadLayer = CreateRoadLayer(roadNetwork, "Road Outline", true);
@@ -302,103 +295,19 @@ namespace UrbanEcho.FileManagement
 
                                         if (roadLayer.DataSource != null)
                                         {
-                                            List<IFeature> RoadFeatures = Helpers.Helper.GetFeatures(roadLayer.DataSource);
-                                            Sim.Sim.RoadFeatures = new Dictionary<string, IFeature>();
-                                            foreach (IFeature feature in RoadFeatures)
-                                            {
-                                                string key = Helper.TryGetFeatureKVPToString(feature, "OBJECTID", "");
+                                            SimManager.Instance.SetRoadFeatureStats(Helpers.Helper.GetFeatures(roadLayer.DataSource));
 
-                                                if (!string.IsNullOrEmpty(key))
-                                                {
-                                                    IFeature newFeature = feature.Copy();
-                                                    newFeature["VehicleCount"] = 0;
-                                                    newFeature["FromToSpeed"] = 0.0;
-                                                    newFeature["ToFromSpeed"] = 0.0;
-                                                    newFeature["Speed"] = 0.0;
-                                                    Sim.Sim.RoadFeatures.TryAdd(key, newFeature);
-                                                }
-                                            }
-
-                                            Sim.Sim.RoadGraph = UrbanTrafficSim.Core.IO.RoadGraphLoader.LoadFromFeatures(Helpers.Helper.GetFeatures(roadLayer.DataSource));
+                                            SimManager.Instance.RoadGraph = UrbanTrafficSim.Core.IO.RoadGraphLoader.LoadFromFeatures(Helpers.Helper.GetFeatures(roadLayer.DataSource));
                                         }
                                     }
                                 }
                             }
                             if (Path.GetExtension(currentProjectFile.RoadLayerPath) == ".osm")
                             {
-                                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Load Road osm File"));
+                                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Load Road osm File"));
 
-                                //part of this code from here
-                                //https://github.com/OsmSharp/core/blob/develop/samples/Sample.Filter/Program.cs
+                                List<IFeature> featuresList = Helpers.OsmReadHelper.GetRoadFeatures(currentProjectFile.RoadLayerPath);
 
-                                List<IFeature> featuresList = new List<IFeature>();
-                                Dictionary<long, Node> nodes = new Dictionary<long, Node>();
-                                using (var fileStream = new FileInfo(currentProjectFile.RoadLayerPath).OpenRead())
-                                {
-                                    XmlOsmStreamSource source = new XmlOsmStreamSource(fileStream);
-
-                                    var progress = source.ShowProgress();
-                                    foreach (OsmGeo geo in source)
-                                    {
-                                        if (geo is Node n)
-                                        {
-                                            if (n.Id != null)
-                                            {
-                                                nodes[n.Id.Value] = n;
-                                            }
-                                        }
-                                    }
-
-                                    foreach (OsmGeo geo in source)
-                                    {
-                                        if (geo is OsmSharp.Way way)
-                                        {
-                                            if (way.Tags != null)
-                                            {
-                                                if (way.Tags.TryGetValue("highway", out string highwayType))
-                                                {
-                                                    if (Osm.OsmReadHelper.CheckRoadTypeAllowed(highwayType))
-                                                    {
-                                                        if (way.Nodes.Count() > 1)
-                                                        {
-                                                            Coordinate[] coordinates = new Coordinate[way.Nodes.Count()];
-                                                            int coordCount = 0;
-                                                            bool skip = false;
-
-                                                            foreach (long index in way.Nodes)
-                                                            {
-                                                                if (nodes.TryGetValue(index, out Node? node))
-                                                                {
-                                                                    if (node.Longitude is double lon && node.Latitude is double lat)
-                                                                    {
-                                                                        (double x, double y) point = SphericalMercator.FromLonLat(
-                                                                                lon,
-                                                                                lat
-                                                                            );
-                                                                        coordinates[coordCount++] = new Coordinate(point.x, point.y);
-                                                                    }
-                                                                    else
-                                                                    {
-                                                                        skip = true;
-                                                                        break;
-                                                                    }
-                                                                }
-                                                            }
-
-                                                            if (!skip)
-                                                            {
-                                                                LineString lineString = new LineString(coordinates);
-                                                                GeometryFeature gf = Osm.OsmReadHelper.CreateRoadFeature(new GeometryFeature(lineString), way);
-
-                                                                featuresList.Add(gf);
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
                                 MemoryLayer? roadLayer1 = CreateRoadLayerFromOSM(featuresList, "Road Outline", true);
                                 if (roadLayer1 != null)
                                 {
@@ -419,29 +328,14 @@ namespace UrbanEcho.FileManagement
 
                                 if (featuresList.Count > 0)
                                 {
-                                    Sim.Sim.RoadFeatures = new Dictionary<string, IFeature>();
-                                    foreach (IFeature feature in featuresList)
-                                    {
-                                        string key = Helper.TryGetFeatureKVPToString(feature, "OBJECTID", "");
-
-                                        if (!string.IsNullOrEmpty(key))
-                                        {
-                                            IFeature newFeature = feature.Copy();
-                                            newFeature["VehicleCount"] = 0;
-                                            newFeature["FromToSpeed"] = 0.0;
-                                            newFeature["ToFromSpeed"] = 0.0;
-                                            newFeature["Speed"] = 0.0;
-                                            Sim.Sim.RoadFeatures.TryAdd(key, newFeature);
-                                        }
-                                    }
-
-                                    Sim.Sim.RoadGraph = UrbanTrafficSim.Core.IO.RoadGraphLoader.LoadFromFeatures(featuresList);
+                                    SimManager.Instance.SetRoadFeatureStats(featuresList);
+                                    SimManager.Instance.RoadGraph = UrbanTrafficSim.Core.IO.RoadGraphLoader.LoadFromFeatures(featuresList);
                                 }
                             }
                         }
                         catch (Exception ex)
                         {
-                            EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to load Road Layer {ex.ToString()}"));
+                            EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to load Road Layer {ex.ToString()}"));
                         }
 
                         if (roadLayerFirstPass != null && roadLayerSecondPass != null)
@@ -455,7 +349,7 @@ namespace UrbanEcho.FileManagement
                     }
                     else
                     {
-                        EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Project file did not contain a road layer"));
+                        EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Project file did not contain a road layer"));
                     }
                 }
                 if (intersectionRequiresLoading == true)
@@ -467,68 +361,25 @@ namespace UrbanEcho.FileManagement
                             if (Path.GetExtension(currentProjectFile.RoadLayerPath) == ".shp")
                             {
                                 ShapeFile intersections = new ShapeFile(currentProjectFile.IntersectionLayerPath);
-                                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Loaded Intersections Shape File"));
+                                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Loaded Intersections Shape File"));
                                 intersectionLayer = CreateIntersectionsLayer(intersections, "Intersections");
                             }
 
                             if (Path.GetExtension(currentProjectFile.RoadLayerPath) == ".osm")
                             {
-                                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Load Intersection osm File"));
+                                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Load Intersection osm File"));
 
                                 //part of this code from here
                                 //https://github.com/OsmSharp/core/blob/develop/samples/Sample.Filter/Program.cs
 
-                                List<IFeature> featuresList = new List<IFeature>();
-                                Dictionary<long, Node> nodes = new Dictionary<long, Node>();
-                                using (var fileStream = new FileInfo(currentProjectFile.RoadLayerPath).OpenRead())
-                                {
-                                    XmlOsmStreamSource source = new XmlOsmStreamSource(fileStream);
+                                List<IFeature> featuresList = OsmReadHelper.GetIntersectionFeatures(currentProjectFile.RoadLayerPath);
 
-                                    var progress = source.ShowProgress();
-                                    foreach (OsmGeo geo in source)
-                                    {
-                                        if (geo is Node n)
-                                        {
-                                            if (n.Id != null)
-                                            {
-                                                nodes[n.Id.Value] = n;
-                                            }
-                                        }
-                                    }
-
-                                    foreach (OsmGeo geo in source)
-                                    {
-                                        if (geo is OsmSharp.Node node)
-                                        {
-                                            if (node.Tags != null)
-                                            {
-                                                if (node.Tags.TryGetValue("highway", out string highwayType))
-                                                {
-                                                    if (Osm.OsmReadHelper.CheckIntersectionTypeAllowed(highwayType))
-                                                    {
-                                                        if (node.Longitude is double lon && node.Latitude is double lat)
-                                                        {
-                                                            (double x, double y) point = SphericalMercator.FromLonLat(
-                                                                    lon,
-                                                                    lat
-                                                                );
-                                                            Point newPoint = new Point(point.x, point.y);
-                                                            GeometryFeature gf = Osm.OsmReadHelper.CreateIntersectionFeature(new GeometryFeature(newPoint), node);
-
-                                                            featuresList.Add(gf);
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
                                 intersectionLayer = CreateIntersectionsLayerFromOSM(featuresList, "Intersections");
                             }
                         }
                         catch (Exception ex)
                         {
-                            EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to load Intersection Layer {ex.ToString()}"));
+                            EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to load Intersection Layer {ex.ToString()}"));
                         }
                     }
 
@@ -543,22 +394,23 @@ namespace UrbanEcho.FileManagement
             }
             else
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Project file did not contain a intersection layer"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Project file did not contain a intersection layer"));
             }
 
             if (vehicleRequiresLoading && intersectionLoaded && roadLoaded)
             {
+                SimManager.Instance.ResetSim();
                 World.Clear();//we need to init world again so center point is correct if reloading
 
                 vehicleRequiresLoading = false;
 
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Initialize Graph"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Initialize Graph"));
 
-                Sim.Sim.InitializeGraph();
+                SimManager.Instance.InitializeGraph();
 
-                if (Sim.Sim.RoadGraph != null)
+                if (SimManager.Instance.RoadGraph != null)
                 {
-                    TrafficVolumeLoader.AssignToGraph(Sim.Sim.RoadGraph);
+                    TrafficVolumeLoader.AssignToGraph(SimManager.Instance.RoadGraph);
                 }
 
                 try
@@ -566,14 +418,14 @@ namespace UrbanEcho.FileManagement
                     // Load census data for realistic spawn distribution (before vehicle creation)
                     if (!string.IsNullOrEmpty(currentProjectFile?.CensusLayerPath))
                     {
-                        Sim.Sim.InitializeCensusSpawning(currentProjectFile.CensusLayerPath);
+                        SimManager.Instance.InitializeCensusSpawning(currentProjectFile.CensusLayerPath);
                     }
                     else
                     {
                         string defaultCensusPath = "Resources/ShapeFiles/Census_2021_Work_Commuting/GIS_DATA_CENSUS_2021_WORK_COMMUTING.shp";
                         if (System.IO.File.Exists(defaultCensusPath))
                         {
-                            Sim.Sim.InitializeCensusSpawning(defaultCensusPath);
+                            SimManager.Instance.InitializeCensusSpawning(defaultCensusPath);
                             if (currentProjectFile != null)
                             {
                                 currentProjectFile.CensusLayerPath = defaultCensusPath;
@@ -583,15 +435,15 @@ namespace UrbanEcho.FileManagement
                 }
                 catch (Exception ex)
                 {
-                    EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to load a census layer {ex.Message}"));
+                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to load a census layer {ex.Message}"));
                 }
 
                 vehicleLayer = CreateVehicleLayer();
                 PinLayer = CreatePinLayer();
                 // Build census zone overlay if census data was loaded
-                if (Sim.Sim.CensusSpawn != null && Sim.Sim.CensusSpawn.IsLoaded)
+                if (SimManager.Instance.CensusSpawn != null && SimManager.Instance.CensusSpawn.IsLoaded)
                 {
-                    censusOverlayLayer = CreateCensusOverlayLayer(Sim.Sim.CensusSpawn.Zones);
+                    censusOverlayLayer = CreateCensusOverlayLayer(SimManager.Instance.CensusSpawn.Zones);
                 }
                 if (false == true)//Change this to enable debug layer
                 {
@@ -602,7 +454,7 @@ namespace UrbanEcho.FileManagement
             }
             else
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Not all required layers loaded"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Not all required layers loaded"));
             }
 
             return addLayer;
@@ -714,11 +566,11 @@ namespace UrbanEcho.FileManagement
             {
                 MbTilesTileSource mbTilesTileSource = new MbTilesTileSource(new SQLiteConnectionString(path, true));
                 mbTilesLayer = new TileLayer(mbTilesTileSource) { Name = name };
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Loaded MBTiles Background File"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Loaded MBTiles Background File"));
             }
             catch (Exception ex)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to create tile layer {ex.ToString()}"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to create tile layer {ex.ToString()}"));
             }
 
             return mbTilesLayer;
@@ -739,11 +591,11 @@ namespace UrbanEcho.FileManagement
 
                 layer = new Layer(name);
                 layer.DataSource = projectingProvider;
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Created Background Layer"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Created Background Layer"));
             }
             catch (Exception ex)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to load Background Layer {ex.ToString()}"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to load Background Layer {ex.ToString()}"));
             }
 
             return layer;
@@ -766,16 +618,16 @@ namespace UrbanEcho.FileManagement
                 if (layer != null)
                 {
                     layer.Style = intersectionsStyle.CreateThemeStyle();
-                    EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Created Intersections Layer"));
+                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Created Intersections Layer"));
                 }
             }
             catch (Exception ex)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Unable to create Intersections Layer {ex.ToString()}"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Unable to create Intersections Layer {ex.ToString()}"));
             }
             if (layer == null)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to create Intersections Layer"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to create Intersections Layer"));
             }
 
             return layer;
@@ -807,15 +659,15 @@ namespace UrbanEcho.FileManagement
                 {
                     layer.Style = intersectionsStyle.CreateThemeStyle();
                 }
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Created Intersections Layer"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Created Intersections Layer"));
             }
             catch (Exception ex)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Unable to create Intersections Layer {ex.ToString()}"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Unable to create Intersections Layer {ex.ToString()}"));
             }
             if (layer == null)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to create Intersections Layer"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to create Intersections Layer"));
             }
             return layer;
         }
@@ -825,7 +677,7 @@ namespace UrbanEcho.FileManagement
             List<IFeature> features = new List<IFeature>();
             if (intersectionLayer is null)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Intersections layer was not added before trying to add intersection bodies"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Intersections layer was not added before trying to add intersection bodies"));
                 return false;
             }
             if (intersectionLayer is Layer layer)
@@ -833,7 +685,7 @@ namespace UrbanEcho.FileManagement
                 IProvider? intersectionDatasource = layer.DataSource;
                 if (intersectionDatasource is null)
                 {
-                    EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Datasource used for adding intersection bodies was null"));
+                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Datasource used for adding intersection bodies was null"));
                     return false;
                 }
                 features = Helpers.Helper.GetFeatures(intersectionDatasource);
@@ -845,9 +697,9 @@ namespace UrbanEcho.FileManagement
                     features = memoryLayer.Features.ToList();
                 }
             }
-            if (Sim.Sim.RoadGraph is null)
+            if (SimManager.Instance.RoadGraph is null)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Intersections can not be added before road graph"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Intersections can not be added before road graph"));
                 return false;
             }
 
@@ -867,11 +719,11 @@ namespace UrbanEcho.FileManagement
                     {
                         if (intersectGF.Geometry is Point p)
                         {
-                            RoadIntersection? r = RoadIntersection.Create(name, feature, Sim.Sim.RoadGraph);
+                            RoadIntersection? r = RoadIntersection.Create(name, feature, SimManager.Instance.RoadGraph);
 
                             if (r is not null)
                             {
-                                Sim.Sim.RoadIntersections.Add(r);
+                                SimManager.Instance.RoadIntersections.Add(r);
                             }
                         }
                     }
@@ -892,11 +744,11 @@ namespace UrbanEcho.FileManagement
 
                 layer.Style = roadStyle.CreateThemeStyle();
 
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Created Road Layer"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Created Road Layer"));
             }
             catch (Exception ex)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to create road layer {ex.ToString()}"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to create road layer {ex.ToString()}"));
             }
             return layer;
         }
@@ -920,11 +772,11 @@ namespace UrbanEcho.FileManagement
 
                 layer.Style = roadStyle.CreateThemeStyle();
 
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Created Road Layer"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Created Road Layer"));
             }
             catch (Exception ex)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to create road layer {ex.ToString()}"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to create road layer {ex.ToString()}"));
             }
             return layer;
         }
@@ -942,11 +794,11 @@ namespace UrbanEcho.FileManagement
 
                 layer.Style = labelStyle.CreateThemeStyle();
 
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Created Road Label Layer"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Created Road Label Layer"));
             }
             catch (Exception ex)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to create road label layer {ex.ToString()}"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to create road label layer {ex.ToString()}"));
             }
             return layer;
         }
@@ -971,11 +823,11 @@ namespace UrbanEcho.FileManagement
 
                 layer.Style = labelStyle.CreateThemeStyle();
 
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Created Road Label Layer"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Created Road Label Layer"));
             }
             catch (Exception ex)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to create road label layer {ex.ToString()}"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to create road label layer {ex.ToString()}"));
             }
             return layer;
         }
@@ -998,104 +850,13 @@ namespace UrbanEcho.FileManagement
 
             if (World.Created == false)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Unable To Create Vehicle Layer if box2d world was not initialized"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Unable To Create Vehicle Layer if box2d world was not initialized"));
                 return null;
             }
 
             try
             {
                 layer = new MemoryLayer("Vehicles");
-                /*
-                int vehiclesAdded = 0;
-                Random random = new Random();
-
-                // Build a weighted spawn list so high-AADT edges get more vehicles (fallback)
-                var weightedEdgeIndices = Sim.Sim.RoadGraph != null
-                    ? TrafficVolumeLoader.BuildWeightedEdgeSpawnList(Sim.Sim.RoadGraph)
-                    : new List<int>();
-
-                //// Scale vehicle count to observed AADT rather than edge count.
-                //// Each simulated vehicle represents ~scaleFactor worth of daily traffic.
-                //double totalAADT = Sim.Sim.RoadGraph?.Edges
-                //    .Where(e => e.Metadata.TrafficVolume > 100) // exclude defaulted edges
-                //    .Sum(e => e.Metadata.TrafficVolume) ?? 0;
-
-                //const double scaleFactor = 0.00004;
-                //int spawnCount = Math.Clamp((int)(totalAADT * scaleFactor), 50, 600);
-                int spawnCount = Sim.Sim.RoadGraph?.Edges.Count / 2 ?? 0;
-
-                for (int v = 0; v < spawnCount; v++)
-                {
-                    // Use census spawn manager if available, otherwise fall back to AADT
-                    int spawnNodeId;
-                    if (Sim.Sim.CensusSpawn != null && Sim.Sim.CensusSpawn.IsLoaded)
-                    {
-                        spawnNodeId = Sim.Sim.CensusSpawn.PickWeightedSpawnNode();
-                    }
-                    else
-                    {
-                        int edgeIdx = weightedEdgeIndices.Count > 0
-                            ? weightedEdgeIndices[random.Next(weightedEdgeIndices.Count)]
-                            : v;
-                        spawnNodeId = Sim.Sim.RoadGraph!.Edges[edgeIdx].From;
-                    }
-
-                    // Find an outgoing edge from the chosen spawn node
-                    var outgoing = Sim.Sim.RoadGraph!.GetOutgoingEdges(spawnNodeId);
-                    if (outgoing.Count == 0) continue;
-
-                    var edge = outgoing[random.Next(outgoing.Count)];
-
-                    if (Sim.Sim.RoadGraph.Nodes.TryGetValue(edge.From, out RoadNode? roadNodeFrom))
-                    {
-                        if (Sim.Sim.RoadGraph.Nodes.TryGetValue(edge.To, out RoadNode? roadNodeTo))
-                        {
-                            if (roadNodeFrom != null && roadNodeTo != null)
-                            {
-                                double randomValue = Random.Shared.NextDouble();
-                                double truckRatio = 0.1f;
-                                bool isTruck = false;
-                                if (randomValue <= truckRatio)
-                                {
-                                    isTruck = true;
-                                }
-
-                                MPoint mPoint = new MPoint(roadNodeFrom.X, roadNodeFrom.Y);
-                                PointFeature pf = new PointFeature(mPoint);
-
-                                pf["VehicleNumber"] = vehiclesAdded;
-                                pf["Hidden"] = "true";
-                                pf["Angle"] = 0.0f;
-                                string type = "RegularCar";
-                                if (!isTruck)
-                                {
-                                    pf["VehicleType"] = "Car" + random.Next(0, VehicleStyles.NumberOFCarColors);
-                                }
-                                else
-                                {
-                                    pf["VehicleType"] = "Truck" + random.Next(0, VehicleStyles.NumberOFTruckColors);
-                                    type = "TransportTruck";
-                                }
-                                //Vehicle groups used so we don't raycast and update velocities every frame (was slowing down fps)
-                                //currently vehicle groups just set as 1 so vehicle groups is bypassed
-                                Vehicle vehicle = new Vehicle(pf, edge, type, vehiclesAdded % Helper.NumberOfVehicleGroups, Sim.Sim.RoadGraph);
-
-                                if (vehicle.IsCreated)
-                                {
-                                    vehiclesAdded++;
-                                    UrbanEcho.Sim.Sim.Vehicles.Add(vehicle);
-                                    VehicleFeatures.Add(pf);
-                                }
-                                else
-                                {
-                                    PointFeature pfFailed = new PointFeature(mPoint);
-
-                                    DebugLayerFeatures.Add(pfFailed);
-                                }
-                            }
-                        }
-                    }
-                }*/
 
                 layer.Features = VehicleFeatures;
 
@@ -1107,11 +868,11 @@ namespace UrbanEcho.FileManagement
 
                 layer.Style = vehiclesStyle.CreateThemeStyle();
 
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Created Vehicles Layer"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Created Vehicles Layer"));
             }
             catch (Exception ex)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to create Vehicle Layer {ex.ToString()}"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to create Vehicle Layer {ex.ToString()}"));
             }
 
             return layer;
@@ -1199,14 +960,14 @@ namespace UrbanEcho.FileManagement
                     };
                 });
 
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(),
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(),
                     $"[Census] Created overlay layer with {features.Count} zone polygons"));
 
                 return layer;
             }
             catch (Exception ex)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(),
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(),
                     $"[Census] Failed to create overlay layer: {ex}"));
                 return null;
             }
@@ -1232,11 +993,11 @@ namespace UrbanEcho.FileManagement
                 PinStyles pinStyles = new PinStyles();
                 layer.Style = pinStyles.CreateThemeStyle();
 
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Created Pin Layer"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Created Pin Layer"));
             }
             catch (Exception ex)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to create Pin Layer {ex.ToString()}"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to create Pin Layer {ex.ToString()}"));
             }
 
             return layer;
@@ -1258,15 +1019,15 @@ namespace UrbanEcho.FileManagement
 
                     GraphLayerFeatures.Add(pf);
                 }*/
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), "Started adding intersection bodies"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), "Started adding intersection bodies"));
 
                 if (ProjectLayers.CreateRoadIntersections())
                 {
-                    Sim.Sim.SetIntersectionBodiesCreated();
+                    SimManager.Instance.SetIntersectionBodiesCreated();
                 }
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), "Done adding intersection bodies"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), "Done adding intersection bodies"));
 
-                foreach (RoadIntersection r in Sim.Sim.RoadIntersections)
+                foreach (RoadIntersection r in SimManager.Instance.RoadIntersections)
                 {
                     if (r.IsBodySet())
                     {
@@ -1328,11 +1089,11 @@ namespace UrbanEcho.FileManagement
                 layer.Style = orangeDotStyle;
                 //layer.MaxVisible = 3.5f;
 
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Created Graph Node Layer"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Created Graph Node Layer"));
             }
             catch (Exception ex)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to create Graph Node Layer {ex.ToString()}"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to create Graph Node Layer {ex.ToString()}"));
             }
 
             return layer;
@@ -1387,47 +1148,6 @@ namespace UrbanEcho.FileManagement
                 SetDefaultZoomLimit(map);
             }
         }
-
-        //Only call from UI
-        /* old version of ZoomToLayer
-        public static void ZoomToLayer(Map map)
-        {
-            if (map == null)
-            {
-                return;
-            }
-
-            if (backgroundMBTile != null)
-            {
-                TileLayer layer = backgroundMBTile;
-                if (layer.Extent != null)
-                {
-                    MRect extent = layer.Extent;
-                    MRect panBounds = extent;
-
-                    if (map != null)
-                    {
-                        panBounds?.Multiply(5.0f);
-                        //https://github.com/Mapsui/Mapsui/blob/main/Samples/Mapsui.Samples.Common/Maps/Navigation/KeepWithinExtentSample.cs
-
-                        if (panBounds != null)
-                        {
-                            map.Navigator.OverridePanBounds = panBounds;
-                            map.Navigator.OverrideZoomBounds = new MMinMax(0.01, 50);
-
-                            map.Navigator.CenterOnAndZoomTo(new MPoint(extent.MinX + (extent.MaxX - extent.MinX) / 2,
-                                extent.MinY + (extent.MaxY - extent.MinY) / 2), 15.0);
-                        }
-                    }
-
-                    isZoomedToLayer = true;
-                }
-            }
-            else
-            {
-                SetDefaultZoomLimit(map);
-            }
-        }*/
 
         //Only call from UI
         //Add a default zoom limit, otherwise there is a crash if trying if scrolling
@@ -1517,7 +1237,7 @@ namespace UrbanEcho.FileManagement
                 myMap?.Layers.Add(debugLayer);
             }
 
-            Map? map = Sim.Sim.MyMap;
+            Map? map = MainWindow.Instance.GetMap();
             if (map != null)
             {
                 map.Refresh();
@@ -1533,7 +1253,7 @@ namespace UrbanEcho.FileManagement
                     MRect extent = map.Navigator.Viewport.ToExtent();
 
                     List<IFeature> copyOfVehiclesFeatures = new List<IFeature>();
-                    lock (Sim.Sim.LockChangeVehicleFeatureList)
+                    lock (SimManager.Instance.LockChangeVehicleFeatureList)
                     {
                         foreach (IFeature v in VehicleFeatures)
                         {

@@ -37,22 +37,36 @@ public partial class MainWindow : AppWindow, IPanelService
     private bool _projectExplorerOpen = true;
     private bool _propertiesOpen = true;
 
+    private MainViewModel vm;
+
+    public static MainWindow Instance { get; private set; } = null!;
+
     public MainWindow()
     {
         InitializeComponent();
-
+        Instance = this;
         TitleBar.ExtendsContentIntoTitleBar = true;
         TitleBar.TitleBarHitTestType = TitleBarHitTestType.Complex;
         var fileDialogService = new FileDialogService(this);
         var mapFeatureService = new MapFeatureService();
         var vehicleService = new VehicleService();
-        MainViewModel vm = new MainViewModel(this, fileDialogService, mapFeatureService, vehicleService);
+        vm = new MainViewModel(this, fileDialogService, mapFeatureService, vehicleService);
         DataContext = vm;
-        SetupMap.Init(vm.Map.MyMap);
-        Sim.Sim.SetMainViewModel(vm);
 
-        Sim.Sim.SimTask = Task.Factory.StartNew(new Action(Sim.Sim.Run), Sim.Sim.Cts.Token);
+        SetupMap.Init(vm.Map.MyMap);
+
+        SimManager.Instance.SimTask = Task.Factory.StartNew(new Action(SimManager.Instance.Run), SimManager.Instance.Cts.Token);
         UIUpdate.UITask = Task.Factory.StartNew(new Action(UIUpdate.Run), UIUpdate.Cts.Token);
+    }
+
+    public MainViewModel GetMainViewModel()
+    {
+        return vm;
+    }
+
+    public Map GetMap()
+    {
+        return vm.Map.MyMap;
     }
 
     public void ToggleConsole(bool open)

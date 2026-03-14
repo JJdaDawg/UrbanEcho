@@ -41,7 +41,7 @@ namespace UrbanEcho.FileManagement
             }
             catch (Exception ex)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to open Project File {ex.ToString()}"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to open Project File {ex.ToString()}"));
             }
 
             return projectFile;
@@ -57,12 +57,12 @@ namespace UrbanEcho.FileManagement
                     {
                         string s = JsonConvert.SerializeObject(projectFile);
                         writer.WriteLine(s);
-                        EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Saved Project File {projectFile.PathForThisFile}"));
+                        EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Saved Project File {projectFile.PathForThisFile}"));
                     }
                 }
                 catch (Exception ex)
                 {
-                    EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to load Project File {ex.ToString()}"));
+                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to load Project File {ex.ToString()}"));
                 }
             }
             else
@@ -81,12 +81,12 @@ namespace UrbanEcho.FileManagement
                 {
                     string s = JsonConvert.SerializeObject(projectFile);
                     writer.WriteLine(s);
-                    EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Saved Project File As {projectFile.PathForThisFile}"));
+                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Saved Project File As {projectFile.PathForThisFile}"));
                 }
             }
             catch (Exception ex)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Failed to save as project file {ex.ToString()}"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to save as project file {ex.ToString()}"));
             }
         }
     }

@@ -42,7 +42,7 @@ namespace UrbanEcho.Physics
 
         public static void Clear()
         {
-            foreach (RoadIntersection r in Sim.Sim.RoadIntersections)
+            foreach (RoadIntersection r in SimManager.Instance.RoadIntersections)
             {
                 if (r.Body != null)
                 {
@@ -51,13 +51,6 @@ namespace UrbanEcho.Physics
                 r.Dispose();//need to dispose to clean up event subscriptions
             }
 
-            foreach (Vehicle v in Sim.Sim.Vehicles)
-            {
-                if (v.Body != null)
-                {
-                    v.Body.Dispose();
-                }
-            }
             if (World.Created)
             {
                 B2Api.b2DestroyWorld(World.WorldId);//Destroy world

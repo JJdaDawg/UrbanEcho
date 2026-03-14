@@ -137,7 +137,7 @@ namespace UrbanEcho.Physics
             }
             catch (Exception e)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(),
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(),
                $"Failed to destroy intersection body: {BodyId.ToString()}"));
             }
         }

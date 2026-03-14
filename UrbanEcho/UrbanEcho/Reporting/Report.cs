@@ -18,6 +18,7 @@ using UrbanEcho.Events.UI;
 using UrbanEcho.FileManagement;
 using UrbanEcho.Models;
 using UrbanEcho.Models.Report;
+using UrbanEcho.Sim;
 using UrbanEcho.ViewModels;
 
 namespace UrbanEcho.Reporting
@@ -61,9 +62,9 @@ namespace UrbanEcho.Reporting
 
             TheReport.Intersections.Sort((intersectionReport1, intersectionReport2) => intersectionReport2.VehicleCount.CompareTo(intersectionReport1.VehicleCount));
 
-            if (Sim.Sim.RoadGraph != null)
+            if (SimManager.Instance.RoadGraph != null)
             {
-                foreach (RoadEdge roadEdge in Sim.Sim.RoadGraph.Edges)
+                foreach (RoadEdge roadEdge in SimManager.Instance.RoadGraph.Edges)
                 {
                     RoadEdgeReport.Add(new RoadEdgeReportModel(roadEdge.Metadata.RoadName, Helpers.Helper.TryGetFeatureKVPToString(roadEdge.Feature, "FROM_STREE", "None"),
                         Helpers.Helper.TryGetFeatureKVPToString(roadEdge.Feature, "TO_STREET", "None"), roadEdge.GetStats()));
@@ -73,11 +74,11 @@ namespace UrbanEcho.Reporting
             }
             if (ReportTask == null || ReportTask.IsCompleted)
             {
-                ReportTask = Task.Factory.StartNew(new Action(() => Export(fullReport, ms)), Sim.Sim.Cts.Token);
+                ReportTask = Task.Factory.StartNew(new Action(() => Export(fullReport, ms)), SimManager.Instance.Cts.Token);
             }
             else
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Unable to create a report (report export has not completed a previous export)"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Unable to create a report (report export has not completed a previous export)"));
             }
         }
 
@@ -125,18 +126,18 @@ namespace UrbanEcho.Reporting
                 //Show report
                 Process.Start(new ProcessStartInfo(outputFile) { UseShellExecute = true });
 
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Report Exported to {outputFile}"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Report Exported to {outputFile}"));
             }
             catch (Exception ex)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Error while exporting report {ex.Message}"));
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Error while exporting report {ex.Message}"));
             }
         }
 
         private MemoryStream? ExportMapImage()
         {
             MemoryStream? ms = null;
-            MainViewModel? mvm = Sim.Sim.GetMainViewModel();
+            MainViewModel? mvm = MainWindow.Instance.GetMainViewModel();
             bool savedFile = false;
             if (mvm != null)
             {
@@ -173,12 +174,12 @@ namespace UrbanEcho.Reporting
                     }
                     catch (Exception ex)
                     {
-                        EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Error while exporting image of map {ex.Message}"));
+                        EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Error while exporting image of map {ex.Message}"));
                     }
                 }
                 if (!savedFile)
                 {
-                    EventQueueForUI.Instance.Add(new LogToConsole(Sim.Sim.GetMainViewModel(), $"Image of map for report was not saved"));
+                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Image of map for report was not saved"));
                 }
             }
 

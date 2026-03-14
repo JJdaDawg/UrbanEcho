@@ -158,7 +158,7 @@ namespace UrbanEcho.Graph
         private static void LogStats(RoadGraph graph, int matched, int unmatched,
             double minAADT, double maxAADT, double totalAADT)
         {
-            var vm = UrbanEcho.Sim.Sim.GetMainViewModel();
+            var vm = MainWindow.Instance.GetMainViewModel();
             if (vm == null) return;
 
             EventQueueForUI.Instance.Add(new LogToConsole(vm,

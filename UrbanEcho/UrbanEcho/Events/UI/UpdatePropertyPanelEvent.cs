@@ -17,7 +17,7 @@ namespace UrbanEcho.Events.UI
 
         public void Run()
         {
-            MainViewModel? mvm = UrbanEcho.Sim.Sim.GetMainViewModel();
+            MainViewModel? mvm = MainWindow.Instance.GetMainViewModel();
             if (mvm is not null)
             {
                 if (mvm.Properties.HasSelection)
