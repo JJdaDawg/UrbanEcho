@@ -28,6 +28,8 @@ namespace UrbanEcho.Physics
         private Vector2[] vertices;
         private bool bodyCreated;
 
+        private bool isDisposed = false;
+
         public VehicleBody(Vehicle parent, FRect rect)
         {
             this.parent = parent;
@@ -62,18 +64,34 @@ namespace UrbanEcho.Physics
             return vertices;
         }
 
+        public bool IsDisposed()
+        {
+            return isDisposed;
+        }
+
         public void Dispose()
         {
             try
             {
-                if (intPtr != nint.Zero)
+                if (!isDisposed)
                 {
-                    NativeHandle.Free(intPtr);
-                }
-                if (bodyCreated)
-                {
-                    B2Api.b2DestroyBody(BodyId);
-                    bodyCreated = false;
+                    if (intPtr != nint.Zero)
+                    {
+                        NativeHandle.Free(intPtr);
+                    }
+                    if (bodyCreated)
+                    {
+                        if (World.Created)
+                        {
+                            //  B2Api.b2DestroyBody(BodyId); Destroy world instead so program doesn't hang up when destroying each body
+                        }
+                        else
+                        {
+                            EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Tried to free vehicle body after box2d world destroyed"));
+                        }
+                        bodyCreated = false;
+                        isDisposed = true;
+                    }
                 }
             }
             catch (Exception e)

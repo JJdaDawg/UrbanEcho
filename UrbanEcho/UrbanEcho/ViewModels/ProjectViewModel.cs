@@ -133,15 +133,20 @@ namespace UrbanEcho.ViewModels
         [RelayCommand(CanExecute = nameof(CanImportData))]
         private void ImportOSMBackground()
         {
-            Map? map = MainWindow.Instance.GetMap();
-            if (map != null)
-            {
-                LoadFileEvent loadBackgroundEvent = new LoadFileEvent(UrbanEcho.FileManagement.FileTypes.FileType.BackgroundFile, "osm", map);
-                EventQueueForSim.Instance.Add(loadBackgroundEvent);
-            }
+            Map map = MainWindow.Instance.GetMap();
+
+            LoadFileEvent loadBackgroundEvent = new LoadFileEvent(UrbanEcho.FileManagement.FileTypes.FileType.BackgroundFile, "osm", map);
+            EventQueueForSim.Instance.Add(loadBackgroundEvent);
 
             //ProjectLayers.LoadBackgroundFile(path);
             //WeakReferenceMessenger.Default.Send(new LogMessage($"Background loaded '{path}'", LogSource.System));
+        }
+
+        [RelayCommand(CanExecute = nameof(CanImportData))]
+        private void ImportViewport()
+        {
+            ImportViewportEvent importViewportEvent = new ImportViewportEvent();
+            EventQueueForSim.Instance.Add(importViewportEvent);
         }
 
         [RelayCommand(CanExecute = nameof(CanImportData))]
@@ -202,6 +207,7 @@ namespace UrbanEcho.ViewModels
             SaveAsProjectCommand.NotifyCanExecuteChanged();
             SaveProjectCommand.NotifyCanExecuteChanged();
             CloseProjectCommand.NotifyCanExecuteChanged();
+            ImportViewportCommand.NotifyCanExecuteChanged();
             ImportDataCommand.NotifyCanExecuteChanged();
             ImportBackgroundCommand.NotifyCanExecuteChanged();
             ImportRoadsCommand.NotifyCanExecuteChanged();

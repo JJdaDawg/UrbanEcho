@@ -159,7 +159,7 @@ namespace UrbanEcho.Sim
                     }
                 }
                 EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Generating Report"));
-                Report report = new Report(SimManager.Instance.RoadIntersections, SimManager.Instance.RoadGraph);
+                // Report report = new Report(SimManager.Instance.RoadIntersections, SimManager.Instance.RoadGraph);
             }
 
             EventQueueForUI.Instance.Add(new RefreshMapEvent(MainWindow.Instance.GetMap()));
@@ -290,7 +290,7 @@ namespace UrbanEcho.Sim
         {
             if (isDisposed == false)
             {
-                lock (SimManager.Instance.LockChangeVehicleFeatureList)//Make sure we dont change the list if being iterated
+                if (World.Created)
                 {
                     foreach (Vehicle vehicle in Vehicles)
                     {
@@ -299,10 +299,24 @@ namespace UrbanEcho.Sim
                             vehicle.Body.Dispose(); //need to dispose to clean up IntPtr
                         }
                     }
-                    Vehicles.Clear();
-                    ProjectLayers.VehicleFeatures.Clear();
-                    isDisposed = true;
+
+                    World.Clear();
                 }
+                else
+                {
+                    if (Vehicles.Count > 0)
+                    {
+                        EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Tried to free up vehicles but world was not created"));
+                    }
+                }
+
+                Vehicles.Clear();
+
+                lock (SimManager.Instance.LockChangeVehicleFeatureList)//Make sure we dont change the list if being iterated
+                {
+                    ProjectLayers.VehicleFeatures.Clear();
+                }
+                isDisposed = true;
             }
         }
     }

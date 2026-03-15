@@ -23,6 +23,7 @@ namespace UrbanEcho.Physics
         public static b2WorldId WorldId;
 
         public static bool Created = false;
+        public static bool WasCreated = false;
 
         public static MPoint Offset = new MPoint();
 
@@ -40,21 +41,39 @@ namespace UrbanEcho.Physics
             Created = true;
         }
 
-        public static void Clear()
+        public static void Init()
         {
+            b2WorldDef worldDef = b2DefaultWorldDef();
+            Vector2 gravity = new Vector2(0.0f, 0.0f);
+            worldDef.gravity = gravity;
+            worldDef.enableSleep = false;
+            WorldId = b2CreateWorld(worldDef);
+            World.Created = true;
+
             foreach (RoadIntersection r in SimManager.Instance.RoadIntersections)
             {
                 if (r.Body != null)
                 {
-                    r.Body.Dispose();
+                    r.Body.RecreateBody();
                 }
-                r.Dispose();//need to dispose to clean up event subscriptions
             }
+        }
 
+        public static void Clear()
+        {
             if (World.Created)
             {
+                foreach (RoadIntersection r in SimManager.Instance.RoadIntersections)
+                {
+                    if (r.Body != null)
+                    {
+                        r.Body.Dispose();
+                    }
+                }
+
                 B2Api.b2DestroyWorld(World.WorldId);//Destroy world
                 World.Created = false;
+                World.WasCreated = true;
             }
         }
     }

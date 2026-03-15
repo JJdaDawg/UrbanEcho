@@ -124,7 +124,7 @@ namespace UrbanEcho.Sim
             //NewProjectEvent newProjectEvent = new NewProjectEvent(mainViewModel.Map.MyMap);
             //EventQueueForSim.Instance.Add(newProjectEvent); //will usually happen from UI
 
-            FrameTimer frameTimer = new FrameTimer(true, 60);
+            FrameTimer frameTimer = new FrameTimer(false, 60);
             bool startedSimulation = false;
 
             while (Cts.IsCancellationRequested == false)
@@ -132,9 +132,11 @@ namespace UrbanEcho.Sim
                 TaskUpdates++;
                 frameTimer.Update();
 
-                if (World.Created)
+                if (World.WasCreated && !World.Created && ProjectLayers.VehicleLayerReady())
                 {
+                    World.Init();
                 }
+
                 if (World.Created)
                 {
                     if (ProjectLayers.GetIsRoadAndIntersectionLoaded())
@@ -156,7 +158,7 @@ namespace UrbanEcho.Sim
                         if (!startedSimulation)
                         {
                             startedSimulation = true;
-
+                            ResetSim();//Dispose so that all vehicles are cleared
                             currentSim = new Sim();
                         }
                         if (!currentSim.IsDisposed())
@@ -172,16 +174,17 @@ namespace UrbanEcho.Sim
                     {
                         if (!currentSim.IsDisposed())
                         {
-                            currentSim.CreateReport();//Clear all the stats
                             ResetSim();//Dispose so that all vehicles are cleared
+                            currentSim.CreateReport();//Clear all the stats
                         }
+
                         currentSim = new Sim();//Get a new instance for current sim
                         startedSimulation = false;
                     }
                 }
 
                 //Only update vehicle layer if ui queue is empty and do it every couple updates
-                if (EventQueueForUI.Instance.IsEmpty() && TaskUpdates % 2 == 0)
+                if (EventQueueForUI.Instance.IsEmpty() && TaskUpdates % 2 == 0 && !currentSim.IsDisposed())
                 {
                     ProjectLayers.UpdateVehicleLayer(true, MainWindow.Instance.GetMap());
                 }
@@ -422,12 +425,16 @@ namespace UrbanEcho.Sim
             RunSimulation = false;
             if (!currentSim.IsDisposed())
             {
-                currentSim.CreateReport();
                 ResetSim();
+                currentSim.CreateReport();
             }
-            currentSim = new Sim();
+
             World.Clear(); //Reset world and Destroy all existing bodies
 
+            foreach (RoadIntersection r in RoadIntersections)
+            {
+                r.Dispose();//need to dispose to clean up event subscriptions
+            }
             RoadIntersections = new List<RoadIntersection>();
 
             RoadGraph = null;
@@ -456,13 +463,6 @@ namespace UrbanEcho.Sim
                         }
                     }
 
-                    foreach (RoadIntersection r in RoadIntersections)
-                    {
-                        if (r.Body != null)
-                        {
-                            r.Body.Dispose();
-                        }
-                    }
                     ResetSim();
 
                     if (World.Created)

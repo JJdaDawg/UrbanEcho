@@ -41,6 +41,7 @@
                     </MenuItem>
                     <MenuItem Header="Import Data" IsEnabled="{Binding Project.HasProject}">
                         <MenuItem Header="OSM Background" Command="{Binding Project.ImportOSMBackgroundCommand}" />
+                        <MenuItem Header="Viewport Import" Command="{Binding Project.ImportViewportCommand}" />
                         <MenuItem Header="Background" Command="{Binding Project.ImportBackgroundCommand}" />
                         <MenuItem Header="Roads" Command="{Binding Project.ImportRoadsCommand}" />
                         <MenuItem Header="Intersections" Command="{Binding Project.ImportIntersectionsCommand}" />

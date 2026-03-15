@@ -35,17 +35,20 @@ namespace UrbanEcho.Physics
 
         private bool bodyCreated;
 
+        private b2BodyDef bodyDef;
+        private b2ShapeDef shapeDef;
+
         public IntersectionBody(RoadIntersection parent, List<(Vector2 pos, float width)> connectingPoints)
         {
             this.parent = parent;
             // Define the intersection body.
-            b2BodyDef bodyDef = b2DefaultBodyDef();
+            bodyDef = b2DefaultBodyDef();
             bodyDef.position = parent.Center;
             bodyDef.type = b2BodyType.b2_staticBody;
 
             BodyId = b2CreateBody(World.WorldId, bodyDef);
             bodyCreated = true;
-            b2ShapeDef shapeDef = b2DefaultShapeDef();
+            shapeDef = b2DefaultShapeDef();
             shapeDef.isSensor = true;
 
             intPtr = NativeHandle.Alloc(parent);
@@ -74,6 +77,15 @@ namespace UrbanEcho.Physics
                 }
                 ShapeId = b2CreatePolygonShape(BodyId, in shapeDef, in polygon);
             }
+        }
+
+        public void RecreateBody()
+        {
+            BodyId = b2CreateBody(World.WorldId, bodyDef);
+            intPtr = NativeHandle.Alloc(parent);
+            shapeDef.userData = intPtr;
+            ShapeId = b2CreatePolygonShape(BodyId, in shapeDef, in polygon);
+            bodyCreated = true;
         }
 
         public Vector2[] GetShapeVertices()
@@ -131,7 +143,7 @@ namespace UrbanEcho.Physics
                 }
                 if (bodyCreated)
                 {
-                    B2Api.b2DestroyBody(BodyId);
+                    //B2Api.b2DestroyBody(BodyId); Destroy world instead of clearing each body
                     bodyCreated = false;
                 }
             }

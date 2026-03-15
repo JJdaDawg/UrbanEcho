@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Threading;
 using UrbanEcho.Events.UI;
 using UrbanEcho.Graph;
 using UrbanEcho.Helpers;
@@ -133,7 +134,7 @@ namespace UrbanEcho.FileManagement
             {
                 currentProjectFile.BackgroundLayerPath = path;
                 backgroundRequiresLoading = true;
-
+                backgroundLayer = null;
                 if (Load(currentProjectFile))
                 {
                     if (MainWindow.Instance.GetMap() != null)
@@ -167,6 +168,17 @@ namespace UrbanEcho.FileManagement
                 currentProjectFile.RoadLayerPath = path;
                 roadRequiresLoading = true;
                 roadLoaded = false;
+                roadLabelLayer = null;
+                roadLayerFirstPass = null;
+                roadLayerSecondPass = null;
+
+                if (Path.GetExtension(currentProjectFile.RoadLayerPath) == ".osm")//if osm file also load the intersection file
+                {
+                    currentProjectFile.IntersectionLayerPath = path;
+                    intersectionRequiresLoading = true;
+                    intersectionLoaded = false;
+                    intersectionLayer = null;
+                }
 
                 if (Load(currentProjectFile))
                 {
@@ -188,6 +200,7 @@ namespace UrbanEcho.FileManagement
                 currentProjectFile.IntersectionLayerPath = path;
                 intersectionRequiresLoading = true;
                 intersectionLoaded = false;
+                intersectionLayer = null;
 
                 if (Load(currentProjectFile))
                 {
@@ -205,6 +218,18 @@ namespace UrbanEcho.FileManagement
         public static bool LayersNeedReAdd()
         {
             return backgroundRequiresLoading || roadRequiresLoading || intersectionRequiresLoading;
+        }
+
+        public static bool VehicleLayerReady()
+        {
+            if (vehicleLayer != null)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         private static void resetLayers()
@@ -307,29 +332,35 @@ namespace UrbanEcho.FileManagement
                                 EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Load Road osm File"));
 
                                 List<IFeature> featuresList = Helpers.OsmReadHelper.GetRoadFeatures(currentProjectFile.RoadLayerPath);
-
-                                MemoryLayer? roadLayer1 = CreateRoadLayerFromOSM(featuresList, "Road Outline", true);
-                                if (roadLayer1 != null)
-                                {
-                                    roadLayerFirstPass = new RasterizingLayer(roadLayer1);
-                                }
-
-                                MemoryLayer? roadLayer2 = CreateRoadLayerFromOSM(featuresList, "Roads", false);
-                                if (roadLayer2 != null)
-                                {
-                                    roadLayerSecondPass = new RasterizingLayer(roadLayer2);
-                                }
-
-                                MemoryLayer? setRoadLabelLayer = CreateRoadLabelLayerFromOSM(featuresList, "Road Labels");
-                                if (setRoadLabelLayer != null)
-                                {
-                                    roadLabelLayer = new RasterizingLayer(setRoadLabelLayer);
-                                }
-
                                 if (featuresList.Count > 0)
                                 {
-                                    SimManager.Instance.SetRoadFeatureStats(featuresList);
-                                    SimManager.Instance.RoadGraph = UrbanTrafficSim.Core.IO.RoadGraphLoader.LoadFromFeatures(featuresList);
+                                    MemoryLayer? roadLayer1 = CreateRoadLayerFromOSM(featuresList, "Road Outline", true);
+                                    if (roadLayer1 != null)
+                                    {
+                                        roadLayerFirstPass = new RasterizingLayer(roadLayer1);
+                                    }
+
+                                    MemoryLayer? roadLayer2 = CreateRoadLayerFromOSM(featuresList, "Roads", false);
+                                    if (roadLayer2 != null)
+                                    {
+                                        roadLayerSecondPass = new RasterizingLayer(roadLayer2);
+                                    }
+
+                                    MemoryLayer? setRoadLabelLayer = CreateRoadLabelLayerFromOSM(featuresList, "Road Labels");
+                                    if (setRoadLabelLayer != null)
+                                    {
+                                        roadLabelLayer = new RasterizingLayer(setRoadLabelLayer);
+                                    }
+
+                                    if (featuresList.Count > 0)
+                                    {
+                                        SimManager.Instance.SetRoadFeatureStats(featuresList);
+                                        SimManager.Instance.RoadGraph = UrbanTrafficSim.Core.IO.RoadGraphLoader.LoadFromFeatures(featuresList);
+                                    }
+                                }
+                                else
+                                {
+                                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to load Road Layer file contained zero features"));
                                 }
                             }
                         }
@@ -1130,7 +1161,7 @@ namespace UrbanEcho.FileManagement
 
                     if (panBounds != null)
                     {
-                        map.Navigator.OverridePanBounds = panBounds;
+                        //map.Navigator.OverridePanBounds = panBounds;
                         map.Navigator.OverrideZoomBounds = new MMinMax(0.01, 2500);
 
                         map.Navigator.CenterOnAndZoomTo(new MPoint(extent.MinX + (extent.MaxX - extent.MinX) / 2,
@@ -1171,7 +1202,7 @@ namespace UrbanEcho.FileManagement
                 {
                     myMap.BackColor = Color.White;
 
-                    myMap.Navigator.OverridePanBounds = panBounds;
+                    //myMap.Navigator.OverridePanBounds = panBounds;
                     myMap.Navigator.OverrideZoomBounds = new MMinMax(0.1, 2500);
 
                     myMap.Navigator.CenterOnAndZoomTo(new MPoint(extent.MinX + (extent.MaxX - extent.MinX) / 2,
