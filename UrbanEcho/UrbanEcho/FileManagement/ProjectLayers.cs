@@ -163,6 +163,7 @@ namespace UrbanEcho.FileManagement
 
         public static void LoadRoadFile(string path)
         {
+            resetLayers();
             if (currentProjectFile != null)
             {
                 currentProjectFile.RoadLayerPath = path;
