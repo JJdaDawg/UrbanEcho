@@ -13,6 +13,7 @@
         <Expander Header="Info" IsExpanded="True">
             <StackPanel Margin="0" Spacing="2">
                 <TextBlock Text="{Binding RoadName, StringFormat='Road: {0}'}" />
+                <TextBlock Text="{Binding RoadType, StringFormat='Road Type: {0}'}" />
                 <TextBlock Text="{Binding Aadt, StringFormat='AADT: {0}'}" />
             </StackPanel>
         </Expander>

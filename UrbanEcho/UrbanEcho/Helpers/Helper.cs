@@ -13,6 +13,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
+using UrbanEcho.Graph;
 using UrbanEcho.Physics;
 
 namespace UrbanEcho.Helpers
@@ -224,6 +225,108 @@ namespace UrbanEcho.Helpers
         public static double DoMapCorrection(double value)
         {
             return value * MapCorrection;
+        }
+
+        public static int GetPriority(RoadType value)
+        {
+            int returnValue = 0;
+            if (value == RoadType.Unknown)
+            {
+                returnValue = 0;
+            }
+            else if (value == RoadType.AlleywayLane)
+            {
+                returnValue = 1;
+            }
+            else if (value == RoadType.Private)
+            {
+                returnValue = 2;
+            }
+            else if (value == RoadType.CulDeSac)
+            {
+                returnValue = 3;
+            }
+            else if (value == RoadType.LocalStreet)
+            {
+                returnValue = 4;
+            }
+            else if (value == RoadType.Roundabout)
+            {
+                returnValue = 5;
+            }
+            else if (value == RoadType.Ramp)
+            {
+                returnValue = 6;
+            }
+            else if (value == RoadType.Collector)
+            {
+                returnValue = 7;
+            }
+            else if (value == RoadType.Arterial)
+            {
+                returnValue = 8;
+            }
+            else if (value == RoadType.Expressway)
+            {
+                returnValue = 9;
+            }
+            else if (value == RoadType.Freeway)
+            {
+                returnValue = 10;
+            }
+
+            return returnValue;
+        }
+
+        public static int GetPriority(string value)
+        {
+            int returnValue = 0;
+            if (value == "NULL")
+            {
+                returnValue = 0;
+            }
+            else if (value == "Alleyway / Lane")
+            {
+                returnValue = 1;
+            }
+            else if (value == "Private")
+            {
+                returnValue = 2;
+            }
+            else if (value == "Cul - de - Sac")
+            {
+                returnValue = 3;
+            }
+            else if (value == "Local Street")
+            {
+                returnValue = 4;
+            }
+            else if (value == "Roundabout")
+            {
+                returnValue = 5;
+            }
+            else if (value == "Ramp")
+            {
+                returnValue = 6;
+            }
+            else if (value == "Collector")
+            {
+                returnValue = 7;
+            }
+            else if (value == "Arterial")
+            {
+                returnValue = 8;
+            }
+            else if (value == "Expressway / Highway")
+            {
+                returnValue = 9;
+            }
+            else if (value == "Freeway")
+            {
+                returnValue = 10;
+            }
+
+            return returnValue;
         }
     }
 }

@@ -1,4 +1,8 @@
-﻿using BruTile;
+﻿using Avalonia.Animation;
+using BruTile;
+using DocumentFormat.OpenXml.Bibliography;
+using DocumentFormat.OpenXml.Drawing.Charts;
+using DocumentFormat.OpenXml.Office2010.ExcelAc;
 using FluentAvalonia.UI.Media;
 using Mapsui;
 using Mapsui.Nts;
@@ -106,77 +110,166 @@ namespace UrbanEcho.Helpers
             }
             bool anySplittingRequired = true;
 
-            while (anySplittingRequired && featuresList.Count < 1000)
+            TestIfFeatureListHasDuplicateNodes(featuresList, false);
+            List<IFeature> checkedList = new List<IFeature>();
+            while (anySplittingRequired && featuresList.Count < 1000)//This limit of 1000 can be removed once we are sure is working
             {
-                (featuresList, anySplittingRequired) = SplitCrossingRoads(featuresList);
+                (featuresList, anySplittingRequired) = SplitCrossingRoads(featuresList, checkedList);
             }
 
             if (featuresList.Count > 1000)
             {
                 EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Loaded the max number of roads for viewport (1000)"));
             }
-
+            TestIfFeatureListHasDuplicateNodes(featuresList, true);
             return featuresList;
         }
 
-        public static (List<IFeature> newFeatures, bool splitHappened) SplitCrossingRoads(List<IFeature> featuresList)
+        public static void TestIfFeatureListHasDuplicateNodes(List<IFeature> featuresList, bool afterSplitting)
         {
-            List<IFeature> newFeaturesList = new List<IFeature>();
-            int count = 0;
-            bool hadToSplit = false;
-            GeometryFeature? test = new GeometryFeature();
             foreach (IFeature feature in featuresList)
             {
-                bool isNewFeature = false;
-
-                if (hadToSplit == false)
+                if (feature is GeometryFeature gf)
                 {
-                    foreach (IFeature otherFeature in featuresList)
+                    if (gf.Geometry != null)
                     {
-                        if (feature.Equals(otherFeature))
+                        if (gf.Geometry is LineString ls)
                         {
-                            continue;
-                        }
-                        else
-                        {
-                            test = new GeometryFeature();
-                            Coordinate[]? c1 = null;
-                            Coordinate[]? c2 = null;
-
-                            if (NeedsSplitting(feature, otherFeature, out c1, out c2))
+                            for (int i = 0; i < ls.Coordinates.Count(); i++)
                             {
-                                hadToSplit = true;
-                                isNewFeature = true;
-                                LineString newLs1 = new LineString(c1);
-                                LineString newLs2 = new LineString(c2);
-                                GeometryFeature newGf1 = CopyFeatureAttributes(new GeometryFeature(newLs1), feature);
-                                GeometryFeature newGf2 = CopyFeatureAttributes(new GeometryFeature(newLs2), feature);
-                                newFeaturesList.Add(newGf1);
-                                newFeaturesList.Add(newGf2);
-                                break;
-                                //EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Split value {count}"));
+                                for (int j = 0; j < ls.Coordinates.Count(); j++)
+                                {
+                                    if (i != j)
+                                    {
+                                        if (ls.Coordinates[i].Equals2D(ls.Coordinates[j], 0.1f))
+                                        {
+                                            string when = afterSplitting ? "after splitting" : "before splitting";
+                                            EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Duplicate Node on linestring in featurelist {when}"));
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
-                if (!isNewFeature)
+            }
+        }
+
+        public static bool TestIfLineStringHasIntersectPoint(LineString ls, Coordinate c, out int indexForDuplicateNode)
+        {
+            indexForDuplicateNode = 0;
+            for (int i = 0; i < ls.Coordinates.Count(); i++)
+            {
+                if (ls.Coordinates[i].Equals2D(c, 0.1f))
                 {
-                    newFeaturesList.Add(feature);
+                    indexForDuplicateNode = i;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static bool TestIfLineStringHasDuplicateNodes(LineString ls, bool first)
+        {
+            for (int i = 0; i < ls.Coordinates.Count(); i++)
+            {
+                for (int j = 0; j < ls.Coordinates.Count(); j++)
+                {
+                    if (i != j)
+                    {
+                        if (ls.Coordinates[i].Equals2D(ls.Coordinates[j], 0.1f))
+                        {
+                            string when = first ? "first part of split" : "second part of split";
+                            EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Duplicate Node on linestring {when}"));
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        public static (List<IFeature> newFeatures, bool splitHappened) SplitCrossingRoads(List<IFeature> featuresList, List<IFeature> checkedList)
+        {
+            List<IFeature> newFeaturesList = new List<IFeature>();
+            int count = 0;
+            bool hadToSplit = false;
+
+            foreach (IFeature feature in featuresList)
+            {
+                bool isNewFeature = false;
+                bool wasCheckedThisTime = false;
+                if (!checkedList.Contains(feature))
+                {
+                    if (hadToSplit == false)
+                    {
+                        foreach (IFeature otherFeature in featuresList)
+                        {
+                            if (feature.Equals(otherFeature))
+                            {
+                                continue;
+                            }
+                            else
+                            {
+                                Coordinate[]? c1 = null;
+                                Coordinate[]? c2 = null;
+                                if (IsSplittingAllowed(feature, otherFeature))
+                                {
+                                    if (NeedsSplitting(feature, otherFeature, out c1, out c2))
+                                    {
+                                        hadToSplit = true;
+                                        isNewFeature = true;
+                                        LineString newLs1 = new LineString(c1);
+                                        LineString newLs2 = new LineString(c2);
+
+                                        GeometryFeature newGf1 = CopyFeatureAttributes(new GeometryFeature(newLs1), feature);
+                                        GeometryFeature newGf2 = CopyFeatureAttributes(new GeometryFeature(newLs2), feature);
+                                        newFeaturesList.Add(newGf1);
+                                        newFeaturesList.Add(newGf2);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        wasCheckedThisTime = true;
+                    }
+                    if (!isNewFeature)
+                    {
+                        newFeaturesList.Add(feature);
+                        if (wasCheckedThisTime)
+                        {
+                            checkedList.Add(feature);
+                        }
+                    }
                 }
                 else
                 {
-                    bool showme = true;
-                    /*
-                    if (test is GeometryCollection gc)
-                    {
-                        LineString lineString = new LineString(coordinates.ToArray());
-                        GeometryFeature gf = OsmReadHelper.CreateRoadFeature(new GeometryFeature(lineString), way, objectIdToUse);
-                    }*/
+                    newFeaturesList.Add(feature);
                 }
             }
 
             count++;
             return (newFeaturesList, hadToSplit);
+        }
+
+        public static bool IsSplittingAllowed(IFeature feature1, IFeature feature2)
+        {
+            bool allow = true;//allow by default
+            if (feature1.Fields.Contains("highway") && feature2.Fields.Contains("highway"))
+            {
+                string? hw1 = feature1["highway"]?.ToString();
+                string? hw2 = feature2["highway"]?.ToString();
+
+                if (hw1 != null && hw2 != null)
+                {
+                    if (hw1 == "motorway" && (hw2 != "motorway" || hw2 != "motorway_link"))
+                    {
+                        allow = false;
+                    }
+                }
+            }
+
+            return allow;
         }
 
         public static bool NeedsSplitting(IFeature feature1, IFeature feature2, out Coordinate[]? c1, out Coordinate[]? c2)
@@ -229,13 +322,7 @@ namespace UrbanEcho.Helpers
                                         {
                                             q2Lengthened = ExtendLine(q1.X, q1.Y, q2.X, q2.Y, 1.0f);
                                         }
-                                        /*
-                                        p1 = new Coordinate(0, 0);
-                                        p2 = new Coordinate(10, 10);
 
-                                        q1 = new Coordinate(0, 10);
-                                        q2 = new Coordinate(10, 0);
-                                        */
                                         intersected = false;
                                         RobustLineIntersector i = new NetTopologySuite.Algorithm.RobustLineIntersector();
                                         i.ComputeIntersection(p1Lengthened, p2Lengthened, q1Lengthened, q2Lengthened);
@@ -245,56 +332,43 @@ namespace UrbanEcho.Helpers
                                             intersected = true;
                                             theIntersectPoint = new Coordinate(i.GetIntersection(0));
                                         }
-                                        /*
-                                        {
-                                            LineString showtestLs1 = new LineString(
-                                                                                    new Coordinate[]
-                                                                                    {
-                                                                                        new Coordinate(p1Lengthened),
-                                                                                        new Coordinate(p2Lengthened)
-                                                                                    });
-                                            LineString showtestLs2 = new LineString(new Coordinate[]
-                                                                                                {
-                                                                                                    new Coordinate(q1Lengthened),
-                                                                                                    new Coordinate(q2Lengthened)
-                                                                                                });
-
-                                            LineString showoldLs1 = new LineString(
-                                                                                    new Coordinate[]
-                                                                                    {
-                                                                                        new Coordinate(p1),
-                                                                                        new Coordinate(p2)
-                                                                                    });
-                                            LineString showoldLs2 = new LineString(new Coordinate[]
-                                                                                                {
-                                                                                                    new Coordinate(q1),
-                                                                                                    new Coordinate(q2)
-                                                                                                });
-
-                                            showtestLs1.Intersection(showtestLs2);
-
-                                            if (showtestLs1.Intersects(showtestLs2))
-                                            {
-                                                Geometry p = showtestLs1.Intersection(showtestLs2);
-                                            }
-                                        }*/
                                     }
                                     if (intersected)
                                     {
                                         Coordinate newPoint = theIntersectPoint;
-
-                                        c1 = new Coordinate[i1 + 2];
-                                        for (int c1Index = 0; c1Index < c1.Count() - 1; c1Index++)
+                                        bool pointDuplicated = TestIfLineStringHasIntersectPoint(ls1, theIntersectPoint.CoordinateValue, out int indexForDuplicate);
+                                        if (!pointDuplicated)
                                         {
-                                            c1[c1Index] = new Coordinate(ls1.Coordinates[c1Index].X, ls1.Coordinates[c1Index].Y);
+                                            c1 = new Coordinate[i1 + 2];
+
+                                            for (int c1Index = 0; c1Index < c1.Count() - 1; c1Index++)
+                                            {
+                                                c1[c1Index] = new Coordinate(ls1.Coordinates[c1Index].X, ls1.Coordinates[c1Index].Y);
+                                            }
+                                            c1[c1.Count() - 1] = newPoint;
+                                            c2 = new Coordinate[ls1.Count - c1.Count() + 2];
+                                            c2[0] = newPoint;
+
+                                            for (int c2Index = 1; c2Index < c2.Count(); c2Index++)
+                                            {
+                                                c2[c2Index] = new Coordinate(ls1.Coordinates[i1 + c2Index].X, ls1.Coordinates[i1 + c2Index].Y);
+                                            }
                                         }
-                                        c1[c1.Count() - 1] = newPoint;
-
-                                        c2 = new Coordinate[ls1.Count - c1.Count() + 2];
-                                        c2[0] = newPoint;
-                                        for (int c2Index = 1; c2Index < c2.Count(); c2Index++)
+                                        else
                                         {
-                                            c2[c2Index] = new Coordinate(ls1.Coordinates[i1 + c2Index].X, ls1.Coordinates[i1 + c2Index].Y);
+                                            c1 = new Coordinate[indexForDuplicate + 1];
+
+                                            for (int c1Index = 0; c1Index < c1.Count(); c1Index++)
+                                            {
+                                                c1[c1Index] = new Coordinate(ls1.Coordinates[c1Index].X, ls1.Coordinates[c1Index].Y);
+                                            }
+
+                                            c2 = new Coordinate[ls1.Count - indexForDuplicate];
+
+                                            for (int c2Index = 0; c2Index < c2.Count(); c2Index++)
+                                            {
+                                                c2[c2Index] = new Coordinate(ls1.Coordinates[indexForDuplicate + c2Index].X, ls1.Coordinates[indexForDuplicate + c2Index].Y);
+                                            }
                                         }
 
                                         LineString testLs1 = new LineString(c1);
@@ -304,6 +378,15 @@ namespace UrbanEcho.Helpers
                                         {
                                             foundIntersect = true;
                                             returnValue = true;
+
+                                            if (TestIfLineStringHasDuplicateNodes(testLs1, true))
+                                            {
+                                                bool breakhere = true;
+                                            }
+                                            if (TestIfLineStringHasDuplicateNodes(testLs2, false))
+                                            {
+                                                bool breakhere = true;
+                                            }
                                         }
                                     }
                                     if (foundIntersect)
@@ -452,6 +535,9 @@ namespace UrbanEcho.Helpers
             list.Add("motorway");
             list.Add("motorway_link");
             list.Add("trunk_link");
+            list.Add("tertiary_link");
+            list.Add("secondary_link");
+            list.Add("primary_link");
 
             return list;
         }
@@ -471,7 +557,8 @@ namespace UrbanEcho.Helpers
             gf["SPEED_LIMI"] = oldFeature["SPEED_LIMI"];
             gf["LANES"] = oldFeature["LANES"];
             gf["FLOW_DIREC"] = oldFeature["FLOW_DIREC"];
-
+            gf["highway"] = oldFeature["highway"];
+            gf["CARTO_CLAS"] = oldFeature["CARTO_CLAS"];
             return gf;
         }
 
@@ -481,7 +568,8 @@ namespace UrbanEcho.Helpers
             gf["SPEED_LIMI"] = GetSpeedLimit(way);
             gf["LANES"] = GetLane(way);
             gf["FLOW_DIREC"] = GetDirection(way);
-
+            gf["highway"] = GetHighway(way);
+            gf["CARTO_CLAS"] = GetRoadType(way);
             return gf;
         }
 
@@ -489,8 +577,43 @@ namespace UrbanEcho.Helpers
         {
             gf["Intersecti"] = GetName(node);
             gf["Intersec_1"] = GetSignalType(node);
-
+            gf["highway"] = GetHighway(node);
             return gf;
+        }
+
+        public static string GetRoadType(Way way)
+        {
+            string returnValue = "Local Street";
+
+            if (way.Tags.TryGetValue("highway", out string value))
+            {
+                if (value == "residential" || value == "unclassified")
+                {
+                    returnValue = "Local Street";
+                }
+                else if (value == "Roundabout")
+                {
+                    returnValue = "Roundabout";
+                }
+                else if (value.Contains("link"))
+                {
+                    returnValue = "Ramp";
+                }
+                else if (value == "secondary" || value == "tertiary")
+                {
+                    returnValue = "Collector";
+                }
+                else if (value == "primary")
+                {
+                    returnValue = "Arterial";
+                }
+                else if (value == "motorway" || value == "trunk")
+                {
+                    returnValue = "Expressway / Highway";
+                }
+            }
+
+            return returnValue;
         }
 
         public static string GetSignalType(Node n)
@@ -518,12 +641,36 @@ namespace UrbanEcho.Helpers
             return returnValue;
         }
 
+        public static string GetHighway(Node n)
+        {
+            string returnValue = "stop";
+
+            if (n.Tags.TryGetValue("highway", out string value))
+            {
+                returnValue = value;
+            }
+
+            return returnValue;
+        }
+
         //not used because we have to split the line segments to be further segmented (using a incrementing integer instead)
         public static string GetOsmId(Way way)
         {
             string returnValue = "0";
 
             if (way.Tags.TryGetValue("osm_id", out string value))
+            {
+                returnValue = value;
+            }
+
+            return returnValue;
+        }
+
+        public static string GetHighway(Way way)
+        {
+            string returnValue = "unclassified";
+
+            if (way.Tags.TryGetValue("highway", out string value))
             {
                 returnValue = value;
             }

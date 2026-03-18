@@ -819,6 +819,7 @@ namespace UrbanEcho.FileManagement
             try
             {
                 layer = new MemoryLayer(name);
+                layer.MinVisible = 0.2f;
                 layer.MaxVisible = 1.5f;
                 layer.Features = features;
 
@@ -867,10 +868,17 @@ namespace UrbanEcho.FileManagement
         public static MemoryLayer? CreateVehicleLayer()
         {
             MemoryLayer? layer = null;
-
+            World.Clear();
             if (World.Created == false)
             {
+                World.WasCreated = false;
+                if (roadLayerFirstPass != null)
+                    while (roadLayerFirstPass.Busy)
+                    {
+                        Thread.Sleep(1);
+                    }
                 MRect? extent = roadLayerFirstPass?.Extent;
+
                 if (extent != null)
                 {
                     CenterOfMap = new MPoint(extent.MinX + (extent.MaxX - extent.MinX) / 2,

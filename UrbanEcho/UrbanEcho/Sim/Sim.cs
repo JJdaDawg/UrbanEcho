@@ -24,7 +24,7 @@ namespace UrbanEcho.Sim
         private readonly Random spawnRng = new Random();
         private float simTime = 0;
         public long SimFrames = 0;
-        private int startingNumberOfVehicles = 3000;
+        private int startingNumberOfVehicles = 10;
         private int maxVehicles = 5000;
         public int GroupToUpdate = 0;
         private bool flasher;

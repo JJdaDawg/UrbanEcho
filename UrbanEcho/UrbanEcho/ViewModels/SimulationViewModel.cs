@@ -95,6 +95,14 @@ namespace UrbanEcho.ViewModels
             EventQueueForSim.Instance.Add(controlSimEvent);
         }
 
+        public void ResetControls()
+        {
+            IsRunning = false;
+            IsPaused = false;
+            IsPausedOrRunning = false;
+            NotifyAllCommands();
+        }
+
         [RelayCommand]
         private void RealTime()
         { }

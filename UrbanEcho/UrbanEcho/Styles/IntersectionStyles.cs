@@ -33,8 +33,8 @@ namespace UrbanEcho.Styles
                 {
                     Styles.Add("TrafficLight", CreateImageStyle(projectName, "TrafficLight.png"));
                     Styles.Add("StopSign", CreateImageStyle(projectName, "StopSign.png"));
-                    Styles.Add("Flasher", CreateImageStyle(projectName, "Flasher.png"));
-                    Styles.Add("Pedestrian", CreateImageStyle(projectName, "Pedestrian.png"));
+                    //Styles.Add("Flasher", CreateImageStyle(projectName, "Flasher.png"));
+                    //Styles.Add("Pedestrian", CreateImageStyle(projectName, "Pedestrian.png"));
                 }
                 catch (Exception ex)
                 {
@@ -85,22 +85,22 @@ namespace UrbanEcho.Styles
 
                             case "All Way Stop":
                                 return Styles["StopSign"];
-
-                            case "Flasher":
-                                return Styles["Flasher"];
-
+                            /*
+                        case "Flasher":
+                            return Styles["Flasher"];
+                            */
                             case "Full Signal":
                                 return Styles["TrafficLight"];
+                            /*
+                        case "Intersection Pedestrian Signal":
+                            return Styles["Pedestrian"];
 
-                            case "Intersection Pedestrian Signal":
-                                return Styles["Pedestrian"];
+                        case "Pedestrian Crossover":
+                            return Styles["Pedestrian"];
 
-                            case "Pedestrian Crossover":
-                                return Styles["Pedestrian"];
-
-                            case "Stop with LRT Signals":
-                                return Styles["TrafficLight"];
-
+                        case "Stop with LRT Signals":
+                            return Styles["TrafficLight"];
+                            */
                             default:
 
                                 return Styles["Default"];

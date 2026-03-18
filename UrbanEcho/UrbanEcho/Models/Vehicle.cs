@@ -284,6 +284,15 @@ namespace UrbanEcho.Sim
 
             Body = new VehicleBody(this, rect);
 
+            Vector2 initialPosition = Vector2.Zero;
+            b2Rot rot = b2Rot.FromAngle(0);
+            B2Api.b2Body_SetTransform(Body.BodyId, initialPosition, rot);
+            B2Api.b2Body_SetLinearVelocity(Body.BodyId, Vector2.Zero);
+            Pos = B2Api.b2Body_GetPosition(Body.BodyId);
+            if (float.IsNaN(Pos.X) || float.IsNaN(Pos.Y))
+            {
+                bool breakhere = true;
+            }
             IsCreated = true;
         }
 
@@ -604,10 +613,21 @@ namespace UrbanEcho.Sim
 
         public void Update()
         {
+            Vector2 LastPos = Pos;
+
             if (didFirstUpdate)//Only do the update after path initially set
             {
+                if (!B2Api.b2Body_IsValid(Body.BodyId))
+                {
+                    return;
+                }
                 Pos = B2Api.b2Body_GetPosition(Body.BodyId);
-
+                if (float.IsNaN(Pos.X) || float.IsNaN(Pos.Y))
+                {
+                    ResetVehicleToNewPos();
+                    Pos = B2Api.b2Body_GetPosition(Body.BodyId);
+                    return;
+                }
                 if (IsForceStopped)
                 {
                     B2Api.b2Body_SetLinearVelocity(Body.BodyId, Vector2.Zero);
@@ -800,7 +820,10 @@ namespace UrbanEcho.Sim
                 Vector2 velocityToSetMs = new Vector2(currentAngle.c * speedToUseMs, currentAngle.s * speedToUseMs);
                 if (State != VehicleStates.Stopped)
                 {
-                    B2Api.b2Body_SetLinearVelocity(Body.BodyId, velocityToSetMs);
+                    if (!float.IsNaN(velocityToSetMs.X) && (!float.IsNaN(velocityToSetMs.Y)))
+                    {
+                        B2Api.b2Body_SetLinearVelocity(Body.BodyId, velocityToSetMs);
+                    }
                 }
                 else
                 {
@@ -1084,8 +1107,18 @@ namespace UrbanEcho.Sim
             }
             B2Api.b2Body_SetLinearVelocity(Body.BodyId, Vector2.Zero);
             B2Api.b2Body_SetAngularVelocity(Body.BodyId, 0);
-            b2Rot rot = b2Rot.FromAngle(GetTargetAngle());
+            float getAngle = GetTargetAngle();
+            if (float.IsNaN(getAngle))
+            {
+                getAngle = 0;
+            }
+            b2Rot rot = b2Rot.FromAngle(getAngle);
             Vector2 initialPosition = GetRandomOffsetFromRoad();
+            if (float.IsNaN(initialPosition.X) || float.IsNaN(initialPosition.Y))
+            {
+                return;
+            }
+
             B2Api.b2Body_SetTransform(Body.BodyId, initialPosition, rot);
         }
 
@@ -1118,23 +1151,34 @@ namespace UrbanEcho.Sim
         private float GetTargetAngle()
         {
             float targetAngle = 0;
-            Vector2 roadDirection = Vector2.Normalize(new Vector2(endPos.X - startPos.X, endPos.Y - startPos.Y));
-            Vector2 closestPointToLine = findNearestPointOnLine(startPos, endPos, Pos);
-
-            Vector2 targetPointToAimTowards = new Vector2(closestPointToLine.X + roadDirection.X * settings.GetLookAheadValueForSteerTowardsLane(), closestPointToLine.Y + roadDirection.Y * settings.GetLookAheadValueForSteerTowardsLane());
-            if (Vector2.Distance(endPos, startPos) <= Vector2.Distance(targetPointToAimTowards, startPos))
+            if (endPos != startPos)
             {
-                targetPointToAimTowards = endPos;
-            }
+                Vector2 roadDirection = Vector2.Normalize(new Vector2(endPos.X - startPos.X, endPos.Y - startPos.Y));
+                Vector2 closestPointToLine = findNearestPointOnLine(startPos, endPos, Pos);
 
-            Vector2 directionNormalized = Vector2.Normalize(new Vector2(targetPointToAimTowards.X - Pos.X, targetPointToAimTowards.Y - Pos.Y));
+                Vector2 targetPointToAimTowards = new Vector2(closestPointToLine.X + roadDirection.X * settings.GetLookAheadValueForSteerTowardsLane(), closestPointToLine.Y + roadDirection.Y * settings.GetLookAheadValueForSteerTowardsLane());
+                if (Vector2.Distance(endPos, startPos) <= Vector2.Distance(targetPointToAimTowards, startPos))
+                {
+                    targetPointToAimTowards = endPos;
+                }
+
+                Vector2 directionNormalized = Vector2.Normalize(new Vector2(targetPointToAimTowards.X - Pos.X, targetPointToAimTowards.Y - Pos.Y));
+
+                targetAngle = MathF.Atan2(directionNormalized.Y, directionNormalized.X);
+            }
+            else
+            {
+                Vector2 directionNormalized = Vector2.Normalize(new Vector2(endPos.X - Pos.X, endPos.Y - Pos.Y));
+
+                targetAngle = MathF.Atan2(directionNormalized.Y, directionNormalized.X);
+            }
 
             if (float.IsNaN(targetAngle))
             {
                 targetAngle = 0;
             }
 
-            return targetAngle = MathF.Atan2(directionNormalized.Y, directionNormalized.X);
+            return targetAngle;
 
             //https://stackoverflow.com/questions/51905268/how-to-find-closest-point-on-line
             //https://stackoverflow.com/questions/22668659/calculate-on-which-side-of-a-line-a-point-is

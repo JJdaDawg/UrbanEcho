@@ -64,6 +64,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Resources\OsmFiles\osmTest.uep">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Resources\ProjectFiles\clippedProject.uep">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

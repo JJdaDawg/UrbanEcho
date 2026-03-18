@@ -17,6 +17,7 @@ public partial class RoadPropertiesViewModel : ObservableObject, IPropertiesView
 
     [ObservableProperty] private string _roadName = string.Empty;
     [ObservableProperty] private string _aadt = string.Empty;
+    [ObservableProperty] private string _roadType = string.Empty;
     [ObservableProperty] private bool _isEditMode;
 
     [ObservableProperty] private bool _isRoadOpen = true;
@@ -36,6 +37,7 @@ public partial class RoadPropertiesViewModel : ObservableObject, IPropertiesView
         _edge = edge;
         RoadName = edge.Metadata.RoadName;
         Aadt = edge.Metadata.TrafficVolume > 0 ? ((int)edge.Metadata.TrafficVolume).ToString() : "N/A";
+        RoadType = edge.Metadata.RoadType.ToString();
         SpeedLimit = (int)Math.Round(edge.Metadata.SpeedLimit * 3.6);
         IsRoadOpen = !edge.IsClosed;
         TruckAllowance = edge.Metadata.TruckAllowance;

@@ -1,4 +1,5 @@
-﻿using Mapsui;
+﻿using DocumentFormat.OpenXml.Drawing.Charts;
+using Mapsui;
 using Mapsui.Nts;
 using NetTopologySuite.Geometries;
 using System;
@@ -110,12 +111,36 @@ namespace UrbanEcho.Models
             {
                 returnValue.offsetTime = 5.0f + (float)Random.Shared.NextDouble() * 10.0f;
 
-                List<(Vector2 direction, float width)> connectionsForBody = returnValue.setConnections(graph);
+                List<(Vector2 direction, float width)> connectionsForBody = returnValue.setConnections(graph, 15.0f);
+                if (connectionsForBody.Count == 0)
+                {
+                    //Try again with higher threshold for connecting roads (don't use higher at first or some roads get linked when they shouldn't)
+                    connectionsForBody = returnValue.setConnections(graph, 20.0f);
+                }
+
                 if (returnValue.isCenterSet && graph is not null)
                 {
                     returnValue.Body = new IntersectionBody(returnValue, connectionsForBody);
                     returnValue.isBodySet = true;
                     returnValue.FallBackTrafficRule = TrafficRule.SetDefaultTrafficRule();
+
+                    string currentName = Helpers.Helper.TryGetFeatureKVPToString(returnValue.Feature, "Intersecti", "");
+
+                    if (currentName == "Unnamed" || currentName == "")
+                    {
+                        SetName(returnValue);
+                    }
+
+                    if (returnValue.Feature.Fields.Contains("highway"))
+                    {
+                        string intersectionType = Helpers.Helper.TryGetFeatureKVPToString(returnValue.Feature, "Intersec_1", "");
+                        if (intersectionType == "All Way Stop")
+                        {
+                            SetStopTypeOSM(returnValue);
+                        }
+                        returnValue.TheSignalType = returnValue.SetSignalType(); //Update signal type in case it was changed
+                    }
+
                     returnValue.SetStaticTrafficRules();
                 }
                 else
@@ -133,8 +158,85 @@ namespace UrbanEcho.Models
                     edgeTrafficRule.RoadEdge.UpdateIntersectionStats += returnValue.UpdateStats;
                 }
             }
-
             return returnValue;
+        }
+
+        //Set stop type if osm data was used
+        private static void SetStopTypeOSM(RoadIntersection roadIntersection)
+        {
+            bool doneSettingType = false;
+            foreach (EdgeTrafficRule edgeTrafficRule in roadIntersection.EdgesInto)
+            {
+                string roadType1 = Helpers.Helper.TryGetFeatureKVPToString(edgeTrafficRule.RoadEdge.Feature, "highway", "");
+
+                foreach (EdgeTrafficRule otherEdgeTrafficRule in roadIntersection.EdgesInto)
+                {
+                    if (roadType1 == "")
+                    {
+                        break;
+                    }
+                    string roadType2 = Helpers.Helper.TryGetFeatureKVPToString(otherEdgeTrafficRule.RoadEdge.Feature, "highway", "");
+                    if (roadType2 == "")
+                    {
+                        continue;
+                    }
+
+                    if (roadType1 != roadType2)//If two different types of highway set as a two way stop
+                    {
+                        roadIntersection.Feature["Intersec_1"] = "Two Way Stop";
+                    }
+                }
+
+                if (doneSettingType)
+                {
+                    break;
+                }
+            }
+        }
+
+        private static void SetName(RoadIntersection roadIntersection)
+        {
+            bool doneSettingName = false;
+            foreach (EdgeTrafficRule edgeTrafficRule in roadIntersection.EdgesInto)
+            {
+                string roadName1 = Helpers.Helper.TryGetFeatureKVPToString(edgeTrafficRule.RoadEdge.Feature, "STREET", "");
+
+                foreach (EdgeTrafficRule otherEdgeTrafficRule in roadIntersection.EdgesInto)
+                {
+                    if (roadName1 == "")
+                    {
+                        break;
+                    }
+                    string roadName2 = Helpers.Helper.TryGetFeatureKVPToString(otherEdgeTrafficRule.RoadEdge.Feature, "STREET", "");
+                    if (roadName2 == "")
+                    {
+                        continue;
+                    }
+
+                    if (roadName1 != roadName2)
+                    {
+                        if (roadName1.Length > 4 && roadName2.Length > 4)
+                        {
+                            //Do just a short name compare
+                            if (roadName1.Substring(0, 4) == roadName2.Substring(0, 4))
+                            {
+                                continue;
+                            }
+                            else
+                            {
+                                roadIntersection.Feature["Intersecti"] = $"{roadName1} @ {roadName2}";
+                                doneSettingName = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (doneSettingName)
+                {
+                    break;
+                }
+            }
         }
 
         private void SetStaticTrafficRules()
@@ -227,53 +329,113 @@ namespace UrbanEcho.Models
                         }
                     }
                 }
-                //no pairs found try matching by using closest aadt values
-                if (firstPairedEdges.Count == 0)
+
+                if (!Feature.Fields.Contains("highway")) //Only use this method if it was not a osm file
                 {
-                    foreach (EdgeTrafficRule edgeTrafficRule1 in EdgesInto)
+                    //no pairs found try matching by using closest aadt values
+                    if (firstPairedEdges.Count == 0)
                     {
-                        float aadtValue1 = Helpers.Helper.TryGetFeatureKVPToFloat(edgeTrafficRule1.RoadEdge.Feature, "AADT", 0);
-                        bool oneMatch = false;
-                        float closestMatch = 0;
-                        EdgeTrafficRule closestRule = EdgesInto[1];//This cannot be null and should get overwritten with correct value
-                        float difference = 0;
-                        foreach (EdgeTrafficRule edgeTrafficRule2 in EdgesInto)
+                        foreach (EdgeTrafficRule edgeTrafficRule1 in EdgesInto)
                         {
-                            if (edgeTrafficRule1 == edgeTrafficRule2)
+                            float aadtValue1 = Helpers.Helper.TryGetFeatureKVPToFloat(edgeTrafficRule1.RoadEdge.Feature, "AADT", 0);
+                            bool oneMatch = false;
+                            float closestMatch = 0;
+                            EdgeTrafficRule closestRule = EdgesInto[1];//This cannot be null and should get overwritten with correct value
+                            float difference = 0;
+                            foreach (EdgeTrafficRule edgeTrafficRule2 in EdgesInto)
                             {
-                                continue;
-                            }
-                            float aadtValue2 = Helpers.Helper.TryGetFeatureKVPToFloat(edgeTrafficRule2.RoadEdge.Feature, "AADT", 0);
-                            if (oneMatch == false)
-                            {
-                                closestRule = edgeTrafficRule2;
-                                oneMatch = true;
-                                difference = Math.Abs(aadtValue1 - aadtValue2);
-                                closestMatch = difference;
-                            }
-                            else
-                            {
-                                difference = Math.Abs(aadtValue1 - aadtValue2);
-                                if (difference < closestMatch)
+                                if (edgeTrafficRule1 == edgeTrafficRule2)
+                                {
+                                    continue;
+                                }
+                                float aadtValue2 = Helpers.Helper.TryGetFeatureKVPToFloat(edgeTrafficRule2.RoadEdge.Feature, "AADT", 0);
+                                if (oneMatch == false)
                                 {
                                     closestRule = edgeTrafficRule2;
+                                    oneMatch = true;
+                                    difference = Math.Abs(aadtValue1 - aadtValue2);
                                     closestMatch = difference;
                                 }
+                                else
+                                {
+                                    difference = Math.Abs(aadtValue1 - aadtValue2);
+                                    if (difference < closestMatch)
+                                    {
+                                        closestRule = edgeTrafficRule2;
+                                        closestMatch = difference;
+                                    }
+                                }
+                            }
+
+                            if (!firstPairedEdges.Contains(edgeTrafficRule1))
+                            {
+                                firstPairedEdges.Add(edgeTrafficRule1);
+                            }
+                            if (!firstPairedEdges.Contains(closestRule))
+                            {
+                                firstPairedEdges.Add(closestRule);
+                            }
+
+                            if (firstPairedEdges.Count != 0)
+                            {
+                                break;
                             }
                         }
+                    }
+                }
+                else
+                {
+                    //used for osm instead of aadt get road priority values
+                    if (firstPairedEdges.Count == 0)
+                    {
+                        foreach (EdgeTrafficRule edgeTrafficRule1 in EdgesInto)
+                        {
+                            string highwayClass1 = Helpers.Helper.TryGetFeatureKVPToString(edgeTrafficRule1.RoadEdge.Feature, "CARTO_CLAS", "");
+                            int priority1 = Helpers.Helper.GetPriority(highwayClass1);
+                            bool oneMatch = false;
+                            float closestMatch = 0;
+                            EdgeTrafficRule closestRule = EdgesInto[1];//This cannot be null and should get overwritten with correct value
+                            float difference = 0;
+                            foreach (EdgeTrafficRule edgeTrafficRule2 in EdgesInto)
+                            {
+                                if (edgeTrafficRule1 == edgeTrafficRule2)
+                                {
+                                    continue;
+                                }
+                                string highwayClass2 = Helpers.Helper.TryGetFeatureKVPToString(edgeTrafficRule2.RoadEdge.Feature, "CARTO_CLAS", "");
+                                int priority2 = Helpers.Helper.GetPriority(highwayClass2);
 
-                        if (!firstPairedEdges.Contains(edgeTrafficRule1))
-                        {
-                            firstPairedEdges.Add(edgeTrafficRule1);
-                        }
-                        if (!firstPairedEdges.Contains(closestRule))
-                        {
-                            firstPairedEdges.Add(closestRule);
-                        }
+                                if (oneMatch == false)
+                                {
+                                    closestRule = edgeTrafficRule2;
+                                    oneMatch = true;
+                                    difference = Math.Abs(priority1 - priority2);
+                                    closestMatch = difference;
+                                }
+                                else
+                                {
+                                    difference = Math.Abs(priority1 - priority2);
+                                    if (difference < closestMatch)
+                                    {
+                                        closestRule = edgeTrafficRule2;
+                                        closestMatch = difference;
+                                    }
+                                }
+                            }
 
-                        if (firstPairedEdges.Count != 0)
-                        {
-                            break;
+                            if (!firstPairedEdges.Contains(edgeTrafficRule1))
+                            {
+                                firstPairedEdges.Add(edgeTrafficRule1);
+                            }
+                            if (!firstPairedEdges.Contains(closestRule))
+                            {
+                                firstPairedEdges.Add(closestRule);
+                            }
+
+                            if (firstPairedEdges.Count != 0)
+                            {
+                                break;
+                            }
                         }
                     }
                 }
@@ -312,6 +474,18 @@ namespace UrbanEcho.Models
                 {
                     computeRatioForSignal = pairedRoads[0].CombinedAADT / aadtSumEdgesInto;
                 }
+                else
+                {
+                    if (pairedRoads[0] != null && pairedRoads[1] != null)
+                    {
+                        if (pairedRoads[0].TrafficRules.Count > 0 && pairedRoads[1].TrafficRules.Count > 0)
+                        {
+                            int priorityDifference = Helpers.Helper.GetPriority(pairedRoads[0].TrafficRules[0].RoadEdge.Metadata.RoadType) -
+                                Helpers.Helper.GetPriority(pairedRoads[1].TrafficRules[0].RoadEdge.Metadata.RoadType);
+                            computeRatioForSignal = 0.5f + priorityDifference * 0.25f;//give signal ratio based on road type priority
+                        }
+                    }
+                }
 
                 ratioForSignal = Math.Clamp(computeRatioForSignal, 0.2f, 0.8f);
             }
@@ -334,47 +508,96 @@ namespace UrbanEcho.Models
 
                 if (EdgesInto.Count > 1)
                 {
-                    if (EdgesInto.Count <= 3)
+                    if (!Feature.Fields.Contains("highway")) //Only use this method if it was not a osm file)
                     {
-                        int indexForLowestAADT = 0;
-                        float lowestAADTValueFound = float.PositiveInfinity;
-
-                        //find lowest AADT value of the two or three and set the other edges to never block
-                        for (int i = 0; i < EdgesInto.Count; i++)
+                        if (EdgesInto.Count <= 3)
                         {
-                            float aadtValue = Helpers.Helper.TryGetFeatureKVPToFloat(EdgesInto[i].RoadEdge.Feature, "AADT", 0);
+                            int indexForLowestAADT = 0;
+                            float lowestAADTValueFound = float.PositiveInfinity;
 
-                            if (aadtValue < lowestAADTValueFound)
+                            //find lowest AADT value of the two or three and set the other edges to never block
+                            for (int i = 0; i < EdgesInto.Count; i++)
                             {
-                                indexForLowestAADT = i;
-                                lowestAADTValueFound = aadtValue;
+                                float aadtValue = Helpers.Helper.TryGetFeatureKVPToFloat(EdgesInto[i].RoadEdge.Feature, "AADT", 0);
+
+                                if (aadtValue < lowestAADTValueFound)
+                                {
+                                    indexForLowestAADT = i;
+                                    lowestAADTValueFound = aadtValue;
+                                }
+                            }
+
+                            for (int i = 0; i < EdgesInto.Count; i++)
+                            {
+                                if (i != indexForLowestAADT)
+                                {
+                                    EdgesInto[i].TrafficRule.SetNeverBlock();
+                                }
                             }
                         }
-
-                        for (int i = 0; i < EdgesInto.Count; i++)
+                        if (EdgesInto.Count >= 4)
                         {
-                            if (i != indexForLowestAADT)
+                            //find two lowest AADT values and set the other edges to never block
+                            List<(float aadt, EdgeTrafficRule edgeRule)> aadtValues = new List<(float aadt, EdgeTrafficRule rule)>();
+
+                            //get a list of the AADT values
+                            for (int i = 0; i < EdgesInto.Count; i++)
                             {
-                                EdgesInto[i].TrafficRule.SetNeverBlock();
+                                aadtValues.Add((Helpers.Helper.TryGetFeatureKVPToFloat(EdgesInto[i].RoadEdge.Feature, "AADT", 0), EdgesInto[i]));
+                            }
+                            //sort from lowest to highest AADT value
+                            aadtValues.Sort((edge1, edge2) => edge1.aadt.CompareTo(edge2.aadt));
+                            //Set any that are not the two lowest values to never block
+                            for (int i = 2; i < aadtValues.Count; i++)
+                            {
+                                aadtValues[i].edgeRule.TrafficRule.SetNeverBlock();
                             }
                         }
                     }
-                    if (EdgesInto.Count >= 4)
+                    else //Only use this method if it was a osm file)
                     {
-                        //find two lowest AADT values and set the other edges to never block
-                        List<(float aadt, EdgeTrafficRule edgeRule)> aadtValues = new List<(float aadt, EdgeTrafficRule rule)>();
+                        if (EdgesInto.Count <= 3)
+                        {
+                            int indexForLowestPriority = 0;
+                            int lowestPriorityValueFound = int.MaxValue;
 
-                        //get a list of the AADT values
-                        for (int i = 0; i < EdgesInto.Count; i++)
-                        {
-                            aadtValues.Add((Helpers.Helper.TryGetFeatureKVPToFloat(EdgesInto[i].RoadEdge.Feature, "AADT", 0), EdgesInto[i]));
+                            //find lowest AADT value of the two or three and set the other edges to never block
+                            for (int i = 0; i < EdgesInto.Count; i++)
+                            {
+                                int priorityValue = Helpers.Helper.GetPriority(EdgesInto[i].RoadEdge.Metadata.RoadType);
+
+                                if (priorityValue < lowestPriorityValueFound)
+                                {
+                                    indexForLowestPriority = i;
+                                    lowestPriorityValueFound = priorityValue;
+                                }
+                            }
+
+                            for (int i = 0; i < EdgesInto.Count; i++)
+                            {
+                                if (i != indexForLowestPriority)
+                                {
+                                    EdgesInto[i].TrafficRule.SetNeverBlock();
+                                }
+                            }
                         }
-                        //sort from lowest to highest AADT value
-                        aadtValues.Sort((edge1, edge2) => edge1.aadt.CompareTo(edge2.aadt));
-                        //Set any that are not the two lowest values to never block
-                        for (int i = 2; i < aadtValues.Count; i++)
+                        if (EdgesInto.Count >= 4)
                         {
-                            aadtValues[i].edgeRule.TrafficRule.SetNeverBlock();
+                            //find two lowest priority values and set the other edges to never block
+                            List<(int priority, EdgeTrafficRule edgeRule)> priorityValues = new List<(int priority, EdgeTrafficRule rule)>();
+
+                            //get a list of the AADT values
+                            for (int i = 0; i < EdgesInto.Count; i++)
+                            {
+                                priorityValues.Add((Helpers.Helper.GetPriority(EdgesInto[i].RoadEdge.Metadata.RoadType), EdgesInto[i]));
+                            }
+                            //sort from lowest to highest AADT value
+                            priorityValues.Sort((edge1, edge2) => Helpers.Helper.GetPriority(edge1.edgeRule.RoadEdge.Metadata.RoadType).CompareTo(Helpers.Helper.GetPriority(edge2.edgeRule.RoadEdge.Metadata.RoadType)));
+                            //Set any that are not the two lowest values to never block
+                            for (int i = 2; i < priorityValues.Count; i++)
+                            {
+                                priorityValues[i].edgeRule.TrafficRule.SetNeverBlock();
+                            }
                         }
                     }
                 }
@@ -428,7 +651,7 @@ namespace UrbanEcho.Models
             return isBodySet;
         }
 
-        private List<(Vector2 pos, float width)> setConnections(RoadGraph graph)
+        private List<(Vector2 pos, float width)> setConnections(RoadGraph graph, float thresholdToUse)
         {
             List<(Vector2 pos, float width)> connectingPoints = new List<(Vector2 pos, float width)>();
 
@@ -472,7 +695,7 @@ namespace UrbanEcho.Models
                                     {
                                         startIndex = lineString.Count - 1;
                                     }
-                                    float threshold = 15.0f;
+                                    float threshold = thresholdToUse;
                                     Vector2 roadFeaturePos = Helpers.Helper.Convert2Box2dWorldPosition(lineString.Coordinates[startIndex].X, lineString.Coordinates[startIndex].Y);
                                     bool connectionAdded = false;
                                     if (Vector2.Distance(Center, roadFeaturePos) < threshold)
@@ -526,17 +749,6 @@ namespace UrbanEcho.Models
             {
                 UpdateFullSignalRule();
             }
-            /* else
-             {
-                 if (EdgesInto.Count != 0)
-                 {
-                     for (int i = 0; i < EdgesInto.Count; i++)
-                     {
-                         EdgesInto[i].TrafficRule.SetBlock(false);
-                     }
-                 }
-                 FallBackTrafficRule.SetBlock(false);
-             }*/
         }
 
         private void UpdateFullSignalRule()

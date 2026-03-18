@@ -117,7 +117,9 @@ namespace UrbanEcho.Sim
             totalRunTime.Start();
 
             //TODO: Remove this once we have UI for loading project
-            LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/ProjectFiles/myFile.uep", MainWindow.Instance.GetMap());
+            //LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/ProjectFiles/myFile.uep", MainWindow.Instance.GetMap());
+            LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/OsmFiles/osmTest.uep", MainWindow.Instance.GetMap());
+
             EventQueueForSim.Instance.Add(loadProjectEvent); //will usually happen from UI
 
             //Start with a new project
@@ -158,12 +160,13 @@ namespace UrbanEcho.Sim
                         if (!startedSimulation)
                         {
                             startedSimulation = true;
-                            ResetSim();//Dispose so that all vehicles are cleared
-                            currentSim = new Sim();
                         }
                         if (!currentSim.IsDisposed())
                         {
-                            currentSim.Step();
+                            if (World.Created)
+                            {
+                                currentSim.Step();
+                            }
                         }
                         else
                         {
@@ -423,6 +426,7 @@ namespace UrbanEcho.Sim
         {
             Paused = false;
             RunSimulation = false;
+            EventQueueForUI.Instance.Add(new ResetSimControlEvent());
             if (!currentSim.IsDisposed())
             {
                 ResetSim();

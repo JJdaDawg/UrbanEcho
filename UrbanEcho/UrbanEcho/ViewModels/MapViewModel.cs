@@ -70,7 +70,7 @@ public partial class MapViewModel : ObservableObject
 
         var trackingTimer = new Avalonia.Threading.DispatcherTimer
         {
-            Interval = TimeSpan.FromMilliseconds(16)
+            Interval = TimeSpan.FromMilliseconds(16 * 5)
         };
         trackingTimer.Tick += (s, e) => UpdateTracking();
         trackingTimer.Start();
@@ -238,8 +238,8 @@ public partial class MapViewModel : ObservableObject
 
     public void UpdateTracking()
     {
-        if (_trackedVehicle is null || (!(SimManager.Instance.RunSimulation || SimManager.Instance.Paused)))//Make sure this routine is only caused during simulation,
-                                                                                                            //or it can keep layers busy and prevent report running
+        if (_trackedVehicle is null || (!(SimManager.Instance.RunSimulation || SimManager.Instance.Paused || World.Created == false)))//Make sure this routine is only caused during simulation,
+                                                                                                                                      //or it can keep layers busy and prevent report running
         {
             if (ProjectLayers.PinLayer != null)
             {
@@ -252,7 +252,21 @@ public partial class MapViewModel : ObservableObject
         }
         else
         {
-            var pos = _trackedVehicle.Pos;
+            Viewport vp = MyMap.Navigator.Viewport;
+            Vector2 pos = Vector2.Zero;
+            if (_trackedVehicle != null)
+            {
+                pos = _trackedVehicle.Pos;
+
+                if (float.IsNaN(pos.X) || float.IsNaN(pos.Y))
+                {
+                    return;
+                }
+            }
+            else
+            {
+                return;
+            }
 
             if (ProjectLayers.PinLayer != null)
             {
@@ -279,39 +293,46 @@ public partial class MapViewModel : ObservableObject
             if (skipFollowScans >= 10)
             {
                 skipFollowScans = 0;
-                Vector2 currentPosViewportCenter = UrbanEcho.Helpers.Helper.Convert2Box2dWorldPosition(MyMap.Navigator.Viewport.CenterX, MyMap.Navigator.Viewport.CenterY);
+                Vector2 currentPosViewportCenter = UrbanEcho.Helpers.Helper.Convert2Box2dWorldPosition(vp.CenterX, vp.CenterY);
                 if (giveTimeForZoomingOut == 0)//If zero then not in middle of flyover
                 {
                     if (Vector2.Distance(currentPosViewportCenter, pos) >= 2000.0f)//If center of viewport 2km away from tracked vehicle do flyover
                     {
-                        currentResolution = MyMap.Navigator.Viewport.Resolution;
-                        MyMap.Navigator.ZoomTo(15, 16 * 10 * 10, Mapsui.Animations.Easing.CubicOut);
+                        currentResolution = vp.Resolution;
+                        if (currentResolution <= 0.1f)
+                        {
+                            currentResolution = 0.1f;
+                        }
+                        MyMap.Navigator.ZoomTo(15, 16 * 100, Mapsui.Animations.Easing.CubicOut);
                         //If vehicle moved to new position from where tracking is do flyover and skip trying to center on vehicle
                         giveTimeForZoomingOut = 1;
                     }
                     else
                     {
-                        MyMap.Navigator.CenterOn(new MPoint(pos.X + World.Offset.X, pos.Y + World.Offset.Y), 16 * 10, Mapsui.Animations.Easing.Linear);
+                        if (World.Created)
+                        {
+                            MyMap.Navigator.CenterOn(new MPoint(pos.X + World.Offset.X, pos.Y + World.Offset.Y), 16 * 50, Mapsui.Animations.Easing.Linear);
+                        }
                     }
                 }
                 else
                 {//If vehicle moved to new position from where tracking is do flyover and skip trying to center on vehicle
                     giveTimeForZoomingOut++;
-                    if (giveTimeForZoomingOut == 5)
+                    if (giveTimeForZoomingOut == 2)
                     {
-                        MyMap.Navigator.CenterOn(new MPoint(pos.X + World.Offset.X, pos.Y + World.Offset.Y), 16 * 10 * 10, Mapsui.Animations.Easing.CubicInOut);
+                        MyMap.Navigator.CenterOn(new MPoint(pos.X + World.Offset.X, pos.Y + World.Offset.Y), 16 * 50, Mapsui.Animations.Easing.CubicInOut);
                     }
-                    if (giveTimeForZoomingOut == 15)
+                    if (giveTimeForZoomingOut == 3)
                     {
-                        MyMap.Navigator.ZoomTo(currentResolution, 16 * 10 * 15, Mapsui.Animations.Easing.CubicOut);
+                        MyMap.Navigator.ZoomTo(currentResolution, 16 * 50, Mapsui.Animations.Easing.CubicOut);
                     }
-                    if (giveTimeForZoomingOut >= 30)
+                    if (giveTimeForZoomingOut >= 4)
                     {
                         giveTimeForZoomingOut = 0;
                     }
                 }
             }
-            MyMap.Refresh();//Refresh so map is redrawn else some items don't render in after map moves
+            // MyMap.Refresh();//Refresh so map is redrawn else some items don't render in after map moves
         }
     }
 
