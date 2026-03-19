@@ -9,47 +9,47 @@
 
     <StackPanel Spacing="0">
 
-        <StackPanel Margin="10,10" Spacing="8">
-            <TextBlock Text="INFO" Opacity="0.5" />
-            <StackPanel Spacing="2">
-                <TextBlock Text="Name" Opacity="0.5" />
-                <TextBlock Text="{Binding Name}" TextWrapping="Wrap" Opacity="0.85" />
-            </StackPanel>
-            <StackPanel Spacing="2">
-                <TextBlock Text="Type" Opacity="0.5" />
-                <TextBlock Text="{Binding Type}" TextWrapping="Wrap" Opacity="0.85" />
-            </StackPanel>
-            <StackPanel Spacing="2">
-                <TextBlock Text="Status" Opacity="0.5" />
-                <TextBlock Text="{Binding Status}" Opacity="0.85" />
-            </StackPanel>
-            <StackPanel Spacing="2">
-                <TextBlock Text="Municipality" Opacity="0.5" />
-                <TextBlock Text="{Binding Municipality}" Opacity="0.85" />
-            </StackPanel>
-            <StackPanel Spacing="2">
-                <TextBlock Text="Owned By" Opacity="0.5" />
-                <TextBlock Text="{Binding OwnedBy}" Opacity="0.85" />
-            </StackPanel>
-            <StackPanel Spacing="2">
-                <TextBlock Text="Maintained By" Opacity="0.5" />
-                <TextBlock Text="{Binding MaintainedBy}" Opacity="0.85" />
-            </StackPanel>
+        <StackPanel Spacing="2">
+            <Expander Header="Intersection Information" IsExpanded="True">
+                <StackPanel Spacing="8">
+					<StackPanel Spacing="2">
+                        <TextBlock Text="Name" Opacity="0.5" />
+                        <TextBlock Text="{Binding Name}" TextWrapping="Wrap" Opacity="0.85" />
+                    </StackPanel>
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="Type" Opacity="0.5" />
+                        <TextBlock Text="{Binding Type}" TextWrapping="Wrap" Opacity="0.85" />
+                    </StackPanel>
+                    <StackPanel Spacing="2" IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                        <TextBlock Text="Status" Opacity="0.5" />
+                        <TextBlock Text="{Binding Status}" Opacity="0.85" />
+                    </StackPanel>
+                    <StackPanel Spacing="2" IsVisible="{Binding Municipality, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                        <TextBlock Text="Municipality" Opacity="0.5" />
+                        <TextBlock Text="{Binding Municipality}" Opacity="0.85" />
+                    </StackPanel>
+                    <StackPanel Spacing="2" IsVisible="{Binding OwnedBy, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                        <TextBlock Text="Owned By" Opacity="0.5" />
+                        <TextBlock Text="{Binding OwnedBy}" Opacity="0.85" />
+                    </StackPanel>
+                    <StackPanel Spacing="2" IsVisible="{Binding MaintainedBy, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                        <TextBlock Text="Maintained By" Opacity="0.5" />
+                        <TextBlock Text="{Binding MaintainedBy}" Opacity="0.85" />
+                    </StackPanel>
+                </StackPanel>
+            </Expander>
         </StackPanel>
 
-        <Separator />
-
-        <StackPanel Margin="14,10" Spacing="4">
-            <TextBlock Text="ROADS" Opacity="0.5" />
-            <ItemsControl ItemsSource="{Binding ConnectingRoads}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding}" Opacity="0.85" />
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </StackPanel>
-
+        <Expander Header="Connecting Roads" IsExpanded="True">
+			<StackPanel>
+				<ItemsControl ItemsSource="{Binding ConnectingRoads}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}" Opacity="0.85" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Expander>
     </StackPanel>
-
 </UserControl>
