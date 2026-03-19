@@ -14,6 +14,7 @@ namespace UrbanEcho.FileManagement
 {
     public class ProjectFile
     {
+        public string FileName = "";
         public string PathForThisFile = "";
         public string BackgroundLayerPath = "";
         public string RoadLayerPath = "";
@@ -44,6 +45,11 @@ namespace UrbanEcho.FileManagement
                 EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to open Project File {ex.ToString()}"));
             }
 
+            if (projectFile is not null)
+            {
+                projectFile.FileName = System.IO.Path.GetFileNameWithoutExtension(path);
+            }
+            
             return projectFile;
         }
 

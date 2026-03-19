@@ -81,7 +81,7 @@
         </Grid>
 
         <!-- Footer -->
-        <local:FooterBar Grid.Row="3" DataContext="{Binding}"/>
+        <local:FooterBar Grid.Row="3" DataContext="{Binding Project}"/>
 
     </Grid>
 </Window>
