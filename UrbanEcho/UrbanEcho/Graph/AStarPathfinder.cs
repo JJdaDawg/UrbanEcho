@@ -78,9 +78,6 @@ namespace UrbanEcho.Graph
             var parent = new Dictionary<int, int>();
             var parentEdge = new Dictionary<int, RoadEdge>();
 
-            foreach (var node in _graph.Nodes.Keys)
-                g[node] = double.PositiveInfinity;
-
             g[node_start] = 0;
             h[node_start] = Heuristic(node_start, node_goal);
             f[node_start] = h[node_start];
@@ -156,9 +153,6 @@ namespace UrbanEcho.Graph
             var h = new Dictionary<int, double>();
             var f = new Dictionary<int, double>();
             var parentEdge = new Dictionary<int, RoadEdge>();
-
-            foreach (var node in _graph.Nodes.Keys)
-                g[node] = double.PositiveInfinity;
 
             g[node_start] = 0;
             h[node_start] = Heuristic(node_start, node_goal);

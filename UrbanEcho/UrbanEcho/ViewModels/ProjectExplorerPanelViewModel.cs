@@ -16,6 +16,7 @@ public partial class ProjectExplorerPanelViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsIntersectionLayerActive))]
     [NotifyPropertyChangedFor(nameof(IsVehicleLayerActive))]
     [NotifyPropertyChangedFor(nameof(IsRoadLayerActive))]
+    [NotifyPropertyChangedFor(nameof(IsSpawnerLayerActive))]
     private SelectionLayer _activeLayer = SelectionLayer.None;
 
     [ObservableProperty] private bool _hasProject;
@@ -23,11 +24,13 @@ public partial class ProjectExplorerPanelViewModel : ObservableObject
     public bool IsIntersectionLayerActive => ActiveLayer == SelectionLayer.Intersection;
     public bool IsVehicleLayerActive => ActiveLayer == SelectionLayer.Vehicle;
     public bool IsRoadLayerActive => ActiveLayer == SelectionLayer.Road;
+    public bool IsSpawnerLayerActive => ActiveLayer == SelectionLayer.Spawner;
 
     public RelayCommand ToggleCommand { get; }
     public RelayCommand SelectIntersectionLayerCommand { get; }
     public RelayCommand SelectVehicleLayerCommand { get; }
     public RelayCommand SelectRoadLayerCommand { get; }
+    public RelayCommand SelectSpawnerLayerCommand { get; }
 
     public ProjectExplorerPanelViewModel(IPanelService panelService)
     {
@@ -36,6 +39,7 @@ public partial class ProjectExplorerPanelViewModel : ObservableObject
         SelectIntersectionLayerCommand = new RelayCommand(() => ActiveLayer = IsIntersectionLayerActive ? SelectionLayer.None : SelectionLayer.Intersection);
         SelectVehicleLayerCommand = new RelayCommand(() => ActiveLayer = IsVehicleLayerActive ? SelectionLayer.None : SelectionLayer.Vehicle);
         SelectRoadLayerCommand = new RelayCommand(() => ActiveLayer = IsRoadLayerActive ? SelectionLayer.None : SelectionLayer.Road);
+        SelectSpawnerLayerCommand = new RelayCommand(() => ActiveLayer = IsSpawnerLayerActive ? SelectionLayer.None : SelectionLayer.Spawner);
         WeakReferenceMessenger.Default.Register<ProjectLoadedMessage>(this, (r, m) => HasProject = true);
         WeakReferenceMessenger.Default.Register<ProjectClosedMessage>(this, (r, m) => HasProject = false);
     }

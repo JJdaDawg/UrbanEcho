@@ -27,6 +27,7 @@ public partial class MapViewModel : ObservableObject
 
     private Vehicle? _trackedVehicle;
     private Vehicle? _pendingDestinationVehicle;
+    private SpawnPoint? _pendingMoveSpawner;
 
     [ObservableProperty] private Map myMap = new Map();
     [ObservableProperty] private bool isVolumeVisible = true;
@@ -49,6 +50,7 @@ public partial class MapViewModel : ObservableObject
         WeakReferenceMessenger.Default.Register<MapFeatureDeselectedMessage>(this, (r, m) =>
         {
             _trackedVehicle = null;
+            _pendingMoveSpawner = null;
             ProjectLayers.SetRoadSelection(null, MyMap);
             ProjectLayers.SetPathOverlay(null, MyMap);
         });
@@ -66,6 +68,20 @@ public partial class MapViewModel : ObservableObject
         WeakReferenceMessenger.Default.Register<HideVehiclePathMessage>(this, (r, m) =>
         {
             ProjectLayers.SetPathOverlay(null, MyMap);
+        });
+        WeakReferenceMessenger.Default.Register<DeleteSpawnerMessage>(this, (r, m) =>
+        {
+            ProjectLayers.RemoveSpawnPoint(m.SpawnPoint);
+            WeakReferenceMessenger.Default.Send(new MapFeatureDeselectedMessage());
+            WeakReferenceMessenger.Default.Send(new LogMessage($"Spawner deleted", LogSource.Map));
+        });
+        WeakReferenceMessenger.Default.Register<MoveSpawnerMessage>(this, (r, m) =>
+        {
+            _pendingMoveSpawner = m.SpawnPoint;
+        });
+        WeakReferenceMessenger.Default.Register<CancelMoveSpawnerMessage>(this, (r, m) =>
+        {
+            _pendingMoveSpawner = null;
         });
 
         var trackingTimer = new Avalonia.Threading.DispatcherTimer
@@ -85,12 +101,26 @@ public partial class MapViewModel : ObservableObject
             return;
         }
 
+        if (_pendingMoveSpawner is not null)
+        {
+            var worldPos = e.WorldPosition;
+            if (worldPos is not null) { HandleSpawnerMove(_pendingMoveSpawner, worldPos); }
+            return;
+        }
+
         var layers = new List<ILayer>();
 
         if (_activeLayer == SelectionLayer.Road)
         {
             var worldPos = e.WorldPosition;
             if (worldPos is not null) HandleRoadClick(worldPos);
+            return;
+        }
+
+        if (_activeLayer == SelectionLayer.Spawner)
+        {
+            var worldPos = e.WorldPosition;
+            if (worldPos is not null) HandleSpawnerClick(worldPos);
             return;
         }
 
@@ -166,6 +196,79 @@ public partial class MapViewModel : ObservableObject
         }
 
         return best;
+    }
+
+    private const double SpawnerSelectionThreshold = 500.0;
+
+    private void HandleSpawnerClick(MPoint worldPos)
+    {
+        // First, try to select an existing spawn point near the click
+        SpawnPoint? nearest = null;
+        double bestDist = SpawnerSelectionThreshold;
+        foreach (var sp in SimManager.Instance.SpawnPoints)
+        {
+            double dx = sp.X - worldPos.X;
+            double dy = sp.Y - worldPos.Y;
+            double dist = Math.Sqrt(dx * dx + dy * dy);
+            if (dist < bestDist)
+            {
+                bestDist = dist;
+                nearest = sp;
+            }
+        }
+
+        if (nearest is not null)
+        {
+            WeakReferenceMessenger.Default.Send(new MapFeatureSelectedMessage(MapFeatureType.Spawner, nearest));
+            return;
+        }
+
+        // No nearby spawner found — add a new one at this location
+        var node = FindNearestSpawnableNode(worldPos);
+        if (node is null)
+        {
+            WeakReferenceMessenger.Default.Send(new LogMessage("No road graph node with outgoing edges found near click", LogSource.Map));
+            return;
+        }
+
+        var spawnPoint = new SpawnPoint
+        {
+            X = node.X,
+            Y = node.Y,
+            NearestNodeId = node.Id,
+            VehiclesPerMinute = 5
+        };
+        ProjectLayers.AddSpawnPoint(spawnPoint);
+        WeakReferenceMessenger.Default.Send(new MapFeatureSelectedMessage(MapFeatureType.Spawner, spawnPoint));
+        WeakReferenceMessenger.Default.Send(new LogMessage($"Spawner added at node {node.Id}", LogSource.Map));
+    }
+
+    private void HandleSpawnerMove(SpawnPoint spawnPoint, MPoint worldPos)
+    {
+        _pendingMoveSpawner = null;
+        var node = FindNearestSpawnableNode(worldPos);
+        if (node is null) return;
+        ProjectLayers.MoveSpawnPoint(spawnPoint, node.X, node.Y, node.Id);
+        WeakReferenceMessenger.Default.Send(new SpawnerMovedMessage());
+        WeakReferenceMessenger.Default.Send(new MapFeatureSelectedMessage(MapFeatureType.Spawner, spawnPoint));
+        WeakReferenceMessenger.Default.Send(new LogMessage($"Spawner moved to node {node.Id}", LogSource.Map));
+    }
+
+    private RoadNode? FindNearestSpawnableNode(MPoint worldPos)
+    {
+        if (SimManager.Instance.RoadGraph is null) return null;
+        double bestDist = double.MaxValue;
+        RoadNode? bestNode = null;
+        foreach (var kvp in SimManager.Instance.RoadGraph.Nodes)
+        {
+            if (SimManager.Instance.RoadGraph.GetOutgoingEdges(kvp.Key).Count == 0)
+                continue;
+            double dx = kvp.Value.X - worldPos.X;
+            double dy = kvp.Value.Y - worldPos.Y;
+            double dist = dx * dx + dy * dy;
+            if (dist < bestDist) { bestDist = dist; bestNode = kvp.Value; }
+        }
+        return bestNode;
     }
 
     partial void OnIsVolumeVisibleChanged(bool value)

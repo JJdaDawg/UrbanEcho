@@ -10,6 +10,7 @@ namespace UrbanEcho.Models
     {
         Vehicle,
         Road,
-        Signal
+        Signal,
+        Spawner
     }
 }
