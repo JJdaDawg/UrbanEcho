@@ -122,7 +122,90 @@ namespace UrbanEcho.Helpers
                 EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Loaded the max number of roads for viewport (1000)"));
             }
             TestIfFeatureListHasDuplicateNodes(featuresList, true);
+
+            SetToAndFromNames(featuresList);
             return featuresList;
+        }
+
+        public static void SetToAndFromNames(List<IFeature> featuresList)
+        {
+            foreach (IFeature feature in featuresList)
+            {
+                if (feature is GeometryFeature gf)
+                {
+                    if (gf.Geometry != null)
+                    {
+                        if (gf.Geometry is LineString ls)
+                        {
+                            foreach (IFeature otherFeature in featuresList)
+                            {
+                                if (feature != otherFeature)
+                                {
+                                    if (otherFeature is GeometryFeature otherGf)
+                                    {
+                                        if (otherGf.Geometry != null)
+                                        {
+                                            if (otherGf.Geometry is LineString otherLs)
+                                            {
+                                                if (!feature.Fields.Contains("TO_STREET") || Helpers.Helper.TryGetFeatureKVPToString(feature, "STREET", "") == Helpers.Helper.TryGetFeatureKVPToString(otherFeature, "STREET", ""))
+                                                {
+                                                    if (Helpers.Helper.TryGetFeatureKVPToString(otherFeature, "STREET", "") != "Unnamed")
+                                                    {
+                                                        if (ls.Coordinates.Last<Coordinate>().Equals2D(otherLs.Coordinates.Last<Coordinate>(), 0.1f))
+                                                        {
+                                                            feature["TO_STREET"] = Helpers.Helper.TryGetFeatureKVPToString(otherFeature, "STREET", "");
+                                                        }
+                                                        else
+                                                        {
+                                                            if (ls.Coordinates.Last<Coordinate>().Equals2D(otherLs.Coordinates.First<Coordinate>(), 0.1f))
+                                                            {
+                                                                feature["TO_STREET"] = Helpers.Helper.TryGetFeatureKVPToString(otherFeature, "STREET", "");
+                                                            }
+                                                        }
+                                                    }
+                                                }
+
+                                                if (!feature.Fields.Contains("FROM_STREE") || Helpers.Helper.TryGetFeatureKVPToString(feature, "STREET", "") == Helpers.Helper.TryGetFeatureKVPToString(otherFeature, "STREET", ""))
+                                                {
+                                                    if (Helpers.Helper.TryGetFeatureKVPToString(otherFeature, "STREET", "") != "Unnamed")
+                                                    {
+                                                        if (ls.Coordinates.First<Coordinate>().Equals2D(otherLs.Coordinates.Last<Coordinate>(), 0.1f))
+                                                        {
+                                                            feature["FROM_STREE"] = Helpers.Helper.TryGetFeatureKVPToString(otherFeature, "STREET", "");
+                                                        }
+                                                        else
+                                                        {
+                                                            if (ls.Coordinates.First<Coordinate>().Equals2D(otherLs.Coordinates.First<Coordinate>(), 0.1f))
+                                                            {
+                                                                feature["FROM_STREE"] = Helpers.Helper.TryGetFeatureKVPToString(otherFeature, "STREET", "");
+                                                            }
+                                                        }
+                                                    }
+                                                }
+
+                                                if (feature.Fields.Contains("TO_STREET") && feature.Fields.Contains("FROM_STREE"))
+                                                {
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (!feature.Fields.Contains("TO_STREET"))
+                {
+                    feature["TO_STREET"] = "";
+                }
+
+                if (!feature.Fields.Contains("FROM_STREE"))
+                {
+                    feature["FROM_STREE"] = "";
+                }
+            }
         }
 
         public static void TestIfFeatureListHasDuplicateNodes(List<IFeature> featuresList, bool afterSplitting)

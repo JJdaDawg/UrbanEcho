@@ -23,58 +23,81 @@ using UrbanEcho.ViewModels;
 
 namespace UrbanEcho.Reporting
 {
-    public class Report
+    public class ReportTask
     {
-        public List<RoadEdgeReportModel> RoadEdgeReport { get; set; } = new List<RoadEdgeReportModel>();
+        public RoadEdgeReport TheRoadEdgeReport { get; set; } = new RoadEdgeReport();
 
-        public IntersectionReport TheReport { get; set; } = new IntersectionReport();
+        public IntersectionReport TheIntersectionReport { get; set; } = new IntersectionReport();
 
-        public static Task? ReportTask { get; set; }
+        public static Task? ExportTask { get; set; }
         public static bool TaskStarted { get; set; } = false;
 
-        public Report(List<RoadIntersection> roadIntersections, RoadGraph roadGraph, bool fullReport = false)
+        public ReportTask(List<RoadIntersection> roadIntersections, RoadGraph roadGraph)
         {
-            TheReport.Intersections = new List<IntersectionReportModel>();
+            TheIntersectionReport.Intersections = new List<IntersectionReportModel>();
 
-            RoadEdgeReport = new List<RoadEdgeReportModel>();
+            TheRoadEdgeReport.Roads = new List<RoadEdgeReportModel>();
 
-            MemoryStream? ms = ExportMapImage();
+            DateTime dateTime = DateTime.Now;
+
+            MemoryStream? ms = ExportMapImage(dateTime);
 
             foreach (RoadIntersection roadIntersection in roadIntersections)
             {
                 if (roadIntersection.EdgesInto.Count == 0) continue;
 
                 List<RoadEdgeReportModel> edges = new List<RoadEdgeReportModel>();
-                if (fullReport)
-                {
-                    foreach (EdgeTrafficRule edgeTrafficRule in roadIntersection.EdgesInto)
-                    {
-                        RoadEdge roadEdge = edgeTrafficRule.RoadEdge;
-                        edges.Add(new RoadEdgeReportModel(roadEdge.Metadata.RoadName, Helpers.Helper.TryGetFeatureKVPToString(roadEdge.Feature, "FROM_STREE", "None"),
-                        Helpers.Helper.TryGetFeatureKVPToString(roadEdge.Feature, "TO_STREET", "None"), roadEdge.GetStats()));
-                    }
-                    edges.Sort((roadEdgeReport1, roadEdgeReport2) => roadEdgeReport2.VehicleCount.CompareTo(roadEdgeReport1.VehicleCount));
-                }
+
                 IntersectionReportModel intersectionReportModel = new IntersectionReportModel(roadIntersection.Name, roadIntersection.GetStats(), edges);
 
-                TheReport.Intersections.Add(intersectionReportModel);
+                TheIntersectionReport.Intersections.Add(intersectionReportModel);
             }
 
-            TheReport.Intersections.Sort((intersectionReport1, intersectionReport2) => intersectionReport2.VehicleCount.CompareTo(intersectionReport1.VehicleCount));
+            TheIntersectionReport.Intersections.Sort((intersectionReport1, intersectionReport2) => intersectionReport2.VehicleCount.CompareTo(intersectionReport1.VehicleCount));
 
             if (SimManager.Instance.RoadGraph != null)
             {
                 foreach (RoadEdge roadEdge in SimManager.Instance.RoadGraph.Edges)
                 {
-                    RoadEdgeReport.Add(new RoadEdgeReportModel(roadEdge.Metadata.RoadName, Helpers.Helper.TryGetFeatureKVPToString(roadEdge.Feature, "FROM_STREE", "None"),
-                        Helpers.Helper.TryGetFeatureKVPToString(roadEdge.Feature, "TO_STREET", "None"), roadEdge.GetStats()));
+                    if (roadEdge.IsFromStartOfLineString)
+                    {
+                        TheRoadEdgeReport.Roads.Add(new RoadEdgeReportModel(roadEdge.Metadata.RoadName, Helpers.Helper.TryGetFeatureKVPToString(roadEdge.Feature, "FROM_STREE", ""),
+                        Helpers.Helper.TryGetFeatureKVPToString(roadEdge.Feature, "TO_STREET", ""), roadEdge.GetStats()));
+                    }
+                    else
+                    {
+                        TheRoadEdgeReport.Roads.Add(new RoadEdgeReportModel(roadEdge.Metadata.RoadName, Helpers.Helper.TryGetFeatureKVPToString(roadEdge.Feature, "TO_STREET", ""),
+                        Helpers.Helper.TryGetFeatureKVPToString(roadEdge.Feature, "FROM_STREE", ""), roadEdge.GetStats()));
+                    }
                 }
 
-                RoadEdgeReport.Sort((roadEdgeReport1, roadEdgeReport2) => roadEdgeReport2.VehicleCount.CompareTo(roadEdgeReport1.VehicleCount));
+                TheRoadEdgeReport.Roads.Sort((roadEdgeReport1, roadEdgeReport2) => roadEdgeReport2.VehicleCount.CompareTo(roadEdgeReport1.VehicleCount));
             }
-            if (ReportTask == null || ReportTask.IsCompleted)
+            if (ExportTask == null || ExportTask.IsCompleted)
             {
-                ReportTask = Task.Factory.StartNew(new Action(() => Export(fullReport, ms)), SimManager.Instance.Cts.Token);
+                try
+                {
+                    ExportTask = Task.Factory.StartNew(new Action(() => Export(ms, dateTime)), SimManager.Instance.Cts.Token);
+                }
+                catch (Exception ex)
+                {
+                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Unable to export report {ex.Message}"));
+                }
+
+                string reportName = Path.GetFileNameWithoutExtension(ProjectLayers.GetProject()?.PathForThisFile ?? "UnNamedProject.uep");
+
+                Report report = new Report(dateTime, reportName, TheRoadEdgeReport, TheIntersectionReport);
+                try
+                {
+                    ReportContext reportContext = new ReportContext();
+
+                    reportContext.Add(report);
+                    Task saveToDatabase = reportContext.SaveChangesAsync(SimManager.Instance.Cts.Token);
+                }
+                catch (Exception ex)
+                {
+                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Unable to add report to database {ex.Message}"));
+                }
             }
             else
             {
@@ -82,7 +105,7 @@ namespace UrbanEcho.Reporting
             }
         }
 
-        private void Export(bool fullReport, MemoryStream? ms)
+        private void Export(MemoryStream? ms, DateTime dateTime)
         {
             //https://github.com/ClosedXML/ClosedXML.Report
             try
@@ -92,17 +115,10 @@ namespace UrbanEcho.Reporting
                 //https://github.com/ClosedXML/ClosedXML.Report
 
                 //https://stackoverflow.com/questions/12500091/datetime-tostring-format-that-can-be-used-in-a-filename-or-extension
-                string outputFile = @$".\Output\Report-{DateTime.Now.ToString("MM-dd-yyyy_hh-mm-ss-tt")}.xlsx";
+                string outputFile = @$".\Output\Report-{dateTime.ToString("MM-dd-yyyy_hh-mm-ss-tt")}.xlsx";
                 XLTemplate? template = null;
 
-                if (fullReport)
-                {
-                    template = new XLTemplate(@".\Resources\Templates\template.xlsx");
-                }
-                else
-                {
-                    template = new XLTemplate(@".\Resources\Templates\templateSmall.xlsx");
-                }
+                template = new XLTemplate(@".\Resources\Templates\template.xlsx");
 
                 template.AddVariable("Date", DateTime.Now.ToString());
                 ProjectFile? projectFile = ProjectLayers.GetProject();
@@ -115,8 +131,8 @@ namespace UrbanEcho.Reporting
                     {
                         template.AddVariable("MapImage", ms);
                     }
-                    template.AddVariable("TheReport", TheReport);
-                    template.AddVariable("Roads", RoadEdgeReport);
+                    template.AddVariable("Intersections", TheIntersectionReport.Intersections);
+                    template.AddVariable("Roads", TheRoadEdgeReport.Roads);
 
                     template.Generate();
                 }
@@ -134,7 +150,7 @@ namespace UrbanEcho.Reporting
             }
         }
 
-        private MemoryStream? ExportMapImage()
+        private MemoryStream? ExportMapImage(DateTime dateTime)
         {
             MemoryStream? ms = null;
             MainViewModel? mvm = MainWindow.Instance.GetMainViewModel();
@@ -165,7 +181,7 @@ namespace UrbanEcho.Reporting
                     try
                     {
                         //https://stackoverflow.com/questions/8624071/save-and-load-memorystream-to-from-a-file/19302609
-                        using (FileStream file = new FileStream(@$".\Output\Map-{DateTime.Now.ToString("MM-dd-yyyy_hh-mm-ss-tt")}.png", FileMode.Create, System.IO.FileAccess.Write))
+                        using (FileStream file = new FileStream(@$".\Output\Map-{dateTime.ToString("MM-dd-yyyy_hh-mm-ss-tt")}.png", FileMode.Create, System.IO.FileAccess.Write))
                         {
                             ms.Position = 0;
                             ms.CopyTo(file);

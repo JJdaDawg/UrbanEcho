@@ -8,8 +8,8 @@ namespace UrbanEcho.Models.Report
 {
     public class IntersectionReport
     {
+        public int IntersectionReportId { get; set; }
         public List<IntersectionReportModel> Intersections { get; set; } = new List<IntersectionReportModel>();
-        public string Title { get; set; } = "The Title";//string that isn't used to avoid parsing problems
 
         public IntersectionReport()
         {

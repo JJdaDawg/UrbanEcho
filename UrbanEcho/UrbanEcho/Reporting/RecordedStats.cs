@@ -18,6 +18,10 @@ namespace UrbanEcho.Reporting
 
         public int VehicleCount { get; private set; }
 
+        public double Lat { get; private set; }
+
+        public double Lon { get; private set; }
+
         public RecordedStats()
         {
         }
@@ -34,6 +38,12 @@ namespace UrbanEcho.Reporting
 
             TotalWaitTime += incomingStats.WaitTime;
             AverageWaitTime = TotalWaitTime / VehicleCount;
+        }
+
+        public void SetPosition(double lat, double lon)
+        {
+            Lat = lat;
+            Lon = lon;
         }
 
         public void Reset()

@@ -24,7 +24,7 @@ namespace UrbanEcho.Sim
         private readonly Random spawnRng = new Random();
         private float simTime = 0;
         public long SimFrames = 0;
-        private int startingNumberOfVehicles = 10;
+        private int startingNumberOfVehicles = 3000;
         private int maxVehicles = 5000;
         public int GroupToUpdate = 0;
         private bool flasher;
@@ -159,7 +159,7 @@ namespace UrbanEcho.Sim
                     }
                 }
                 EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Generating Report"));
-                // Report report = new Report(SimManager.Instance.RoadIntersections, SimManager.Instance.RoadGraph);
+                ReportTask report = new ReportTask(SimManager.Instance.RoadIntersections, SimManager.Instance.RoadGraph);
             }
 
             EventQueueForUI.Instance.Add(new RefreshMapEvent(MainWindow.Instance.GetMap()));

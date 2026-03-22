@@ -9,6 +9,8 @@ namespace UrbanEcho.Models.Report
 {
     public class RoadEdgeReportModel
     {
+        public int RoadEdgeReportModelId { get; set; }
+
         public string RoadName;
         public string FromRoadName;
         public string ToRoadName;
@@ -19,6 +21,14 @@ namespace UrbanEcho.Models.Report
         public double TotalWaitTime { get; set; }
 
         public int VehicleCount { get; set; }
+
+        public double Lat { get; private set; }
+
+        public double Lon { get; private set; }
+
+        private RoadEdgeReportModel()//Unused only for creation of database
+        {
+        }
 
         public RoadEdgeReportModel(string roadName, string fromName, string toName, RecordedStats stats)
         {
@@ -31,6 +41,8 @@ namespace UrbanEcho.Models.Report
             AverageWaitTime = stats.AverageWaitTime;
             TotalWaitTime = stats.TotalWaitTime;
             VehicleCount = stats.VehicleCount;
+            Lat = stats.Lat;
+            Lon = stats.Lon;
         }
     }
 }

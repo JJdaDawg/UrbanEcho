@@ -1,6 +1,7 @@
 ﻿using DocumentFormat.OpenXml.Drawing.Charts;
 using Mapsui;
 using Mapsui.Nts;
+using Mapsui.Projections;
 using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
@@ -94,6 +95,9 @@ namespace UrbanEcho.Models
                     {
                         Center = Helpers.Helper.Convert2Box2dWorldPosition(p);
                         isCenterSet = true;
+
+                        (double lon, double lat) = SphericalMercator.ToLonLat(p.X, p.Y);
+                        stats.SetPosition(lat, lon);
                     }
                 }
             }
@@ -225,6 +229,7 @@ namespace UrbanEcho.Models
                             else
                             {
                                 roadIntersection.Feature["Intersecti"] = $"{roadName1} @ {roadName2}";
+                                roadIntersection.Name = $"{roadName1} @ {roadName2}";
                                 doneSettingName = true;
                                 break;
                             }

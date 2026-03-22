@@ -117,8 +117,8 @@ namespace UrbanEcho.Sim
             totalRunTime.Start();
 
             //TODO: Remove this once we have UI for loading project
-            //LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/ProjectFiles/myFile.uep", MainWindow.Instance.GetMap());
-            LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/OsmFiles/osmTest.uep", MainWindow.Instance.GetMap());
+            LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/ProjectFiles/myFile.uep", MainWindow.Instance.GetMap());
+            //LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/OsmFiles/osmTest.uep", MainWindow.Instance.GetMap());
 
             EventQueueForSim.Instance.Add(loadProjectEvent); //will usually happen from UI
 
@@ -459,11 +459,11 @@ namespace UrbanEcho.Sim
                 {
                     SimTask.Wait();
 
-                    if (Report.ReportTask != null)
+                    if (ReportTask.ExportTask != null)
                     {
-                        if (!Report.ReportTask.IsCompleted)
+                        if (!ReportTask.ExportTask.IsCompleted)
                         {
-                            Report.ReportTask.Wait();
+                            ReportTask.ExportTask.Wait();
                         }
                     }
 
