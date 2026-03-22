@@ -11,6 +11,7 @@ namespace UrbanEcho.Models
         None,
         Intersection,
         Vehicle,
-        Road
+        Road,
+        Spawner
     }
 }

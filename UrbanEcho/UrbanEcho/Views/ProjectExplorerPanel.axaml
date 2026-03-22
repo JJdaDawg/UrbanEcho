@@ -43,6 +43,9 @@
                         <ToggleButton Content="Roads"
                                       IsChecked="{Binding IsRoadLayerActive}"
                                       Command="{Binding SelectRoadLayerCommand}" />
+                        <ToggleButton Content="Spawners"
+                                      IsChecked="{Binding IsSpawnerLayerActive}"
+                                      Command="{Binding SelectSpawnerLayerCommand}" />
                     </StackPanel>
                 </StackPanel>
             </Grid>

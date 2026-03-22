@@ -76,17 +76,37 @@ namespace UrbanEcho.Sim
 
             SimFrames++;
 
-            if (Vehicles.Count == 0)
+            if (SimManager.Instance.SpawnPoints.Count > 0)
             {
-                TrySpawnVehicle(startingNumberOfVehicles, false);
-                foreach (Vehicle v in Vehicles)
+                // Use spawner-based spawning when spawn points exist
+                if (Vehicles.Count == 0)
                 {
-                    v.ResetStats();//Reset stats at start else the loading time is included when many are loaded
+                    TrySpawnFromSpawners(true);
+                    foreach (Vehicle v in Vehicles)
+                    {
+                        v.ResetStats();
+                    }
+                }
+                else
+                {
+                    TrySpawnFromSpawners(false);
                 }
             }
             else
             {
-                TrySpawnVehicle();
+                // Fallback to census / random spawning
+                if (Vehicles.Count == 0)
+                {
+                    TrySpawnVehicle(startingNumberOfVehicles, false);
+                    foreach (Vehicle v in Vehicles)
+                    {
+                        v.ResetStats();//Reset stats at start else the loading time is included when many are loaded
+                    }
+                }
+                else
+                {
+                    TrySpawnVehicle();
+                }
             }
 
             GroupToUpdate = (GroupToUpdate + 1) % Helper.NumberOfVehicleGroups;
@@ -274,6 +294,108 @@ namespace UrbanEcho.Sim
             {//Show message if more than 1 vehicle being spawned
                 EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Done adding vehicle paths {vehiclesAddedThisSpawn} vehicles added this spawn"));
             }
+        }
+
+        /// <summary>
+        /// Iterates over all spawn points and spawns vehicles from each one
+        /// according to its configured VehiclesPerMinute rate.
+        /// </summary>
+        private void TrySpawnFromSpawners(bool initialBurst)
+        {
+            if (SimManager.Instance.RoadGraph == null || !World.Created)
+                return;
+
+            foreach (SpawnPoint sp in SimManager.Instance.SpawnPoints)
+            {
+                if (Vehicles.Count >= maxVehicles)
+                    return;
+
+                int toSpawn;
+                if (initialBurst)
+                {
+                    // On first frame, give each spawner a small initial batch
+                    toSpawn = Math.Min(sp.VehiclesPerMinute, 20);
+                }
+                else
+                {
+                    // Convert VehiclesPerMinute to a sim-time interval.
+                    // SimMinutesPerRealSecond controls the sim clock rate.
+                    // At 60 fps, one step ≈ 1/60 real second.
+                    float spawnIntervalSec = 60.0f / (sp.VehiclesPerMinute * Clock.SimMinutesPerRealSecond);
+                    if (spawnIntervalSec < 0.016f) spawnIntervalSec = 0.016f;
+
+                    if (simTime - sp.LastSpawnTime < spawnIntervalSec)
+                        continue;
+
+                    toSpawn = 1;
+                }
+
+                for (int i = 0; i < toSpawn; i++)
+                {
+                    if (Vehicles.Count >= maxVehicles)
+                        return;
+
+                    if (SpawnVehicleAtNode(sp.NearestNodeId))
+                    {
+                        sp.LastSpawnTime = simTime;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Creates a single vehicle at the given graph node and adds it to the simulation.
+        /// Returns true if the vehicle was successfully created.
+        /// </summary>
+        public bool SpawnVehicleAtNode(int nodeId)
+        {
+            if (SimManager.Instance.RoadGraph == null || !World.Created)
+                return false;
+
+            var outgoing = SimManager.Instance.RoadGraph.GetOutgoingEdges(nodeId);
+            if (outgoing.Count == 0)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Sim] SpawnVehicleAtNode failed: node {nodeId} has no outgoing edges");
+                return false;
+            }
+
+            var edge = outgoing[spawnRng.Next(outgoing.Count)];
+
+            if (!SimManager.Instance.RoadGraph.Nodes.TryGetValue(edge.From, out RoadNode? fromNode) || fromNode == null)
+                return false;
+
+            int vehicleId = Vehicles.Count;
+            MPoint mPoint = new MPoint(fromNode.X, fromNode.Y);
+            PointFeature pf = new PointFeature(mPoint);
+            pf["VehicleNumber"] = vehicleId;
+            pf["Hidden"] = "true";
+            pf["Angle"] = 0.0f;
+
+            bool isTruck = Random.Shared.NextDouble() <= 0.1;
+            string type = "RegularCar";
+            if (!isTruck)
+            {
+                pf["VehicleType"] = "Car" + spawnRng.Next(0, VehicleStyles.NumberOFCarColors);
+            }
+            else
+            {
+                pf["VehicleType"] = "Truck" + spawnRng.Next(0, VehicleStyles.NumberOFTruckColors);
+                type = "TransportTruck";
+            }
+
+            Vehicle vehicle = new Vehicle(pf, edge, type, vehicleId % Helper.NumberOfVehicleGroups, SimManager.Instance.RoadGraph);
+
+            if (vehicle.IsCreated)
+            {
+                Vehicles.Add(vehicle);
+                lock (SimManager.Instance.LockChangeVehicleFeatureList)
+                {
+                    ProjectLayers.VehicleFeatures.Add(pf);
+                }
+                vehicle.Update();
+                return true;
+            }
+            return false;
         }
 
         public float GetSimTime()

@@ -49,4 +49,22 @@ namespace UrbanEcho.Messages
     }
 
     public class HideVehiclePathMessage { }
+
+    public class AddSpawnerMessage { }
+
+    public class DeleteSpawnerMessage
+    {
+        public SpawnPoint SpawnPoint { get; }
+        public DeleteSpawnerMessage(SpawnPoint spawnPoint) => SpawnPoint = spawnPoint;
+    }
+
+    public class MoveSpawnerMessage
+    {
+        public SpawnPoint SpawnPoint { get; }
+        public MoveSpawnerMessage(SpawnPoint spawnPoint) => SpawnPoint = spawnPoint;
+    }
+
+    public class CancelMoveSpawnerMessage { }
+
+    public class SpawnerMovedMessage { }
 }

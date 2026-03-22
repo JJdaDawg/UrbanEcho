@@ -306,6 +306,12 @@ namespace UrbanEcho.Sim
 
             if (pathSegmentIndex >= pathSteps.Count)
             {
+                if (SimManager.Instance.SpawnPoints.Count > 0)
+                {
+                    // When gates exist, vehicles respawn at a gate instead of continuing
+                    ResetVehicleToNewPos();
+                    return;
+                }
                 int currentNodeId = path[path.Count - 1];
                 setNewPath(currentNodeId);
             }
@@ -1070,7 +1076,13 @@ namespace UrbanEcho.Sim
             }
             if (!useCurrentPos)
             {
-                if (SimManager.Instance.CensusSpawn != null)
+                if (SimManager.Instance.SpawnPoints.Count > 0)
+                {
+                    // When spawn points (gates) exist, always respawn at a random gate
+                    var sp = SimManager.Instance.SpawnPoints[Random.Shared.Next(SimManager.Instance.SpawnPoints.Count)];
+                    startNode = sp.NearestNodeId;
+                }
+                else if (SimManager.Instance.CensusSpawn != null)
                 {
                     if (SimManager.Instance.CensusSpawn.IsLoaded)
                     {

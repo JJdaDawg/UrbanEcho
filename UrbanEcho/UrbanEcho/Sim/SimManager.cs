@@ -54,6 +54,8 @@ namespace UrbanEcho.Sim
 
         public CensusSpawnManager? CensusSpawn;
 
+        public List<SpawnPoint> SpawnPoints = new List<SpawnPoint>();
+
         public long TaskUpdates = 0;
 
         public AStarPathfinder? pathfinder;
@@ -443,6 +445,7 @@ namespace UrbanEcho.Sim
 
             RoadGraph = null;
             CensusSpawn = null;
+            SpawnPoints = new List<SpawnPoint>();
             pathfinder = null;
             nodes = null;
             intersectionBodiesCreated = false;
