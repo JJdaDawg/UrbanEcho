@@ -50,6 +50,8 @@ namespace UrbanEcho.Messages
 
     public class HideVehiclePathMessage { }
 
+    public class CensusLoadedMessage { }
+
     public class AddSpawnerMessage { }
 
     public class DeleteSpawnerMessage

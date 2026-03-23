@@ -6,6 +6,7 @@ using UrbanEcho.Events.UI;
 using UrbanEcho.FileManagement;
 using UrbanEcho.Messages;
 using UrbanEcho.Models;
+using UrbanEcho.Sim;
 
 namespace UrbanEcho.ViewModels;
 
@@ -22,6 +23,8 @@ public partial class ProjectExplorerPanelViewModel : ObservableObject
     private SelectionLayer _activeLayer = SelectionLayer.None;
 
     [ObservableProperty] private bool _hasProject;
+    [ObservableProperty] private bool _isCensusLoaded;
+    [ObservableProperty] private bool _useCensusSpawning;
 
     public bool IsIntersectionLayerActive => ActiveLayer == SelectionLayer.Intersection;
     public bool IsVehicleLayerActive => ActiveLayer == SelectionLayer.Vehicle;
@@ -69,8 +72,15 @@ public partial class ProjectExplorerPanelViewModel : ObservableObject
         WeakReferenceMessenger.Default.Register<ProjectClosedMessage>(this, (r, m) =>
         {
             HasProject = false;
+            IsCensusLoaded = false;
+            UseCensusSpawning = false;
             AutoPlaceGatesFromExtentCommand.NotifyCanExecuteChanged();
             AutoPlaceGatesFromResidentialCommand.NotifyCanExecuteChanged();
+        });
+
+        WeakReferenceMessenger.Default.Register<CensusLoadedMessage>(this, (r, m) =>
+        {
+            IsCensusLoaded = true;
         });
     }
 
@@ -80,6 +90,11 @@ public partial class ProjectExplorerPanelViewModel : ObservableObject
         WeakReferenceMessenger.Default.Send(new ActiveLayerChangedMessage(value));
         AutoPlaceGatesFromExtentCommand.NotifyCanExecuteChanged();
         AutoPlaceGatesFromResidentialCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnUseCensusSpawningChanged(bool value)
+    {
+        SimManager.Instance.SpawnMode = value ? SpawnMode.Census : SpawnMode.Gates;
     }
 
     public void Toggle()

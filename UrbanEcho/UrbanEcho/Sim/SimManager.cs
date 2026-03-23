@@ -39,6 +39,12 @@ namespace UrbanEcho.Sim
         SpeedDown = 4
     }
 
+    public enum SpawnMode
+    {
+        Gates,
+        Census
+    }
+
     public sealed class SimManager
     {
         private static SimManager? instance;
@@ -55,6 +61,8 @@ namespace UrbanEcho.Sim
         public CensusSpawnManager? CensusSpawn;
 
         public List<SpawnPoint> SpawnPoints = new List<SpawnPoint>();
+
+        public SpawnMode SpawnMode { get; set; } = SpawnMode.Gates;
 
         public long TaskUpdates = 0;
 
@@ -446,6 +454,7 @@ namespace UrbanEcho.Sim
             RoadGraph = null;
             CensusSpawn = null;
             SpawnPoints = new List<SpawnPoint>();
+            SpawnMode = SpawnMode.Gates;
             pathfinder = null;
             nodes = null;
             intersectionBodiesCreated = false;

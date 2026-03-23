@@ -76,7 +76,10 @@ namespace UrbanEcho.Sim
 
             SimFrames++;
 
-            if (SimManager.Instance.SpawnPoints.Count > 0)
+            bool useCensusSpawning = SimManager.Instance.SpawnMode == SpawnMode.Census
+                && SimManager.Instance.CensusSpawn?.IsLoaded == true;
+
+            if (SimManager.Instance.SpawnPoints.Count > 0 && !useCensusSpawning)
             {
                 // Use spawner-based spawning when spawn points exist
                 if (Vehicles.Count == 0)

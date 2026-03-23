@@ -300,23 +300,33 @@ namespace UrbanEcho.Sim
 
         private void AdvanceToNextRoad()
         {
-            if (path == null || pathSteps == null || graph == null || Body == null)
+            if (graph == null || Body == null)
+                return;
+
+            if (path == null || pathSteps == null)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Could not run advance to next road"));
+                ResetVehicleToNewPos();
                 return;
             }
 
             if (pathSegmentIndex >= pathSteps.Count)
             {
-                if (SimManager.Instance.SpawnPoints.Count > 0)
+                bool hasGates = SimManager.Instance.SpawnPoints.Count > 0;
+                bool useCensus = SimManager.Instance.SpawnMode == SpawnMode.Census
+                    && SimManager.Instance.CensusSpawn?.IsLoaded == true;
+
+                if (hasGates || useCensus)
                 {
-                    // When gates exist, vehicles respawn at a gate instead of continuing
+                    // Gates mode: return to origin node; Census mode: teleport to new census origin
                     ResetVehicleToNewPos();
                     return;
                 }
                 int currentNodeId = path[path.Count - 1];
                 setNewPath(currentNodeId);
             }
+
+            // setNewPath may have nulled the path on failure — re-check before proceeding
+            if (path == null || pathSteps == null) return;
 
             stepThroughPath();
         }
@@ -327,6 +337,7 @@ namespace UrbanEcho.Sim
             if (graph == null || Body == null)
             {
                 EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Could not run advance to next road"));
+            path = null; pathSteps = null;
                 return;
             }
 
@@ -334,7 +345,7 @@ namespace UrbanEcho.Sim
             if (nodes.Count < 2)
             {
                 EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Nodes in graph were less than 2"));
-                ResetVehicleToNewPos();
+            path = null; pathSteps = null;
                 return;
             }
             var pathfinder = new AStarPathfinder(graph, SimManager.Instance.NodePenalties, IsTruck);
@@ -343,7 +354,7 @@ namespace UrbanEcho.Sim
             var newPathEdges = pathfinder.FindPathEdges(currentNodeId, goalNode);
             if (newPathEdges.Count < 1)
             {
-                ResetVehicleToNewPos();
+            path = null; pathSteps = null;
                 return;
             }
             pathSteps = PathStepBuilder.Build(newPathEdges, graph);
@@ -1078,21 +1089,17 @@ namespace UrbanEcho.Sim
             }
             if (!useCurrentPos)
             {
-                if (SimManager.Instance.SpawnPoints.Count > 0)
+                bool useCensus = SimManager.Instance.SpawnMode == SpawnMode.Census
+                    && SimManager.Instance.CensusSpawn?.IsLoaded == true;
+
+                if (SimManager.Instance.SpawnPoints.Count > 0 && !useCensus)
                 {
-                    // Respawn back to this vehicle's original spawn node before picking a new destination
+                    // Gates mode: respawn back to this vehicle's original spawn node
                     startNode = originNodeId;
                 }
-                else if (SimManager.Instance.CensusSpawn != null)
+                else if (SimManager.Instance.CensusSpawn != null && SimManager.Instance.CensusSpawn.IsLoaded)
                 {
-                    if (SimManager.Instance.CensusSpawn.IsLoaded)
-                    {
-                        startNode = SimManager.Instance.CensusSpawn.PickWeightedSpawnNode();
-                    }
-                    else
-                    {
-                        startNode = TrafficVolumeLoader.PickWeightedDestination(graph, -1);
-                    }
+                    startNode = SimManager.Instance.CensusSpawn.PickWeightedSpawnNode();
                 }
                 else
                 {
@@ -1116,7 +1123,14 @@ namespace UrbanEcho.Sim
             }
             else
             {
-                ResetVehicleToNewPos();
+                // startNode failed — try one random fallback to avoid getting permanently stuck
+                int fallbackNode = TrafficVolumeLoader.PickWeightedDestination(graph, -1);
+                setNewPath(fallbackNode);
+                pathSegmentIndex = 0;
+                if (path is not null)
+                    AdvanceToNextRoad();
+                else
+                    return; // Give up this cycle; vehicle will retry on the next update
             }
             B2Api.b2Body_SetLinearVelocity(Body.BodyId, Vector2.Zero);
             B2Api.b2Body_SetAngularVelocity(Body.BodyId, 0);
