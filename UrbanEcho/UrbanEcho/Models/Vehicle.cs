@@ -95,6 +95,7 @@ namespace UrbanEcho.Sim
 
         private int pathSegmentIndex = 0;
         private RoadGraph graph;
+        private int originNodeId;
 
         private float vehicleInFrontThresholdWaitTime = 120.0f;//Set long so we know it isn't just a light
 
@@ -263,6 +264,7 @@ namespace UrbanEcho.Sim
             currentTrafficRule = TrafficRule.SetDefaultTrafficRule();
 
             this.currentRoadEdge = SetCurrentRoadEdge(currentRoadEdge);
+            originNodeId = currentRoadEdge.From;
 
             if (!settings.IsValid())
             {
@@ -1078,9 +1080,8 @@ namespace UrbanEcho.Sim
             {
                 if (SimManager.Instance.SpawnPoints.Count > 0)
                 {
-                    // When spawn points (gates) exist, always respawn at a random gate
-                    var sp = SimManager.Instance.SpawnPoints[Random.Shared.Next(SimManager.Instance.SpawnPoints.Count)];
-                    startNode = sp.NearestNodeId;
+                    // Respawn back to this vehicle's original spawn node before picking a new destination
+                    startNode = originNodeId;
                 }
                 else if (SimManager.Instance.CensusSpawn != null)
                 {
