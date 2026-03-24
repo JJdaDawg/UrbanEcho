@@ -50,6 +50,8 @@ namespace UrbanEcho.Messages
 
     public class HideVehiclePathMessage { }
 
+    public class CensusLoadedMessage { }
+
     public class AddSpawnerMessage { }
 
     public class DeleteSpawnerMessage
@@ -67,4 +69,40 @@ namespace UrbanEcho.Messages
     public class CancelMoveSpawnerMessage { }
 
     public class SpawnerMovedMessage { }
+
+    /// <summary>
+    /// Requests auto-placement of spawner gates along the convex hull of the
+    /// loaded road network's boundary.
+    /// </summary>
+    public class AutoPlaceSpawnersFromExtentMessage
+    {
+        public int MaxGates { get; }
+        public double Tolerance { get; }
+        public int VehiclesPerMinute { get; }
+
+        public AutoPlaceSpawnersFromExtentMessage(int maxGates = 6, double tolerance = 400.0, int vehiclesPerMinute = 5)
+        {
+            MaxGates = maxGates;
+            Tolerance = tolerance;
+            VehiclesPerMinute = vehiclesPerMinute;
+        }
+    }
+
+    /// <summary>
+    /// Requests auto-placement of spawner gates at the boundaries of all
+    /// residential areas (landuse=residential) found in the given OSM file.
+    /// </summary>
+    public class AutoPlaceSpawnersFromOsmResidentialMessage
+    {
+        public string OsmPath { get; }
+        public int MaxGatesPerArea { get; }
+        public int VehiclesPerMinute { get; }
+
+        public AutoPlaceSpawnersFromOsmResidentialMessage(string osmPath, int maxGatesPerArea = 4, int vehiclesPerMinute = 3)
+        {
+            OsmPath = osmPath;
+            MaxGatesPerArea = maxGatesPerArea;
+            VehiclesPerMinute = vehiclesPerMinute;
+        }
+    }
 }

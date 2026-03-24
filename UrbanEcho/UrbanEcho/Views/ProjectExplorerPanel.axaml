@@ -47,6 +47,28 @@
                                       IsChecked="{Binding IsSpawnerLayerActive}"
                                       Command="{Binding SelectSpawnerLayerCommand}" />
                     </StackPanel>
+
+                    <!-- Preset gate tools — only shown when Spawner layer is active -->
+                    <StackPanel IsVisible="{Binding IsSpawnerLayerActive}" Spacing="4" Margin="0,6,8,0">
+                        <TextBlock Text="PRESET GATES" Opacity="0.5" />
+                        <Button Content="Place gates at network boundary"
+                                Command="{Binding AutoPlaceGatesFromExtentCommand}"
+                                HorizontalAlignment="Stretch"
+                                ToolTip.Tip="Places up to 6 spawners at road nodes along the convex hull of the loaded road network" />
+                        <Button Content="Place gates at residential areas (OSM)"
+                                Command="{Binding AutoPlaceGatesFromResidentialCommand}"
+                                HorizontalAlignment="Stretch"
+                                ToolTip.Tip="Reads landuse=residential polygons from the loaded OSM file and places spawners at their road-network entry points" />
+                    </StackPanel>
+
+                    <!-- Spawn mode — only shown when census data is loaded -->
+                    <StackPanel IsVisible="{Binding IsCensusLoaded}" Spacing="4" Margin="0,6,8,0">
+                        <TextBlock Text="SPAWN MODE" Opacity="0.5" />
+                        <ToggleButton Content="Use Census Spawning"
+                                      IsChecked="{Binding UseCensusSpawning}"
+                                      HorizontalAlignment="Stretch"
+                                      ToolTip.Tip="Spawn vehicles at census-weighted origin nodes instead of gates" />
+                    </StackPanel>
                 </StackPanel>
             </Grid>
         </Grid>

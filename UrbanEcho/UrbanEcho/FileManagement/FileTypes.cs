@@ -14,7 +14,8 @@ namespace UrbanEcho.FileManagement
             ProjectFile = 1,
             BackgroundFile = 2,
             RoadLayerFile = 3,
-            IntersectionLayerFile = 4
+            IntersectionLayerFile = 4,
+            CensusLayerFile = 5
         };
 
         public static readonly FilePickerFileType ProjectFile = new("Urban Echo Project")
@@ -30,6 +31,11 @@ namespace UrbanEcho.FileManagement
         public static readonly FilePickerFileType MbTiles = new("MBTiles")
         {
             Patterns = new[] { "*.mbtiles" }
+        };
+
+        public static readonly FilePickerFileType ShapeFile = new("Shapefile")
+        {
+            Patterns = new[] { "*.shp" }
         };
     }
 }

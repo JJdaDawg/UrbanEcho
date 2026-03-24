@@ -1,9 +1,12 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using System.IO;
 using UrbanEcho.Events.UI;
+using UrbanEcho.FileManagement;
 using UrbanEcho.Messages;
 using UrbanEcho.Models;
+using UrbanEcho.Sim;
 
 namespace UrbanEcho.ViewModels;
 
@@ -20,6 +23,8 @@ public partial class ProjectExplorerPanelViewModel : ObservableObject
     private SelectionLayer _activeLayer = SelectionLayer.None;
 
     [ObservableProperty] private bool _hasProject;
+    [ObservableProperty] private bool _isCensusLoaded;
+    [ObservableProperty] private bool _useCensusSpawning;
 
     public bool IsIntersectionLayerActive => ActiveLayer == SelectionLayer.Intersection;
     public bool IsVehicleLayerActive => ActiveLayer == SelectionLayer.Vehicle;
@@ -31,6 +36,8 @@ public partial class ProjectExplorerPanelViewModel : ObservableObject
     public RelayCommand SelectVehicleLayerCommand { get; }
     public RelayCommand SelectRoadLayerCommand { get; }
     public RelayCommand SelectSpawnerLayerCommand { get; }
+    public RelayCommand AutoPlaceGatesFromExtentCommand { get; }
+    public RelayCommand AutoPlaceGatesFromResidentialCommand { get; }
 
     public ProjectExplorerPanelViewModel(IPanelService panelService)
     {
@@ -40,14 +47,54 @@ public partial class ProjectExplorerPanelViewModel : ObservableObject
         SelectVehicleLayerCommand = new RelayCommand(() => ActiveLayer = IsVehicleLayerActive ? SelectionLayer.None : SelectionLayer.Vehicle);
         SelectRoadLayerCommand = new RelayCommand(() => ActiveLayer = IsRoadLayerActive ? SelectionLayer.None : SelectionLayer.Road);
         SelectSpawnerLayerCommand = new RelayCommand(() => ActiveLayer = IsSpawnerLayerActive ? SelectionLayer.None : SelectionLayer.Spawner);
-        WeakReferenceMessenger.Default.Register<ProjectLoadedMessage>(this, (r, m) => HasProject = true);
-        WeakReferenceMessenger.Default.Register<ProjectClosedMessage>(this, (r, m) => HasProject = false);
+
+        AutoPlaceGatesFromExtentCommand = new RelayCommand(
+            () => WeakReferenceMessenger.Default.Send(new AutoPlaceSpawnersFromExtentMessage()),
+            () => HasProject && IsSpawnerLayerActive);
+
+        AutoPlaceGatesFromResidentialCommand = new RelayCommand(
+            () =>
+            {
+                string path = ProjectLayers.GetProject()?.RoadLayerPath ?? "";
+                if (!string.IsNullOrEmpty(path) && Path.GetExtension(path).Equals(".osm", System.StringComparison.OrdinalIgnoreCase))
+                    WeakReferenceMessenger.Default.Send(new AutoPlaceSpawnersFromOsmResidentialMessage(path));
+                else
+                    WeakReferenceMessenger.Default.Send(new LogMessage("An OSM road file must be loaded to detect residential areas", LogSource.System));
+            },
+            () => HasProject && IsSpawnerLayerActive);
+
+        WeakReferenceMessenger.Default.Register<ProjectLoadedMessage>(this, (r, m) =>
+        {
+            HasProject = true;
+            AutoPlaceGatesFromExtentCommand.NotifyCanExecuteChanged();
+            AutoPlaceGatesFromResidentialCommand.NotifyCanExecuteChanged();
+        });
+        WeakReferenceMessenger.Default.Register<ProjectClosedMessage>(this, (r, m) =>
+        {
+            HasProject = false;
+            IsCensusLoaded = false;
+            UseCensusSpawning = false;
+            AutoPlaceGatesFromExtentCommand.NotifyCanExecuteChanged();
+            AutoPlaceGatesFromResidentialCommand.NotifyCanExecuteChanged();
+        });
+
+        WeakReferenceMessenger.Default.Register<CensusLoadedMessage>(this, (r, m) =>
+        {
+            IsCensusLoaded = true;
+        });
     }
 
     partial void OnActiveLayerChanged(SelectionLayer value)
     {
         WeakReferenceMessenger.Default.Send(new MapFeatureDeselectedMessage());
         WeakReferenceMessenger.Default.Send(new ActiveLayerChangedMessage(value));
+        AutoPlaceGatesFromExtentCommand.NotifyCanExecuteChanged();
+        AutoPlaceGatesFromResidentialCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnUseCensusSpawningChanged(bool value)
+    {
+        SimManager.Instance.SpawnMode = value ? SpawnMode.Census : SpawnMode.Gates;
     }
 
     public void Toggle()

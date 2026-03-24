@@ -222,6 +222,36 @@ namespace UrbanEcho.FileManagement
             }
         }
 
+        public static void LoadCensusFile(string path)
+        {
+            if (currentProjectFile == null || SimManager.Instance.RoadGraph == null)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), "[Census] Cannot load census data: no project or road graph loaded"));
+                return;
+            }
+
+            try
+            {
+                currentProjectFile.CensusLayerPath = path;
+                SimManager.Instance.InitializeCensusSpawning(path);
+
+                if (SimManager.Instance.CensusSpawn != null && SimManager.Instance.CensusSpawn.IsLoaded)
+                {
+                    censusOverlayLayer = CreateCensusOverlayLayer(SimManager.Instance.CensusSpawn.Zones);
+                    if (MainWindow.Instance.GetMap() != null)
+                    {
+                        EventQueueForUI.Instance.Add(new AddLayersEvent(MainWindow.Instance.GetMap()));
+                    }
+                    EventQueueForUI.Instance.Add(new CensusLoadedEvent());
+                    EventQueueForUI.Instance.Add(new SetProjectEvent(currentProjectFile));
+                }
+            }
+            catch (Exception ex)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to load census data: {ex.Message}"));
+            }
+        }
+
         public static bool LayersNeedReAdd()
         {
             return backgroundRequiresLoading || roadRequiresLoading || intersectionRequiresLoading;
@@ -453,39 +483,9 @@ namespace UrbanEcho.FileManagement
                     TrafficVolumeLoader.AssignToGraph(SimManager.Instance.RoadGraph);
                 }
 
-                try
-                {
-                    // Load census data for realistic spawn distribution (before vehicle creation)
-                    if (!string.IsNullOrEmpty(currentProjectFile?.CensusLayerPath))
-                    {
-                        SimManager.Instance.InitializeCensusSpawning(currentProjectFile.CensusLayerPath);
-                    }
-                    else
-                    {
-                        string defaultCensusPath = "Resources/ShapeFiles/Census_2021_Work_Commuting/GIS_DATA_CENSUS_2021_WORK_COMMUTING.shp";
-                        if (System.IO.File.Exists(defaultCensusPath))
-                        {
-                            SimManager.Instance.InitializeCensusSpawning(defaultCensusPath);
-                            if (currentProjectFile != null)
-                            {
-                                currentProjectFile.CensusLayerPath = defaultCensusPath;
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to load a census layer {ex.Message}"));
-                }
-
                 vehicleLayer = CreateVehicleLayer();
                 PinLayer = CreatePinLayer();
                 spawnerLayer = CreateSpawnerLayer();
-                // Build census zone overlay if census data was loaded
-                if (SimManager.Instance.CensusSpawn != null && SimManager.Instance.CensusSpawn.IsLoaded)
-                {
-                    censusOverlayLayer = CreateCensusOverlayLayer(SimManager.Instance.CensusSpawn.Zones);
-                }
                 if (false == true)//Change this to enable debug layer
                 {
                     MemoryLayer tempDebugLayer = CreateDebugLayer();//use this layer for testing
