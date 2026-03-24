@@ -517,26 +517,67 @@ namespace UrbanEcho.Models
                     {
                         if (EdgesInto.Count <= 3)
                         {
-                            int indexForLowestAADT = 0;
-                            float lowestAADTValueFound = float.PositiveInfinity;
+                            //check if two names are the same
+                            bool twoNamesSame = false;
 
-                            //find lowest AADT value of the two or three and set the other edges to never block
-                            for (int i = 0; i < EdgesInto.Count; i++)
+                            if (EdgesInto.Count == 3)
                             {
-                                float aadtValue = Helpers.Helper.TryGetFeatureKVPToFloat(EdgesInto[i].RoadEdge.Feature, "AADT", 0);
+                                string? roadName1 = EdgesInto[0].RoadEdge.Feature["STREET"]?.ToString();
+                                string? roadName2 = EdgesInto[1].RoadEdge.Feature["STREET"]?.ToString();
+                                string? roadName3 = EdgesInto[2].RoadEdge.Feature["STREET"]?.ToString();
 
-                                if (aadtValue < lowestAADTValueFound)
+                                if (roadName1 == roadName2)
                                 {
-                                    indexForLowestAADT = i;
-                                    lowestAADTValueFound = aadtValue;
+                                    twoNamesSame = true;
+
+                                    EdgesInto[0].TrafficRule.SetNeverBlock();
+                                    EdgesInto[1].TrafficRule.SetNeverBlock();
+                                }
+                                else
+                                {
+                                    if (roadName1 == roadName3)
+                                    {
+                                        twoNamesSame = true;
+
+                                        EdgesInto[0].TrafficRule.SetNeverBlock();
+                                        EdgesInto[2].TrafficRule.SetNeverBlock();
+                                    }
+                                    else
+                                    {
+                                        if (roadName2 == roadName3)
+                                        {
+                                            twoNamesSame = true;
+
+                                            EdgesInto[1].TrafficRule.SetNeverBlock();
+                                            EdgesInto[2].TrafficRule.SetNeverBlock();
+                                        }
+                                    }
                                 }
                             }
 
-                            for (int i = 0; i < EdgesInto.Count; i++)
+                            if (!twoNamesSame)
                             {
-                                if (i != indexForLowestAADT)
+                                int indexForLowestAADT = 0;
+                                float lowestAADTValueFound = float.PositiveInfinity;
+
+                                //find lowest AADT value of the two or three and set the other edges to never block
+                                for (int i = 0; i < EdgesInto.Count; i++)
                                 {
-                                    EdgesInto[i].TrafficRule.SetNeverBlock();
+                                    float aadtValue = Helpers.Helper.TryGetFeatureKVPToFloat(EdgesInto[i].RoadEdge.Feature, "AADT", 0);
+
+                                    if (aadtValue < lowestAADTValueFound)
+                                    {
+                                        indexForLowestAADT = i;
+                                        lowestAADTValueFound = aadtValue;
+                                    }
+                                }
+
+                                for (int i = 0; i < EdgesInto.Count; i++)
+                                {
+                                    if (i != indexForLowestAADT)
+                                    {
+                                        EdgesInto[i].TrafficRule.SetNeverBlock();
+                                    }
                                 }
                             }
                         }
@@ -563,26 +604,67 @@ namespace UrbanEcho.Models
                     {
                         if (EdgesInto.Count <= 3)
                         {
-                            int indexForLowestPriority = 0;
-                            int lowestPriorityValueFound = int.MaxValue;
+                            //check if two names are the same
+                            bool twoNamesSame = false;
 
-                            //find lowest AADT value of the two or three and set the other edges to never block
-                            for (int i = 0; i < EdgesInto.Count; i++)
+                            if (EdgesInto.Count == 3)
                             {
-                                int priorityValue = Helpers.Helper.GetPriority(EdgesInto[i].RoadEdge.Metadata.RoadType);
+                                string? roadName1 = EdgesInto[0].RoadEdge.Feature["STREET"]?.ToString();
+                                string? roadName2 = EdgesInto[1].RoadEdge.Feature["STREET"]?.ToString();
+                                string? roadName3 = EdgesInto[2].RoadEdge.Feature["STREET"]?.ToString();
 
-                                if (priorityValue < lowestPriorityValueFound)
+                                if (roadName1 == roadName2)
                                 {
-                                    indexForLowestPriority = i;
-                                    lowestPriorityValueFound = priorityValue;
+                                    twoNamesSame = true;
+
+                                    EdgesInto[0].TrafficRule.SetNeverBlock();
+                                    EdgesInto[1].TrafficRule.SetNeverBlock();
+                                }
+                                else
+                                {
+                                    if (roadName1 == roadName3)
+                                    {
+                                        twoNamesSame = true;
+
+                                        EdgesInto[0].TrafficRule.SetNeverBlock();
+                                        EdgesInto[2].TrafficRule.SetNeverBlock();
+                                    }
+                                    else
+                                    {
+                                        if (roadName2 == roadName3)
+                                        {
+                                            twoNamesSame = true;
+
+                                            EdgesInto[1].TrafficRule.SetNeverBlock();
+                                            EdgesInto[2].TrafficRule.SetNeverBlock();
+                                        }
+                                    }
                                 }
                             }
 
-                            for (int i = 0; i < EdgesInto.Count; i++)
+                            if (!twoNamesSame)
                             {
-                                if (i != indexForLowestPriority)
+                                int indexForLowestPriority = 0;
+                                int lowestPriorityValueFound = int.MaxValue;
+
+                                //find lowest AADT value of the two or three and set the other edges to never block
+                                for (int i = 0; i < EdgesInto.Count; i++)
                                 {
-                                    EdgesInto[i].TrafficRule.SetNeverBlock();
+                                    int priorityValue = Helpers.Helper.GetPriority(EdgesInto[i].RoadEdge.Metadata.RoadType);
+
+                                    if (priorityValue < lowestPriorityValueFound)
+                                    {
+                                        indexForLowestPriority = i;
+                                        lowestPriorityValueFound = priorityValue;
+                                    }
+                                }
+
+                                for (int i = 0; i < EdgesInto.Count; i++)
+                                {
+                                    if (i != indexForLowestPriority)
+                                    {
+                                        EdgesInto[i].TrafficRule.SetNeverBlock();
+                                    }
                                 }
                             }
                         }

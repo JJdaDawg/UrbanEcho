@@ -1,10 +1,12 @@
 ﻿using Box2dNet;
 using Box2dNet.Interop;
+using DocumentFormat.OpenXml.Spreadsheet;
 using ExCSS;
 using Mapsui;
 using Mapsui.Layers;
 using Mapsui.Nts;
 using NetTopologySuite.Geometries;
+using NetTopologySuite.Operation.Distance;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -74,8 +76,9 @@ namespace UrbanEcho.Sim
 
         private VehicleSettings settings;
 
-        private float angleThresholdToDecelerate = Helper.Deg2Rad(45.0f);//How many degrees off target angle before decelerate
+        private float angleThresholdToDecelerate = Helper.Deg2Rad(5.0f);//How many degrees off target angle before decelerate
         private bool angleAboveThreshold = false;
+        private float angleDifference;
 
         private PointFeature? feature;//The feature this vehicle is connected to
 
@@ -275,7 +278,8 @@ namespace UrbanEcho.Sim
             this.feature = feature;
             this.updateGroup = updateGroup;
 
-            FRect rect = new FRect(startPos.X - (settings.GetLength()) / 2, startPos.Y - (settings.GetWidth()) / 2, settings.GetLength(), settings.GetWidth());
+            //FRect rect = new FRect(startPos.X - (settings.GetLength()) / 2, startPos.Y - (settings.GetWidth()) / 2, settings.GetLength(), settings.GetWidth());
+            FRect rect = new FRect(startPos.X, startPos.Y - (settings.GetWidth()) / 2, settings.GetLength(), settings.GetWidth());
 
             overlapDelegateVehicle = OverlapCallbackVehicle;
             overlapDelegateIntersection = OverlapCallbackIntersection;
@@ -337,7 +341,7 @@ namespace UrbanEcho.Sim
             if (graph == null || Body == null)
             {
                 EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Could not run advance to next road"));
-            path = null; pathSteps = null;
+                path = null; pathSteps = null;
                 return;
             }
 
@@ -345,7 +349,7 @@ namespace UrbanEcho.Sim
             if (nodes.Count < 2)
             {
                 EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Nodes in graph were less than 2"));
-            path = null; pathSteps = null;
+                path = null; pathSteps = null;
                 return;
             }
             var pathfinder = new AStarPathfinder(graph, SimManager.Instance.NodePenalties, IsTruck);
@@ -354,7 +358,7 @@ namespace UrbanEcho.Sim
             var newPathEdges = pathfinder.FindPathEdges(currentNodeId, goalNode);
             if (newPathEdges.Count < 1)
             {
-            path = null; pathSteps = null;
+                path = null; pathSteps = null;
                 return;
             }
             pathSteps = PathStepBuilder.Build(newPathEdges, graph);
@@ -728,7 +732,7 @@ namespace UrbanEcho.Sim
 
                                         thisVehicleIsInAIntersection = false;
                                         B2Api.b2World_OverlapShape(World.WorldId, b2VehicleShapeProxy, queryFilter, overlapDelegateThisVehicleInAnyIntersection, 1);
-                                        if (thisVehicleIsInAIntersection == true)
+                                        if (thisVehicleIsInAIntersection == true || stoppedElaspedTime > 30)//or if vehicle has waited a long time then other side of intersection may be blocked and try moving forward
                                         {
                                             WaitingOnIntersection = false;
                                             IsWaiting = false;
@@ -832,7 +836,7 @@ namespace UrbanEcho.Sim
 
                 if (State == VehicleStates.SlowDownForTurn)
                 {
-                    updateToSpeed = Math.Clamp(updateToSpeed - settings.GetDeceleration() * settings.GetSlowDownfactor(), 0, SpeedLimit);
+                    updateToSpeed = Math.Clamp(updateToSpeed - settings.GetDeceleration() * settings.GetSlowDownfactor() * angleDifference / Helper.Deg2Rad(180.0f), 0, SpeedLimit);
                 }
 
                 float speedToUseMs = Helper.Kmh2Ms(updateToSpeed);
@@ -869,11 +873,9 @@ namespace UrbanEcho.Sim
                     if (!(insideAnotherVehicle))
                     {
                         //Start raycast from front of car, so ray is not against self
-                        Vector2 calcRayStart = new Vector2(Pos.X + (settings.GetLength() / 2.0f + 0.1f) * currentAngle.c,
-                            Pos.Y + (settings.GetLength() / 2.0f + 0.1f) * currentAngle.s);
+                        Vector2 calcRayStart = new Vector2(Pos.X + (settings.GetLength() + 0.1f) * currentAngle.c,
+                            Pos.Y + (settings.GetLength() + 0.1f) * currentAngle.s);
                         //Vector2 calcRayStart = new Vector2(Pos.X, Pos.Y);
-
-                        b2Rot angleForRay = b2Rot.FromAngle(currentFloatAngle);
 
                         //use shorter ray if turning inside a intersection so it doesn't stop for vehicles
                         //that are waiting on other side of turn while car is making a right
@@ -886,6 +888,9 @@ namespace UrbanEcho.Sim
                         {
                             rayDistance = 5.0f;
                         }
+
+                        b2Rot angleForRay = b2Rot.FromAngle(currentFloatAngle);
+
                         ray = new Ray(calcRayStart, new Vector2(angleForRay.c * rayDistance, angleForRay.s * rayDistance));
                         ResetVehicleInFrontCount();//Has to be before the raycast else will always be zero value
 
@@ -1320,6 +1325,7 @@ namespace UrbanEcho.Sim
 
                 if (Math.Abs(angle) >= angleThresholdToDecelerate)
                 {
+                    angleDifference = Math.Abs(angle);
                     angleAboveThreshold = true;
                 }
                 else
