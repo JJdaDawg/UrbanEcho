@@ -126,6 +126,9 @@ namespace UrbanEcho.Migrations
                     b.Property<double>("AverageWaitTime")
                         .HasColumnType("REAL");
 
+                    b.Property<int>("Closed")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int?>("IntersectionReportModelId")
                         .HasColumnType("INTEGER");
 

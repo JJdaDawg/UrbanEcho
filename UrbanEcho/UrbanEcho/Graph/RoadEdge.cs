@@ -23,7 +23,11 @@ public sealed class RoadEdge
 
     public bool IsClosed { get; private set; }
 
-    public void Close() => IsClosed = true;
+    public void Close()
+    {
+        IsClosed = true;
+        stats.SetClosed();
+    }
 
     public void Open() => IsClosed = false;
 
