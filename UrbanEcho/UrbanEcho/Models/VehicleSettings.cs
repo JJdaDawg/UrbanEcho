@@ -31,7 +31,7 @@ namespace UrbanEcho.Models
                 acceleration = 2.0f;// Helper.DoMapCorrection(0.5f * Helper.NumberOfVehicleGroups);
                 deceleration = 4.0f;// Helper.DoMapCorrection(3.0f * Helper.NumberOfVehicleGroups);
                 slowDownfactor = 0.5f;//number from 0 to 1 multiplied by deceleration for slowing down on turns
-                turnSpeed = 2.0f;
+                turnSpeed = 4.0f;
                 lookAheadValueForSteerTowardsLane = 15.0f;
 
                 validType = true;
@@ -44,7 +44,7 @@ namespace UrbanEcho.Models
                 acceleration = 0.2f;
                 deceleration = 4.0f;
                 slowDownfactor = 0.5f;
-                turnSpeed = 2.0f;
+                turnSpeed = 3.0f;
                 lookAheadValueForSteerTowardsLane = 20.0f;
 
                 validType = true;

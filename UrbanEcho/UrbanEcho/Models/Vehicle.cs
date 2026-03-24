@@ -919,6 +919,69 @@ namespace UrbanEcho.Sim
                             }
                         }
 
+                        //Test with another ray if vehicle may be near a turn
+
+                        if (vehicleInFrontCount == 0 && distanceToTarget - 10.0f <= distanceThresholdReachedTarget)
+                        {
+                            float distanceToUse = rayDistance * 0.5f;
+                            ray = new Ray(calcRayStart + new Vector2(angleForRay.s * settings.GetWidth() / 2, angleForRay.c * settings.GetWidth() / 2), new Vector2(angleForRay.c * distanceToUse, angleForRay.s * distanceToUse));
+
+                            queryFilter.maskBits = (ulong)ShapeCategories.Vehicle;
+                            b2RayResult secondRayResult = B2Api.b2World_CastRayClosest(World.WorldId, ray.Start, ray.Translation, queryFilter);
+
+                            if (secondRayResult.hit)
+                            {
+                                float distance = distanceToUse * rayResult.fraction;
+
+                                if (secondRayResult.shapeId != Body.ShapeId)
+                                {
+                                    b2Filter filter = B2Api.b2Shape_GetFilter(secondRayResult.shapeId);
+                                    if (filter.categoryBits == (ulong)ShapeCategories.Vehicle)
+                                    {
+                                        bool counted = SetVehicleInFrontCount(secondRayResult.shapeId, secondRayResult.fraction);
+                                    }
+                                    else
+                                    {
+                                        EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Should query vehicle not something else"));
+                                    }
+                                }
+                                else
+                                {
+                                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Shape collided with self, raycast start point incorrect"));
+                                }
+                            }
+                            //Test with third ray at different angle if vehicle may be near a turn
+                            if (vehicleInFrontCount == 0)
+                            {
+                                ray = new Ray(calcRayStart + new Vector2(angleForRay.s * settings.GetWidth() / 2, -angleForRay.c * settings.GetWidth() / 2), new Vector2(angleForRay.c * distanceToUse, angleForRay.s * distanceToUse));
+
+                                queryFilter.maskBits = (ulong)ShapeCategories.Vehicle;
+                                b2RayResult thirdRayResult = B2Api.b2World_CastRayClosest(World.WorldId, ray.Start, ray.Translation, queryFilter);
+
+                                if (thirdRayResult.hit)
+                                {
+                                    float distance = distanceToUse * rayResult.fraction;
+
+                                    if (thirdRayResult.shapeId != Body.ShapeId)
+                                    {
+                                        b2Filter filter = B2Api.b2Shape_GetFilter(thirdRayResult.shapeId);
+                                        if (filter.categoryBits == (ulong)ShapeCategories.Vehicle)
+                                        {
+                                            bool counted = SetVehicleInFrontCount(thirdRayResult.shapeId, thirdRayResult.fraction);
+                                        }
+                                        else
+                                        {
+                                            EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Should query vehicle not something else"));
+                                        }
+                                    }
+                                    else
+                                    {
+                                        EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Shape collided with self, raycast start point incorrect"));
+                                    }
+                                }
+                            }
+                        }
+
                         // B2Api.b2World_CastRay(World.WorldId, ray.Start, ray.Translation, queryFilter, rayCastDelegate, 1);
                         //Only query intersections if no car already in front
                         if (vehicleInFrontCount == 0)
