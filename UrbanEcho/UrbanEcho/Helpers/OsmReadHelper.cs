@@ -735,6 +735,7 @@ namespace UrbanEcho.Helpers
             gf["FLOW_DIREC"] = oldFeature["FLOW_DIREC"];
             gf["highway"] = oldFeature["highway"];
             gf["CARTO_CLAS"] = oldFeature["CARTO_CLAS"];
+            gf["TRUCK_ACCE"] = oldFeature["TRUCK_ACCE"];
             return gf;
         }
 
@@ -746,6 +747,15 @@ namespace UrbanEcho.Helpers
             gf["FLOW_DIREC"] = GetDirection(way);
             gf["highway"] = GetHighway(way);
             gf["CARTO_CLAS"] = GetRoadType(way);
+            string truckString = "NO ACCESS";
+            if (gf["CARTO_CLAS"]?.ToString() is string cartoClass)
+            {
+                if (cartoClass != "Local Street")
+                {
+                    truckString = "24HR";
+                }
+            }
+            gf["TRUCK_ACCE"] = truckString;
             return gf;
         }
 
