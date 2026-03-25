@@ -104,6 +104,7 @@ namespace UrbanEcho.Migrations
                     VehicleCount = table.Column<int>(type: "INTEGER", nullable: false),
                     Lat = table.Column<double>(type: "REAL", nullable: false),
                     Lon = table.Column<double>(type: "REAL", nullable: false),
+                    Closed = table.Column<int>(type: "INTEGER", nullable: false),
                     IntersectionReportModelId = table.Column<int>(type: "INTEGER", nullable: true),
                     RoadEdgeReportId = table.Column<int>(type: "INTEGER", nullable: true)
                 },

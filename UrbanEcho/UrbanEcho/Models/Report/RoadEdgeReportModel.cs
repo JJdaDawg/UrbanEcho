@@ -26,6 +26,8 @@ namespace UrbanEcho.Models.Report
 
         public double Lon { get; private set; }
 
+        public int Closed { get; private set; } //0 not Closed, non zero as closed
+
         private RoadEdgeReportModel()//Unused only for creation of database
         {
         }
@@ -43,6 +45,7 @@ namespace UrbanEcho.Models.Report
             VehicleCount = stats.VehicleCount;
             Lat = stats.Lat;
             Lon = stats.Lon;
+            Closed = stats.Closed;
         }
     }
 }

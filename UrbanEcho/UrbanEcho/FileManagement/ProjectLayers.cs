@@ -59,6 +59,7 @@ namespace UrbanEcho.FileManagement
         private static bool backgroundRequiresLoading = false;
         private static bool roadRequiresLoading = false;
         private static bool intersectionRequiresLoading = false;
+        private static bool censusRequiresLoading = false;
         private static bool vehicleRequiresLoading = true;
 
         private static bool roadLoaded = false;
@@ -174,6 +175,7 @@ namespace UrbanEcho.FileManagement
             {
                 currentProjectFile.RoadLayerPath = path;
                 roadRequiresLoading = true;
+                censusRequiresLoading = true;
                 roadLoaded = false;
                 roadLabelLayer = null;
                 roadLayerFirstPass = null;
@@ -232,18 +234,21 @@ namespace UrbanEcho.FileManagement
 
             try
             {
-                currentProjectFile.CensusLayerPath = path;
-                SimManager.Instance.InitializeCensusSpawning(path);
-
-                if (SimManager.Instance.CensusSpawn != null && SimManager.Instance.CensusSpawn.IsLoaded)
+                if (!string.IsNullOrEmpty(path))
                 {
-                    censusOverlayLayer = CreateCensusOverlayLayer(SimManager.Instance.CensusSpawn.Zones);
-                    if (MainWindow.Instance.GetMap() != null)
+                    currentProjectFile.CensusLayerPath = path;
+                    SimManager.Instance.InitializeCensusSpawning(path);
+
+                    if (SimManager.Instance.CensusSpawn != null && SimManager.Instance.CensusSpawn.IsLoaded)
                     {
-                        EventQueueForUI.Instance.Add(new AddLayersEvent(MainWindow.Instance.GetMap()));
+                        censusOverlayLayer = CreateCensusOverlayLayer(SimManager.Instance.CensusSpawn.Zones);
+                        if (MainWindow.Instance.GetMap() != null)
+                        {
+                            EventQueueForUI.Instance.Add(new AddLayersEvent(MainWindow.Instance.GetMap()));
+                        }
+                        EventQueueForUI.Instance.Add(new CensusLoadedEvent());
+                        EventQueueForUI.Instance.Add(new SetProjectEvent(currentProjectFile));
                     }
-                    EventQueueForUI.Instance.Add(new CensusLoadedEvent());
-                    EventQueueForUI.Instance.Add(new SetProjectEvent(currentProjectFile));
                 }
             }
             catch (Exception ex)
@@ -275,7 +280,7 @@ namespace UrbanEcho.FileManagement
             roadRequiresLoading = true;
             intersectionRequiresLoading = true;
             vehicleRequiresLoading = true;
-
+            censusRequiresLoading = true;
             roadLoaded = false;
             intersectionLoaded = false;
             backgroundLayer = null;
@@ -477,6 +482,20 @@ namespace UrbanEcho.FileManagement
                 EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Initialize Graph"));
 
                 SimManager.Instance.InitializeGraph();
+
+                if (censusRequiresLoading)
+                {
+                    if (currentProjectFile != null)
+                    {
+                        LoadCensusFile(currentProjectFile.CensusLayerPath);
+                        if (censusOverlayLayer != null)
+                        {
+                            addLayer = true;
+                            censusRequiresLoading = false;
+                            vehicleRequiresLoading = true;
+                        }
+                    }
+                }
 
                 if (SimManager.Instance.RoadGraph != null)
                 {

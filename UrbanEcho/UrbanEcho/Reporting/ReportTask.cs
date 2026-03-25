@@ -86,6 +86,13 @@ namespace UrbanEcho.Reporting
 
                 string reportName = Path.GetFileNameWithoutExtension(ProjectLayers.GetProject()?.PathForThisFile ?? "UnNamedProject.uep");
 
+                bool anyRoadsClosed = CheckAnyRoadsClosed(TheRoadEdgeReport.Roads);
+
+                if (anyRoadsClosed)
+                {
+                    reportName = reportName + " (Closures)";
+                }
+
                 Report report = new Report(dateTime, reportName, TheRoadEdgeReport, TheIntersectionReport);
                 try
                 {
@@ -103,6 +110,18 @@ namespace UrbanEcho.Reporting
             {
                 EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Unable to create a report (report export has not completed a previous export)"));
             }
+        }
+
+        private bool CheckAnyRoadsClosed(List<RoadEdgeReportModel> roadEdges)
+        {
+            bool returnValue = false;
+
+            if (roadEdges.Any(e => e.Closed > 0))
+            {
+                returnValue = true;
+            }
+
+            return returnValue;
         }
 
         private void Export(MemoryStream? ms, DateTime dateTime)

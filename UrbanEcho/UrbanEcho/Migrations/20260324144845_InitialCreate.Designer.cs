@@ -11,7 +11,7 @@ using UrbanEcho.Reporting;
 namespace UrbanEcho.Migrations
 {
     [DbContext(typeof(ReportContext))]
-    [Migration("20260319150006_InitialCreate")]
+    [Migration("20260324144845_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -128,6 +128,9 @@ namespace UrbanEcho.Migrations
 
                     b.Property<double>("AverageWaitTime")
                         .HasColumnType("REAL");
+
+                    b.Property<int>("Closed")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int?>("IntersectionReportModelId")
                         .HasColumnType("INTEGER");

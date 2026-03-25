@@ -35,7 +35,7 @@ namespace UrbanEcho.Physics
             this.parent = parent;
             // Define the vehicle body.
             b2BodyDef bodyDef = b2DefaultBodyDef();
-            bodyDef.position = new Vector2(rect.X + rect.Width * 0.5f, rect.Y + rect.Height * 0.5f);
+            bodyDef.position = new Vector2(rect.X /*+ rect.Width * 0.5f*/, rect.Y + rect.Height * 0.5f);
             bodyDef.type = b2BodyType.b2_kinematicBody;
 
             bodyDef.linearDamping = 0.01f;
@@ -45,7 +45,9 @@ namespace UrbanEcho.Physics
 
             bodyCreated = true;
             b2ShapeDef shapeDef = b2DefaultShapeDef();
-            b2Polygon polygon = Helper.CreatePolygon([new(-rect.Width / 2, -rect.Height / 2), new(-rect.Width / 2, rect.Height / 2), new(rect.Width / 2, rect.Height / 2), new(rect.Width / 2, -rect.Height / 2)]);
+            //b2Polygon polygon = Helper.CreatePolygon([new(-rect.Width / 2, -rect.Height / 2), new(-rect.Width / 2, rect.Height / 2), new(rect.Width / 2, rect.Height / 2), new(rect.Width / 2, -rect.Height / 2)]);
+            b2Polygon polygon = Helper.CreatePolygon([new(0, -rect.Height / 2), new(0, rect.Height / 2), new(rect.Width, rect.Height / 2), new(rect.Width, -rect.Height / 2)]);
+
             vertices = new Vector2[polygon.count];
             for (int i = 0; i < polygon.count; i++)
             {

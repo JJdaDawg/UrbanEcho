@@ -24,7 +24,7 @@ namespace UrbanEcho.Sim
         private readonly Random spawnRng = new Random();
         private float simTime = 0;
         public long SimFrames = 0;
-        private int startingNumberOfVehicles = 3000;
+        private int startingNumberOfVehicles = 3000; //Using number of nodes later in code
         private int maxVehicles = 5000;
         public int GroupToUpdate = 0;
         private bool flasher;
@@ -100,6 +100,10 @@ namespace UrbanEcho.Sim
                 // Fallback to census / random spawning
                 if (Vehicles.Count == 0)
                 {
+                    if (SimManager.Instance.RoadGraph != null)
+                    {
+                        startingNumberOfVehicles = SimManager.Instance.RoadGraph.Nodes.Count / 2;
+                    }
                     TrySpawnVehicle(startingNumberOfVehicles, false);
                     foreach (Vehicle v in Vehicles)
                     {
