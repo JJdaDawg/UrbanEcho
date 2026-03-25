@@ -20,6 +20,12 @@ namespace UrbanEcho.Graph
         private static List<int>? _weightedDestinationNodes;
 
         /// <summary>
+        /// True when at least one edge carried a real AADT value (> 0) from the source data.
+        /// False for OSM-only graphs where every edge received the default fallback volume.
+        /// </summary>
+        public static bool HasRealAadt { get; private set; }
+
+        /// <summary>
         /// Processes the graph edges that already carry AADT from the main shapefile.
         /// Edges with no AADT (0) get a small default volume so they remain routable,
         /// then builds the weighted destination node list.
@@ -53,6 +59,7 @@ namespace UrbanEcho.Graph
             }
 
             // Build the weighted destination node list now that volumes are assigned
+            HasRealAadt = matched > 0;
             _weightedDestinationNodes = BuildWeightedDestinationNodes(graph);
 
             LogStats(graph, matched, unmatched, minAADT, maxAADT, totalAADT);
@@ -118,6 +125,23 @@ namespace UrbanEcho.Graph
             } while (result == excludeNodeId && attempts < 50);
 
             return result;
+        }
+
+        /// <summary>
+        /// Picks a destination node uniformly at random, excluding <paramref name="excludeNodeId"/>.
+        /// </summary>
+        public static int PickRandomDestination(RoadGraph graph, int excludeNodeId)
+        {
+            var nodes = graph.Nodes.Keys.ToList();
+            if (nodes.Count == 0) return excludeNodeId;
+            int pick;
+            int attempts = 0;
+            do
+            {
+                pick = nodes[Random.Shared.Next(nodes.Count)];
+                attempts++;
+            } while (pick == excludeNodeId && nodes.Count > 1 && attempts < 50);
+            return pick;
         }
 
         /// <summary>

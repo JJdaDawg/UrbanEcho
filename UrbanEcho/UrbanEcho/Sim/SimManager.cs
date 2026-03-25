@@ -45,6 +45,19 @@ namespace UrbanEcho.Sim
         Census
     }
 
+    /// <summary>
+    /// Controls how vehicles select their next destination node when building a path.
+    /// </summary>
+    public enum RoutingMode
+    {
+        /// <summary>Destinations weighted by AADT traffic volume (default).</summary>
+        Aadt,
+        /// <summary>Destinations chosen uniformly at random.</summary>
+        Random,
+        /// <summary>Destinations weighted by census zone employment (attraction model). Requires census data.</summary>
+        CensusOD
+    }
+
     public sealed class SimManager
     {
         private static SimManager? instance;
@@ -64,10 +77,14 @@ namespace UrbanEcho.Sim
 
         public SpawnMode SpawnMode { get; set; } = SpawnMode.Gates;
 
+        public RoutingMode RoutingMode { get; set; } = RoutingMode.Aadt;
+
         public long TaskUpdates = 0;
 
         public AStarPathfinder? pathfinder;
         public List<int>? nodes;
+        /// <summary>Node IDs that have at least one open, truck-allowed outgoing edge. Used as fallback spawn pool for trucks.</summary>
+        public List<int> TruckEligibleNodes { get; private set; } = new List<int>();
 
         private bool intersectionBodiesCreated = false;
 
@@ -368,6 +385,12 @@ namespace UrbanEcho.Sim
 
             pathfinder = new AStarPathfinder(RoadGraph);
             nodes = RoadGraph.Nodes.Keys.ToList();
+
+            // Build the truck-eligible spawn pool once so we never waste a spawn slot.
+            TruckEligibleNodes = nodes
+                .Where(nid => RoadGraph.GetOutgoingEdges(nid)
+                    .Any(e => !e.IsClosed && e.Metadata.TruckAllowance))
+                .ToList();
         }
 
         /// <summary>
@@ -451,8 +474,10 @@ namespace UrbanEcho.Sim
             CensusSpawn = null;
             SpawnPoints = new List<SpawnPoint>();
             SpawnMode = SpawnMode.Gates;
+            RoutingMode = RoutingMode.Aadt;
             pathfinder = null;
             nodes = null;
+            TruckEligibleNodes = new List<int>();
             intersectionBodiesCreated = false;
             NodePenalties = new Dictionary<int, double>();
         }

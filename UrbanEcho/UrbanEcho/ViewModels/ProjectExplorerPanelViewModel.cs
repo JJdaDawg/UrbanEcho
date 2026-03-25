@@ -25,6 +25,7 @@ public partial class ProjectExplorerPanelViewModel : ObservableObject
     [ObservableProperty] private bool _hasProject;
     [ObservableProperty] private bool _isCensusLoaded;
     [ObservableProperty] private bool _useCensusSpawning;
+    [ObservableProperty] private int _routingModeIndex = 0;
 
     public bool IsIntersectionLayerActive => ActiveLayer == SelectionLayer.Intersection;
     public bool IsVehicleLayerActive => ActiveLayer == SelectionLayer.Vehicle;
@@ -74,6 +75,7 @@ public partial class ProjectExplorerPanelViewModel : ObservableObject
             HasProject = false;
             IsCensusLoaded = false;
             UseCensusSpawning = false;
+            RoutingModeIndex = 0;
             AutoPlaceGatesFromExtentCommand.NotifyCanExecuteChanged();
             AutoPlaceGatesFromResidentialCommand.NotifyCanExecuteChanged();
         });
@@ -95,6 +97,16 @@ public partial class ProjectExplorerPanelViewModel : ObservableObject
     partial void OnUseCensusSpawningChanged(bool value)
     {
         SimManager.Instance.SpawnMode = value ? SpawnMode.Census : SpawnMode.Gates;
+    }
+
+    partial void OnRoutingModeIndexChanged(int value)
+    {
+        SimManager.Instance.RoutingMode = value switch
+        {
+            1 => RoutingMode.Random,
+            2 => RoutingMode.CensusOD,
+            _ => RoutingMode.Aadt
+        };
     }
 
     public void Toggle()
