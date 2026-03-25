@@ -11,7 +11,6 @@ using System.Resources;
 using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
-using UrbanEcho.Sim;
 using static Mapsui.Rendering.Skia.Functions.ClippingFunctions;
 
 namespace UrbanEcho.Styles

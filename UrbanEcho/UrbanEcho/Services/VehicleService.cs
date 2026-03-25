@@ -4,48 +4,56 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UrbanEcho.Events.Sim;
 using UrbanEcho.Messages;
 using UrbanEcho.Models;
-using UrbanEcho.Sim;
 
 namespace UrbanEcho.Services
 {
     public interface IVehicleService
     {
-        void Respawn(Vehicle vehicle);
-        void ToggleStop(Vehicle vehicle);
-        void TrackVehicle(Vehicle vehicle);
-        void PickDestination(Vehicle vehicle);
+        void Respawn(VehicleReadOnly vehicle);
+
+        void ToggleStop(VehicleReadOnly vehicle);
+
+        void TrackVehicle(VehicleReadOnly vehicle);
+
+        void PickDestination(VehicleReadOnly vehicle);
+
         void CancelPickDestination();
+
         void StopTracking();
-        void ShowPath(Vehicle vehicle);
+
+        void ShowPath(VehicleReadOnly vehicle);
+
         void HidePath();
     }
 
     public class VehicleService : IVehicleService
     {
-        public void Respawn(Vehicle vehicle)
+        public void Respawn(VehicleReadOnly vehicle)
         {
-            WeakReferenceMessenger.Default.Send(new LogMessage($"Vehicle {vehicle.VehicleUI.Id} despawned", LogSource.System));
-            vehicle.ResetVehicleToNewPos();
+            WeakReferenceMessenger.Default.Send(new LogMessage($"Vehicle {vehicle.Id()} despawned", LogSource.System));
+            EventQueueForSim.Instance.Add(new ResetPositionEvent(vehicle));
         }
 
-        public void ToggleStop(Vehicle vehicle)
+        public void ToggleStop(VehicleReadOnly vehicle)
         {
-            vehicle.IsForceStopped = !vehicle.IsForceStopped;
-            WeakReferenceMessenger.Default.Send(new LogMessage($"Vehicle {vehicle.VehicleUI.Id} {(vehicle.IsForceStopped ? "stopped" : "started")}", LogSource.System));
+            bool stopCommand = !vehicle.IsForceStopped();
+            EventQueueForSim.Instance.Add(new ForceStopEvent(vehicle, stopCommand));
+            WeakReferenceMessenger.Default.Send(new LogMessage($"Vehicle {vehicle.Id()} {(stopCommand ? "stopped" : "started")}", LogSource.System));
         }
 
-        public void TrackVehicle(Vehicle vehicle)
+        public void TrackVehicle(VehicleReadOnly vehicle)
         {
             WeakReferenceMessenger.Default.Send(new TrackVehicleMessage(vehicle));
-            WeakReferenceMessenger.Default.Send(new LogMessage($"Tracking vehicle {vehicle.VehicleUI.Id}", LogSource.System));
+            WeakReferenceMessenger.Default.Send(new LogMessage($"Tracking vehicle {vehicle.Id()}", LogSource.System));
         }
 
-        public void PickDestination(Vehicle vehicle)
+        public void PickDestination(VehicleReadOnly vehicle)
         {
             WeakReferenceMessenger.Default.Send(new PickDestinationMessage(vehicle));
-            WeakReferenceMessenger.Default.Send(new LogMessage($"Picking destination for vehicle {vehicle.VehicleUI.Id}", LogSource.System));
+            WeakReferenceMessenger.Default.Send(new LogMessage($"Picking destination for vehicle {vehicle.Id()}", LogSource.System));
         }
 
         public void CancelPickDestination()
@@ -59,10 +67,10 @@ namespace UrbanEcho.Services
             WeakReferenceMessenger.Default.Send(new LogMessage("Stopped tracking vehicle", LogSource.System));
         }
 
-        public void ShowPath(Vehicle vehicle)
+        public void ShowPath(VehicleReadOnly vehicle)
         {
             WeakReferenceMessenger.Default.Send(new ShowVehiclePathMessage(vehicle));
-            WeakReferenceMessenger.Default.Send(new LogMessage($"Showing path for vehicle {vehicle.VehicleUI.Id}", LogSource.System));
+            WeakReferenceMessenger.Default.Send(new LogMessage($"Showing path for vehicle {vehicle.Id()}", LogSource.System));
         }
 
         public void HidePath()

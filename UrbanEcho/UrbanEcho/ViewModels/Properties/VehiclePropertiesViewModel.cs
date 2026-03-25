@@ -6,28 +6,27 @@ using UrbanEcho.Messages;
 using UrbanEcho.Models;
 using UrbanEcho.Models.UI;
 using UrbanEcho.Services;
-using UrbanEcho.Sim;
 
 namespace UrbanEcho.ViewModels.Properties
 {
     public partial class VehiclePropertiesViewModel : ObservableObject, IPropertiesViewModel
     {
-        private readonly Vehicle _vehicle;
+        private readonly VehicleReadOnly _vehicle;
         private readonly IVehicleService _vehicleService;
 
         public string Title => "Vehicle";
-        public string Subtitle => $"ID: {_vehicle.VehicleUI.Id}";
+        public string Subtitle => $"ID: {_vehicle.Id()}";
 
-        public int Id => _vehicle.VehicleUI.Id;
-        public string VehicleType => _vehicle.VehicleUI.VehicleType;
-        public float Kmh => _vehicle.Kmh;
-        public float SpeedLimit => _vehicle.SpeedLimit;
-        public VehicleStates State => _vehicle.State;
-        public bool IsWaiting => _vehicle.IsWaiting;
-        public bool WaitingOnIntersection => _vehicle.WaitingOnIntersection;
-        public bool VehicleInFront => _vehicle.VehicleInFront;
-        public float MetersFromCarInFront => _vehicle.MetersFromCarInFront;
-        public string RoadName => _vehicle.RoadName;
+        public int Id => _vehicle.Id();
+        public string VehicleType => _vehicle.VehicleType();
+        public float Kmh => _vehicle.Kmh();
+        public float SpeedLimit => _vehicle.SpeedLimit();
+        public VehicleStates State => _vehicle.State();
+        public bool IsWaiting => _vehicle.IsWaiting();
+        public bool WaitingOnIntersection => _vehicle.WaitingOnIntersection();
+        public bool VehicleInFront => _vehicle.VehicleInFront();
+        public float MetersFromCarInFront => _vehicle.MetersFromCarInFront();
+        public string RoadName => _vehicle.RoadName();
 
         [ObservableProperty]
         private bool _isEditing;
@@ -41,7 +40,7 @@ namespace UrbanEcho.ViewModels.Properties
         [ObservableProperty]
         private bool _isShowingPath;
 
-        public VehiclePropertiesViewModel(Vehicle vehicle, IVehicleService vehicleService)
+        public VehiclePropertiesViewModel(VehicleReadOnly vehicle, IVehicleService vehicleService)
         {
             _vehicle = vehicle;
             _vehicleService = vehicleService;
@@ -73,15 +72,17 @@ namespace UrbanEcho.ViewModels.Properties
 
         // ACTION Commands
         public RelayCommand PathCommand { get; }
+
         public RelayCommand TrendCommand { get; } = new RelayCommand(() => { /* todo */ });
         public RelayCommand TrackCommand { get; }
 
         // EDIT Commands
         public RelayCommand DestinationCommand { get; }
+
         public RelayCommand StartStopCommand { get; }
         public RelayCommand RespawnCommand { get; }
 
-        public string StartStopLabel => _vehicle.IsForceStopped ? "Start" : "Stop";
+        public string StartStopLabel => _vehicle.IsForceStopped() ? "Start" : "Stop";
 
         public void UpdatePropertyView()
         {

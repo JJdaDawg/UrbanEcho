@@ -25,8 +25,8 @@ public partial class MapViewModel : ObservableObject
 
     private SelectionLayer _activeLayer = SelectionLayer.None;
 
-    private Vehicle? _trackedVehicle;
-    private Vehicle? _pendingDestinationVehicle;
+    private VehicleReadOnly? _trackedVehicle;
+    private VehicleReadOnly? _pendingDestinationVehicle;
     private SpawnPoint? _pendingMoveSpawner;
 
     [ObservableProperty] private Map myMap = new Map();
@@ -282,15 +282,15 @@ public partial class MapViewModel : ObservableObject
         WeakReferenceMessenger.Default.Send(new LogMessage("Volume visibility toggled", LogSource.Map));
     }
 
-    private void HandleDestinationPick(Vehicle vehicle, MPoint worldPos)
+    private void HandleDestinationPick(VehicleReadOnly vehicle, MPoint worldPos)
     {
         _pendingDestinationVehicle = null;
         int? nearestNode = FindNearestNode(worldPos);
         if (nearestNode is null) return;
-        EventQueueForSim.Instance.Add(new SetDestinationEvent(vehicle, nearestNode));
-        vehicle.SetDestination(nearestNode.Value);
+        EventQueueForSim.Instance.Add(new SetDestinationEvent(vehicle, nearestNode.Value));
+
         WeakReferenceMessenger.Default.Send(new DestinationPickedMessage());
-        WeakReferenceMessenger.Default.Send(new LogMessage($"Destination set for vehicle {vehicle.VehicleUI.Id}", LogSource.Map));
+        WeakReferenceMessenger.Default.Send(new LogMessage($"Destination set for vehicle {vehicle.Id()}", LogSource.Map));
     }
 
     private int? FindNearestNode(MPoint worldPos)
@@ -363,7 +363,7 @@ public partial class MapViewModel : ObservableObject
             Vector2 pos = Vector2.Zero;
             if (_trackedVehicle != null)
             {
-                pos = _trackedVehicle.Pos;
+                pos = _trackedVehicle.Pos();
 
                 if (float.IsNaN(pos.X) || float.IsNaN(pos.Y))
                 {

@@ -7,22 +7,21 @@ using UrbanEcho.Sim;
 
 namespace UrbanEcho.Events.Sim
 {
-    public class SetDestinationEvent : IEventForSim
+    public class ForceStopEvent : IEventForSim
     {
-        private int? nearestNode;
+        private bool stopCommand = false;
         private UrbanEcho.Models.Vehicle? vehicle;
 
-        public SetDestinationEvent(UrbanEcho.Models.VehicleReadOnly vehicle, int? nearestNode)
+        public ForceStopEvent(UrbanEcho.Models.VehicleReadOnly vehicle, bool stopCommand)
         {
-            this.nearestNode = nearestNode;
+            this.stopCommand = stopCommand;
             this.vehicle = SimManager.Instance.GetVehicle(vehicle);
         }
 
         public void Run()
         {
-            if (nearestNode is null) return;
             if (vehicle is null) return;
-            vehicle.RequestSetDestination(nearestNode.Value);
+            vehicle.SetForceStop(stopCommand);
         }
     }
 }

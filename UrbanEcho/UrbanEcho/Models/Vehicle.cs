@@ -18,8 +18,9 @@ using UrbanEcho.Models;
 using UrbanEcho.Models.UI;
 using UrbanEcho.Physics;
 using UrbanEcho.Reporting;
+using UrbanEcho.Sim;
 
-namespace UrbanEcho.Sim
+namespace UrbanEcho.Models
 {
     public enum VehicleStates
     {
@@ -32,11 +33,6 @@ namespace UrbanEcho.Sim
 
     public class Vehicle : IBodyParent
     {
-        public VehicleUI VehicleUI
-        {
-            get; private set;
-        } = new VehicleUI();
-
         public bool IsForceStopped = false;
 
         //public b2CastResultFcn? rayCastDelegate;
@@ -138,6 +134,9 @@ namespace UrbanEcho.Sim
         private Stats stats = new Stats();
         private double allSpeedValues = 0;
 
+        private RequestDestination? requestDestination = null;
+        private RequestResetPosition? requestResetPosition = null;
+
         public float Kmh
         {
             get
@@ -146,7 +145,6 @@ namespace UrbanEcho.Sim
             }
             set
             {
-                VehicleUI.Kmh = value;
                 kmh = value;
             }
         }
@@ -161,7 +159,6 @@ namespace UrbanEcho.Sim
             }
             set
             {
-                VehicleUI.SpeedLimit = value;
                 speedLimit = value;
             }
         }
@@ -176,7 +173,6 @@ namespace UrbanEcho.Sim
             }
             set
             {
-                VehicleUI.State = value;
                 state = value;
             }
         }
@@ -191,7 +187,6 @@ namespace UrbanEcho.Sim
             }
             set
             {
-                VehicleUI.IsWaiting = value;
                 isWaiting = value;
             }
         }
@@ -206,7 +201,6 @@ namespace UrbanEcho.Sim
             }
             set
             {
-                VehicleUI.WaitingOnIntersection = value;
                 waitingOnIntersection = value;
             }
         }
@@ -221,7 +215,6 @@ namespace UrbanEcho.Sim
             }
             set
             {
-                VehicleUI.VehicleInFront = value;
                 vehicleInFront = value;
             }
         }
@@ -236,7 +229,6 @@ namespace UrbanEcho.Sim
             }
             set
             {
-                VehicleUI.MetersFromCarInFront = value;
                 metersFromCarInFront = value;
             }
         }
@@ -252,15 +244,18 @@ namespace UrbanEcho.Sim
             set
             {
                 roadType = value;
-                VehicleUI.RoadName = value;
             }
         }
+
+        public int Id;
+        public string VehicleType = "";
 
         public Vehicle(PointFeature feature, RoadEdge currentRoadEdge, string carType, int updateGroup, RoadGraph roadGraph)
         {
             graph = roadGraph;
-            VehicleUI.VehicleType = Helper.TryGetFeatureKVPToString(feature, "VehicleType", "");
-            VehicleUI.Id = Helper.TryGetFeatureKVPToInt(feature, "VehicleNumber", 0);
+
+            VehicleType = Helper.TryGetFeatureKVPToString(feature, "VehicleType", "");
+            Id = Helper.TryGetFeatureKVPToInt(feature, "VehicleNumber", 0);
 
             settings = new VehicleSettings(carType);
             IsTruck = carType == "TransportTruck";
@@ -487,7 +482,12 @@ namespace UrbanEcho.Sim
             return counted;
         }
 
-        public void SetDestination(int goalNodeId)
+        public void RequestSetDestination(int goalNodeId)
+        {
+            requestDestination = new RequestDestination(goalNodeId);
+        }
+
+        private void SetDestination(int goalNodeId)
         {
             if (graph == null) return;
 
@@ -657,6 +657,17 @@ namespace UrbanEcho.Sim
                     State = VehicleStates.Stopped;
                     Kmh = 0;
                     return;
+                }
+                if (requestDestination != null)
+                {
+                    SetDestination(requestDestination.NodeId);
+                    requestDestination = null;
+                }
+
+                if (requestResetPosition != null)
+                {
+                    ResetVehicleToNewPos();
+                    requestResetPosition = null;
                 }
 
                 UpdateStats();
@@ -836,7 +847,7 @@ namespace UrbanEcho.Sim
 
                 if (State == VehicleStates.SlowDownForTurn)
                 {
-                    updateToSpeed = Math.Clamp(updateToSpeed - settings.GetDeceleration() * settings.GetSlowDownfactor() * angleDifference / Helper.Deg2Rad(180.0f), 0, SpeedLimit);
+                    updateToSpeed = Math.Clamp(updateToSpeed - settings.GetDeceleration() * settings.GetSlowDownfactor() * Math.Abs(angleDifference) / Helper.Deg2Rad(180.0f), 0, SpeedLimit);
                 }
 
                 float speedToUseMs = Helper.Kmh2Ms(updateToSpeed);
@@ -921,27 +932,35 @@ namespace UrbanEcho.Sim
 
                         //Test with another ray if vehicle may be near a turn
 
-                        if (vehicleInFrontCount == 0 && (distanceToTarget - 20.0f <= distanceThresholdReachedTarget || State == VehicleStates.SlowDownForTurn))
+                        if (vehicleInFrontCount == 0 && State == VehicleStates.SlowDownForTurn && angleDifference > 0)
                         {
-                            Vector2 secondCalcRayStart = new Vector2(Pos.X - (settings.GetWidth() / 2 + 0.25f) * currentAngle.s,
+                            Vector2 anotherCalcRayStart = new Vector2(Pos.X - (settings.GetWidth() / 2 + 0.25f) * currentAngle.s,
                             Pos.Y + (settings.GetWidth() / 2 + 0.2f) * currentAngle.c);
+                            b2Rot angleForSecondRay = b2Rot.FromAngle(currentFloatAngle + Helper.Deg2Rad(30));
                             float distanceToUse = rayDistance * 1.0f;
 
-                            ray = new Ray(secondCalcRayStart, new Vector2(angleForRay.c * distanceToUse, angleForRay.s * distanceToUse));
+                            ray = new Ray(anotherCalcRayStart, new Vector2(angleForSecondRay.c * distanceToUse, angleForSecondRay.s * distanceToUse));
 
                             queryFilter.maskBits = (ulong)ShapeCategories.Vehicle;
-                            b2RayResult secondRayResult = B2Api.b2World_CastRayClosest(World.WorldId, ray.Start, ray.Translation, queryFilter);
+                            b2RayResult anotherRayResult = B2Api.b2World_CastRayClosest(World.WorldId, ray.Start, ray.Translation, queryFilter);
 
-                            if (secondRayResult.hit)
+                            if (anotherRayResult.hit)
                             {
                                 float distance = distanceToUse * rayResult.fraction;
 
-                                if (secondRayResult.shapeId != Body.ShapeId)
+                                if (anotherRayResult.shapeId != Body.ShapeId)
                                 {
-                                    b2Filter filter = B2Api.b2Shape_GetFilter(secondRayResult.shapeId);
+                                    b2Filter filter = B2Api.b2Shape_GetFilter(anotherRayResult.shapeId);
                                     if (filter.categoryBits == (ulong)ShapeCategories.Vehicle)
                                     {
-                                        bool counted = SetVehicleInFrontCount(secondRayResult.shapeId, secondRayResult.fraction);
+                                        bool counted = SetVehicleInFrontCount(anotherRayResult.shapeId, anotherRayResult.fraction);
+
+                                        //if (counted && SimManager.Instance.GetSimTime() > 10) testing
+                                        //{
+                                        //    bool breakhere = true;
+                                        //    SimManager.Instance.RunSimulation = false;
+                                        //    SimManager.Instance.Paused = true;
+                                        //}
                                     }
                                     else
                                     {
@@ -953,40 +972,83 @@ namespace UrbanEcho.Sim
                                     EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Shape collided with self, raycast start point incorrect"));
                                 }
                             }
-                            //Test with third ray at different angle if vehicle may be near a turn
-                            if (vehicleInFrontCount == 0)
-                            {
-                                Vector2 thirdCalcRayStart = new Vector2(Pos.X + (settings.GetWidth() / 2 + 0.25f) * currentAngle.s,
+                        }
+
+                        if (vehicleInFrontCount == 0 && State == VehicleStates.SlowDownForTurn && angleDifference < 0)
+                        {
+                            Vector2 anotherCalcRayStart = new Vector2(Pos.X + (settings.GetWidth() / 2 + 0.25f) * currentAngle.s,
                             Pos.Y - (settings.GetWidth() / 2 + 0.2f) * currentAngle.c);
+                            b2Rot angleForSecondRay = b2Rot.FromAngle(currentFloatAngle + Helper.Deg2Rad(-30));
+                            float distanceToUse = rayDistance * 1.0f;
 
-                                ray = new Ray(thirdCalcRayStart, new Vector2(angleForRay.c * distanceToUse, angleForRay.s * distanceToUse));
+                            ray = new Ray(anotherCalcRayStart, new Vector2(angleForSecondRay.c * distanceToUse, angleForSecondRay.s * distanceToUse));
 
-                                queryFilter.maskBits = (ulong)ShapeCategories.Vehicle;
-                                b2RayResult thirdRayResult = B2Api.b2World_CastRayClosest(World.WorldId, ray.Start, ray.Translation, queryFilter);
+                            queryFilter.maskBits = (ulong)ShapeCategories.Vehicle;
+                            b2RayResult anotherRayResult = B2Api.b2World_CastRayClosest(World.WorldId, ray.Start, ray.Translation, queryFilter);
 
-                                if (thirdRayResult.hit)
+                            if (anotherRayResult.hit)
+                            {
+                                float distance = distanceToUse * rayResult.fraction;
+
+                                if (anotherRayResult.shapeId != Body.ShapeId)
                                 {
-                                    float distance = distanceToUse * rayResult.fraction;
-
-                                    if (thirdRayResult.shapeId != Body.ShapeId)
+                                    b2Filter filter = B2Api.b2Shape_GetFilter(anotherRayResult.shapeId);
+                                    if (filter.categoryBits == (ulong)ShapeCategories.Vehicle)
                                     {
-                                        b2Filter filter = B2Api.b2Shape_GetFilter(thirdRayResult.shapeId);
-                                        if (filter.categoryBits == (ulong)ShapeCategories.Vehicle)
-                                        {
-                                            bool counted = SetVehicleInFrontCount(thirdRayResult.shapeId, thirdRayResult.fraction);
-                                        }
-                                        else
-                                        {
-                                            EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Should query vehicle not something else"));
-                                        }
+                                        bool counted = SetVehicleInFrontCount(anotherRayResult.shapeId, anotherRayResult.fraction);
+
+                                        //if (counted && SimManager.Instance.GetSimTime() > 10) testing
+                                        //{
+                                        //    bool breakhere = true;
+                                        //    SimManager.Instance.RunSimulation = false;
+                                        //    SimManager.Instance.Paused = true;
+                                        //}
                                     }
                                     else
                                     {
-                                        EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Shape collided with self, raycast start point incorrect"));
+                                        EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Should query vehicle not something else"));
                                     }
+                                }
+                                else
+                                {
+                                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Shape collided with self, raycast start point incorrect"));
                                 }
                             }
                         }
+
+                        ////Test with third ray at different angle if vehicle may be near a turn
+                        //if (vehicleInFrontCount == 0)
+                        //{
+                        //    Vector2 thirdCalcRayStart = new Vector2(Pos.X + (settings.GetWidth() / 2 + 0.25f) * currentAngle.s,
+                        //Pos.Y - (settings.GetWidth() / 2 + 0.2f) * currentAngle.c);
+
+                        //    ray = new Ray(thirdCalcRayStart, new Vector2(angleForRay.c * distanceToUse, angleForRay.s * distanceToUse));
+
+                        //    queryFilter.maskBits = (ulong)ShapeCategories.Vehicle;
+                        //    b2RayResult thirdRayResult = B2Api.b2World_CastRayClosest(World.WorldId, ray.Start, ray.Translation, queryFilter);
+
+                        //    if (thirdRayResult.hit)
+                        //    {
+                        //        float distance = distanceToUse * rayResult.fraction;
+
+                        //        if (thirdRayResult.shapeId != Body.ShapeId)
+                        //        {
+                        //            b2Filter filter = B2Api.b2Shape_GetFilter(thirdRayResult.shapeId);
+                        //            if (filter.categoryBits == (ulong)ShapeCategories.Vehicle)
+                        //            {
+                        //                bool counted = SetVehicleInFrontCount(thirdRayResult.shapeId, thirdRayResult.fraction);
+                        //            }
+                        //            else
+                        //            {
+                        //                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Should query vehicle not something else"));
+                        //            }
+                        //        }
+                        //        else
+                        //        {
+                        //            EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Shape collided with self, raycast start point incorrect"));
+                        //        }
+                        //    }
+                        //}
 
                         // B2Api.b2World_CastRay(World.WorldId, ray.Start, ray.Translation, queryFilter, rayCastDelegate, 1);
                         //Only query intersections if no car already in front
@@ -1096,6 +1158,7 @@ namespace UrbanEcho.Sim
                 {
                     EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Vehicle missing enable feature + {ex.ToString()}"));
                 }
+
                 if (path == null || pathSteps == null)
                 {
                     ResetVehicleToNewPos();
@@ -1151,7 +1214,17 @@ namespace UrbanEcho.Sim
             return keepCheckingOverlap;
         }
 
-        public void ResetVehicleToNewPos(bool useCurrentPos = false)
+        public void SetForceStop(bool stopCommand)
+        {
+            IsForceStopped = stopCommand;
+        }
+
+        public void RequestResetVehicleToNewPos()
+        {
+            requestResetPosition = new RequestResetPosition();
+        }
+
+        private void ResetVehicleToNewPos(bool useCurrentPos = false)
         {
             int goalNode;
             int startNode;
@@ -1394,7 +1467,7 @@ namespace UrbanEcho.Sim
 
                 if (Math.Abs(angle) >= angleThresholdToDecelerate)
                 {
-                    angleDifference = Math.Abs(angle);
+                    angleDifference = angle;
                     angleAboveThreshold = true;
                 }
                 else

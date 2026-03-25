@@ -7,22 +7,19 @@ using UrbanEcho.Sim;
 
 namespace UrbanEcho.Events.Sim
 {
-    public class SetDestinationEvent : IEventForSim
+    public class ResetPositionEvent : IEventForSim
     {
-        private int? nearestNode;
         private UrbanEcho.Models.Vehicle? vehicle;
 
-        public SetDestinationEvent(UrbanEcho.Models.VehicleReadOnly vehicle, int? nearestNode)
+        public ResetPositionEvent(UrbanEcho.Models.VehicleReadOnly vehicle)
         {
-            this.nearestNode = nearestNode;
             this.vehicle = SimManager.Instance.GetVehicle(vehicle);
         }
 
         public void Run()
         {
-            if (nearestNode is null) return;
             if (vehicle is null) return;
-            vehicle.RequestSetDestination(nearestNode.Value);
+            vehicle.RequestResetVehicleToNewPos();
         }
     }
 }

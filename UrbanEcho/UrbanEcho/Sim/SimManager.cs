@@ -224,9 +224,14 @@ namespace UrbanEcho.Sim
             return currentSim.GetSimTime();
         }
 
-        public List<Vehicle> GetVehicles()
+        public List<VehicleReadOnly> GetVehicles()
         {
-            return currentSim.Vehicles;
+            return currentSim.GetVehicles();
+        }
+
+        public Vehicle? GetVehicle(VehicleReadOnly vehicleReadOnly)
+        {
+            return currentSim.GetVehicle(vehicleReadOnly);
         }
 
         public int GetGroupToUpdate()
@@ -251,8 +256,7 @@ namespace UrbanEcho.Sim
 
             lock (LockChangeVehicleFeatureList)
             {
-                foreach (Vehicle vehicle in currentSim.Vehicles)
-                    vehicle.RerouteAroundEdge(edge);
+                currentSim.CloseRoad(edge);
             }
         }
 
@@ -289,11 +293,7 @@ namespace UrbanEcho.Sim
             {
                 lock (LockChangeVehicleFeatureList)
                 {
-                    foreach (Vehicle vehicle in currentSim.Vehicles)
-                    {
-                        if (vehicle.IsTruck)
-                            vehicle.RerouteAroundEdge(edge);
-                    }
+                    currentSim.SetTruckAllowance(edge);
                 }
             }
         }
@@ -312,11 +312,7 @@ namespace UrbanEcho.Sim
 
             lock (LockChangeVehicleFeatureList)
             {
-                foreach (Vehicle vehicle in currentSim.Vehicles)
-                {
-                    if (vehicle.GetRoadEdge().Feature == edge.Feature)
-                        vehicle.SpeedLimit = corrected;
-                }
+                currentSim.SetSpeedLimit(edge, corrected);
             }
         }
 
