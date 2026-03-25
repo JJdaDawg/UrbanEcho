@@ -69,6 +69,20 @@
                                       HorizontalAlignment="Stretch"
                                       ToolTip.Tip="Spawn vehicles at census-weighted origin nodes instead of gates" />
                     </StackPanel>
+
+                    <!-- Routing mode — always shown when a project is loaded -->
+                    <StackPanel Spacing="4" Margin="0,6,8,0">
+                        <TextBlock Text="ROUTING MODE" Opacity="0.5" />
+                        <ComboBox SelectedIndex="{Binding RoutingModeIndex}"
+                                  HorizontalAlignment="Stretch"
+                                  ToolTip.Tip="Controls how vehicles pick their next destination">
+                            <ComboBoxItem Content="AADT weighted" />
+                            <ComboBoxItem Content="Random" />
+                            <ComboBoxItem Content="Census (employment)"
+                                          IsEnabled="{Binding IsCensusLoaded}"
+                                          ToolTip.Tip="Requires census data to be loaded" />
+                        </ComboBox>
+                    </StackPanel>
                 </StackPanel>
             </Grid>
         </Grid>

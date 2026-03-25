@@ -353,7 +353,13 @@ namespace UrbanEcho.Sim
                 return;
             }
             var pathfinder = new AStarPathfinder(graph, SimManager.Instance.NodePenalties, IsTruck);
-            int goalNode = TrafficVolumeLoader.PickWeightedDestination(graph, currentNodeId);
+            int goalNode = SimManager.Instance.RoutingMode switch
+            {
+                RoutingMode.Random => TrafficVolumeLoader.PickRandomDestination(graph, currentNodeId),
+                RoutingMode.CensusOD when SimManager.Instance.CensusSpawn?.IsLoaded == true
+                    => SimManager.Instance.CensusSpawn.PickDestinationNode(),
+                _ => TrafficVolumeLoader.PickWeightedDestination(graph, currentNodeId)
+            };
 
             var newPathEdges = pathfinder.FindPathEdges(currentNodeId, goalNode);
             if (newPathEdges.Count < 1)

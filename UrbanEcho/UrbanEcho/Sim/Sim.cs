@@ -1,4 +1,4 @@
-﻿using Box2dNet.Interop;
+using Box2dNet.Interop;
 using Mapsui;
 using Mapsui.Layers;
 using System;
@@ -253,6 +253,19 @@ namespace UrbanEcho.Sim
                 var validEdges = isTruck
                     ? outgoing.Where(e => !e.IsClosed && e.Metadata.TruckAllowance).ToList()
                     : outgoing.Where(e => !e.IsClosed).ToList();
+
+                // Truck landed on a no-truck node: redirect to eligible pool instead of wasting the slot.
+                if (isTruck && validEdges.Count == 0)
+                {
+                    var eligible = SimManager.Instance.TruckEligibleNodes;
+                    if (eligible.Count > 0)
+                    {
+                        spawnNodeId = eligible[spawnRng.Next(eligible.Count)];
+                        outgoing = SimManager.Instance.RoadGraph.GetOutgoingEdges(spawnNodeId);
+                        validEdges = outgoing.Where(e => !e.IsClosed && e.Metadata.TruckAllowance).ToList();
+                    }
+                }
+
                 if (validEdges.Count == 0)
                     continue;
 
@@ -373,6 +386,15 @@ namespace UrbanEcho.Sim
             var validEdges = isTruck
                 ? outgoing.Where(e => !e.IsClosed && e.Metadata.TruckAllowance).ToList()
                 : outgoing.Where(e => !e.IsClosed).ToList();
+
+            // Spawn point has a fixed node; if no truck roads exist here, demote to car
+            // so we never silently drop a spawn from a gate.
+            if (isTruck && validEdges.Count == 0)
+            {
+                isTruck = false;
+                validEdges = outgoing.Where(e => !e.IsClosed).ToList();
+            }
+
             if (validEdges.Count == 0)
             {
                 System.Diagnostics.Debug.WriteLine($"[Sim] SpawnVehicleAtNode failed: node {nodeId} has no valid edges for vehicle type");
