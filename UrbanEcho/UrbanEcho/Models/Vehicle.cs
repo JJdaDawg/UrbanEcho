@@ -76,7 +76,7 @@ namespace UrbanEcho.Sim
 
         private VehicleSettings settings;
 
-        private float angleThresholdToDecelerate = Helper.Deg2Rad(5.0f);//How many degrees off target angle before decelerate
+        private float angleThresholdToDecelerate = Helper.Deg2Rad(2.0f);//How many degrees off target angle before decelerate
         private bool angleAboveThreshold = false;
         private float angleDifference;
 
@@ -921,10 +921,13 @@ namespace UrbanEcho.Sim
 
                         //Test with another ray if vehicle may be near a turn
 
-                        if (vehicleInFrontCount == 0 && distanceToTarget - 10.0f <= distanceThresholdReachedTarget)
+                        if (vehicleInFrontCount == 0 && (distanceToTarget - 20.0f <= distanceThresholdReachedTarget || State == VehicleStates.SlowDownForTurn))
                         {
-                            float distanceToUse = rayDistance * 0.5f;
-                            ray = new Ray(calcRayStart + new Vector2(angleForRay.s * settings.GetWidth() / 2, angleForRay.c * settings.GetWidth() / 2), new Vector2(angleForRay.c * distanceToUse, angleForRay.s * distanceToUse));
+                            Vector2 secondCalcRayStart = new Vector2(Pos.X - (settings.GetWidth() / 2 + 0.25f) * currentAngle.s,
+                            Pos.Y + (settings.GetWidth() / 2 + 0.2f) * currentAngle.c);
+                            float distanceToUse = rayDistance * 1.0f;
+
+                            ray = new Ray(secondCalcRayStart, new Vector2(angleForRay.c * distanceToUse, angleForRay.s * distanceToUse));
 
                             queryFilter.maskBits = (ulong)ShapeCategories.Vehicle;
                             b2RayResult secondRayResult = B2Api.b2World_CastRayClosest(World.WorldId, ray.Start, ray.Translation, queryFilter);
@@ -953,7 +956,10 @@ namespace UrbanEcho.Sim
                             //Test with third ray at different angle if vehicle may be near a turn
                             if (vehicleInFrontCount == 0)
                             {
-                                ray = new Ray(calcRayStart + new Vector2(angleForRay.s * settings.GetWidth() / 2, -angleForRay.c * settings.GetWidth() / 2), new Vector2(angleForRay.c * distanceToUse, angleForRay.s * distanceToUse));
+                                Vector2 thirdCalcRayStart = new Vector2(Pos.X + (settings.GetWidth() / 2 + 0.25f) * currentAngle.s,
+                            Pos.Y - (settings.GetWidth() / 2 + 0.2f) * currentAngle.c);
+
+                                ray = new Ray(thirdCalcRayStart, new Vector2(angleForRay.c * distanceToUse, angleForRay.s * distanceToUse));
 
                                 queryFilter.maskBits = (ulong)ShapeCategories.Vehicle;
                                 b2RayResult thirdRayResult = B2Api.b2World_CastRayClosest(World.WorldId, ray.Start, ray.Translation, queryFilter);
