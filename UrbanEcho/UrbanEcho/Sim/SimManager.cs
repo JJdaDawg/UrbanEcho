@@ -52,8 +52,10 @@ namespace UrbanEcho.Sim
     {
         /// <summary>Destinations weighted by AADT traffic volume (default).</summary>
         Aadt,
+
         /// <summary>Destinations chosen uniformly at random.</summary>
         Random,
+
         /// <summary>Destinations weighted by census zone employment (attraction model). Requires census data.</summary>
         CensusOD
     }
@@ -83,6 +85,7 @@ namespace UrbanEcho.Sim
 
         public AStarPathfinder? pathfinder;
         public List<int>? nodes;
+
         /// <summary>Node IDs that have at least one open, truck-allowed outgoing edge. Used as fallback spawn pool for trucks.</summary>
         public List<int> TruckEligibleNodes { get; private set; } = new List<int>();
 

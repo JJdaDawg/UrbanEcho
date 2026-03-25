@@ -25,6 +25,7 @@ namespace UrbanEcho.Physics
         private nint intPtr;
 
         private Vector2[] vertices;
+
         private bool bodyCreated;
 
         private bool isDisposed = false;

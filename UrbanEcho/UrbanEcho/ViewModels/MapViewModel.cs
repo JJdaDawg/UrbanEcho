@@ -363,7 +363,7 @@ public partial class MapViewModel : ObservableObject
             Vector2 pos = Vector2.Zero;
             if (_trackedVehicle != null)
             {
-                pos = _trackedVehicle.Pos();
+                pos = _trackedVehicle.PinPos();
 
                 if (float.IsNaN(pos.X) || float.IsNaN(pos.Y))
                 {

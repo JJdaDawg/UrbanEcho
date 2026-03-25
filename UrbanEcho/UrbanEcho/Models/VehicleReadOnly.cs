@@ -72,9 +72,9 @@ namespace UrbanEcho.Models
             return v.IsForceStopped;
         }
 
-        public Vector2 Pos()
+        public Vector2 PinPos()
         {
-            return v.Pos;
+            return v.GetPinPos();
         }
 
         public bool InstanceMatches(Vehicle vehicle)
