@@ -128,7 +128,18 @@ namespace UrbanEcho.Helpers
             TestIfFeatureListHasDuplicateNodes(featuresList, true);
 
             SetToAndFromNames(featuresList);
+            SetObjectIds(featuresList);
             return featuresList;
+        }
+
+        public static void SetObjectIds(List<IFeature> featuresList)
+        {
+            int idCounter = 1;
+            foreach (IFeature feature in featuresList)
+            {
+                feature["OBJECTID"] = idCounter.ToString();
+                idCounter++;
+            }
         }
 
         public static void SetToAndFromNames(List<IFeature> featuresList)

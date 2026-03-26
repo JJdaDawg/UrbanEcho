@@ -11,6 +11,7 @@ using Mapsui.Layers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Threading;
@@ -137,6 +138,10 @@ namespace UrbanEcho.Sim
             }
         }
 
+        private bool simulationReady = false;
+        private bool projectNameChanged = false;
+        private bool lastSimulationReadyValue = false;
+
         private SimManager()
         {
         }
@@ -185,6 +190,8 @@ namespace UrbanEcho.Sim
                         }
                     }
 
+                    simulationReady = true;
+
                     if (RunSimulation)
                     {
                         if (!startedSimulation)
@@ -215,6 +222,10 @@ namespace UrbanEcho.Sim
                         startedSimulation = false;
                     }
                 }
+                else
+                {
+                    simulationReady = false;
+                }
 
                 //Only update vehicle layer if ui queue is empty and do it every couple updates
                 if (EventQueueForUI.Instance.IsEmpty() && TaskUpdates % 2 == 0 && !currentSim.IsDisposed())
@@ -236,6 +247,44 @@ namespace UrbanEcho.Sim
                 {
                     Thread.Sleep(timeToSleep);
                 }
+
+                if (FooterNeedsUpdate())
+                {
+                    UpdateFooter();
+                }
+            }
+        }
+
+        public bool FooterNeedsUpdate()
+        {
+            bool returnValue = (projectNameChanged || lastSimulationReadyValue != simulationReady);
+            return returnValue;
+        }
+
+        public void UpdateFooter()
+        {
+            lastSimulationReadyValue = simulationReady;
+            projectNameChanged = false;
+            string readyText = (simulationReady) ? "Ready" : "Not Ready - check that all required layers are added";
+            string projectText = Path.GetFileNameWithoutExtension(ProjectLayers.GetProject()?.PathForThisFile ?? "");
+            if (string.IsNullOrEmpty(projectText))
+            {
+                projectText = "Untitled Project";
+            }
+            else
+            {
+                projectText = projectText + " Project";
+            }
+            EventQueueForUI.Instance.Add(new UpdateFooterEvent(readyText, projectText));
+        }
+
+        public void SetProjectNameChanged()
+        {
+            projectNameChanged = true;
+            simulationReady = false;
+            if (FooterNeedsUpdate())
+            {
+                UpdateFooter();
             }
         }
 

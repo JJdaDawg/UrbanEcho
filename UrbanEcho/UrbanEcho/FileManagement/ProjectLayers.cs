@@ -102,7 +102,7 @@ namespace UrbanEcho.FileManagement
                 EventQueueForUI.Instance.Clear();
 
                 currentProjectFile = openProject;
-
+                SimManager.Instance.SetProjectNameChanged();
                 resetLayers();
 
                 if (Load(currentProjectFile))
@@ -1439,6 +1439,7 @@ namespace UrbanEcho.FileManagement
         public static void NewProject()
         {
             currentProjectFile = new ProjectFile();
+            SimManager.Instance.SetProjectNameChanged();
             resetLayers();
             EventQueueForUI.Instance.Add(new SetProjectEvent(currentProjectFile));
         }

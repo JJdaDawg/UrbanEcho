@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.Events.Sim;
 using UrbanEcho.Events.UI;
+using UrbanEcho.Sim;
 
 namespace UrbanEcho.FileManagement
 {
@@ -67,13 +68,14 @@ namespace UrbanEcho.FileManagement
             else
             {
                 //TODO: Add event so dialog pops up and user can pick path
+                //This may not be needed since save as is called instead in cases where it is blank path
             }
         }
 
         public static void SaveAs(ProjectFile projectFile, string pathToSaveAt)
         {
             projectFile.PathForThisFile = pathToSaveAt;
-
+            SimManager.Instance.SetProjectNameChanged();
             try
             {
                 using (StreamWriter writer = File.CreateText(pathToSaveAt))

@@ -755,9 +755,9 @@ namespace UrbanEcho.Models
                             }
                         }
 
-                        if (vehicleInFrontCount == 0)
+                        anotherVehicleAhead = false;
+                        if (vehicleInFrontCount == 0 && state == VehicleStates.SlowDownForTurn)
                         {
-                            anotherVehicleAhead = false;
                             (Vector2 pos, b2Rot angle, bool valid) = GetLookAheadPosAndAngle(2.0f);
                             if (valid)
                             {
