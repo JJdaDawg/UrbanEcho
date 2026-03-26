@@ -109,6 +109,9 @@ namespace UrbanEcho.Graph
                         + turnPenalty
                         + (_nodePenalties?.GetValueOrDefault(node_successor, 0.0) ?? 0.0);
 
+                    if (double.IsPositiveInfinity(successor_current_cost))
+                        continue;
+
                     if (successor_current_cost >= g.GetValueOrDefault(node_successor, double.PositiveInfinity)
                         && closedSet.Contains(node_successor))
                         continue;
@@ -184,6 +187,9 @@ namespace UrbanEcho.Graph
                         g[node_current] + EdgeRoutingCost(edge)
                         + turnPenalty
                         + (_nodePenalties?.GetValueOrDefault(node_successor, 0.0) ?? 0.0);
+
+                    if (double.IsPositiveInfinity(successor_current_cost))
+                        continue;
 
                     if (successor_current_cost >= g.GetValueOrDefault(node_successor, double.PositiveInfinity)
                         && closedSet.Contains(node_successor))

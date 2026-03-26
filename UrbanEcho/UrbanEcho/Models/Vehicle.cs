@@ -288,8 +288,17 @@ namespace UrbanEcho.Models
 
             Body = new VehicleBody(this, rect);
 
-            Vector2 initialPosition = Vector2.Zero;
-            b2Rot rot = b2Rot.FromAngle(0);
+            // Compute the starting road position so the body starts on the road.
+            // Without this, a failed ResetVehicleToNewPos leaves the body at (0,0)
+            // and the vehicle drives through the map in a straight line to reach
+            // its assigned road edge.
+            UpdateEndPos();
+
+            Vector2 initialPosition = startPos;
+            Vector2 roadDir = endPos - startPos;
+            float initialAngle = (roadDir != Vector2.Zero) ? MathF.Atan2(roadDir.Y, roadDir.X) : 0f;
+            if (float.IsNaN(initialAngle)) initialAngle = 0;
+            b2Rot rot = b2Rot.FromAngle(initialAngle);
             B2Api.b2Body_SetTransform(Body.BodyId, initialPosition, rot);
             B2Api.b2Body_SetLinearVelocity(Body.BodyId, Vector2.Zero);
             Pos = B2Api.b2Body_GetPosition(Body.BodyId);
@@ -1052,22 +1061,28 @@ namespace UrbanEcho.Models
 
             if (didFirstUpdate == false)//Set the enabled one time after first scan
             {
-                try
-                {
-                    feature["Hidden"] = "false";
-                }
-                catch (Exception ex)
-                {
-                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Vehicle missing enable feature + {ex.ToString()}"));
-                }
-
                 if (path == null || pathSteps == null)
                 {
                     ResetVehicleToNewPos();
                 }
-            }
 
-            didFirstUpdate = true;
+                // Only make the vehicle visible and active once it has a valid path.
+                // Without a path the vehicle would drive in a straight line from its
+                // body position toward the road — through the map, not the network.
+                if (path != null && pathSteps != null)
+                {
+                    try
+                    {
+                        feature["Hidden"] = "false";
+                    }
+                    catch (Exception ex)
+                    {
+                        EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Vehicle missing enable feature + {ex.ToString()}"));
+                    }
+
+                    didFirstUpdate = true;
+                }
+            }
         }
 
         private (Vector2 pos, b2Rot angle, bool valid) GetLookAheadPosAndAngle(float lookAheadValue)
