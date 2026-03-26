@@ -104,6 +104,8 @@ namespace UrbanEcho.Models
         private int vehicleInFrontCount = 0;
 
         private bool insideAnotherVehicle = false;
+        private int insideAnotherVehicleCount = 0;
+        private bool overlappedDuringThisScan = false;
         private bool anotherVehicleAhead = false;
         private int intersectionInFrontCount = 0;
         private bool hasClearedIntersection = true;
@@ -702,9 +704,14 @@ namespace UrbanEcho.Models
                     queryFilter.maskBits = (ulong)ShapeCategories.Vehicle;
                     if (SimManager.Instance.GetSimTime() > lastTimeCheckedOverlap + overlapTestFrequency)
                     {
+                        overlappedDuringThisScan = false;
                         B2Api.b2World_OverlapShape(World.WorldId, b2ShapeProxy, queryFilter, overlapDelegateVehicle, 1);
                         lastTimeCheckedOverlap = SimManager.Instance.GetSimTime() + (float)Random.Shared.NextDouble();//add a 1 second random offset so not all vehicles
                                                                                                                       //do this at same time
+                        if (!(overlappedDuringThisScan))
+                        {
+                            insideAnotherVehicleCount = 0;
+                        }
                     }
                     if (!(insideAnotherVehicle))
                     {
@@ -836,6 +843,7 @@ namespace UrbanEcho.Models
                             vehicleInFrontCount = 0;//Reset this so resetVehicle to new position isn't called twice
                             insideAnotherVehicle = false;//Reset this so resetVehicle to new position isn't called twice
                             anotherVehicleAhead = false;//Reset this so resetVehicle to new position isn't called twice
+                            insideAnotherVehicleCount = 0;
                         }
                     }
                     else
@@ -855,6 +863,7 @@ namespace UrbanEcho.Models
                             ResetVehicleToNewPos();
                             insideAnotherVehicle = false;//Reset this so resetVehicle to new position isn't called twice
                             anotherVehicleAhead = false;
+                            insideAnotherVehicleCount = 0;
                         }
                     }
                     else
@@ -868,6 +877,7 @@ namespace UrbanEcho.Models
                         ResetVehicleToNewPos();
                         insideAnotherVehicle = false;
                         anotherVehicleAhead = false;
+                        insideAnotherVehicleCount = 0;
                     }
                 }
 
@@ -1095,7 +1105,12 @@ namespace UrbanEcho.Models
 
                 if (IsCollidedVehicleSameEdgeOrIntersection(otherVehicle.currentRoadEdge))
                 {
-                    insideAnotherVehicle = true;
+                    insideAnotherVehicleCount++;
+                    overlappedDuringThisScan = true;
+                    if (insideAnotherVehicleCount > 1)//only mark them as insideAnother Vehicle if it happens two times
+                    {
+                        insideAnotherVehicle = true;
+                    }
                     returnValue = false;
                 }
             }
