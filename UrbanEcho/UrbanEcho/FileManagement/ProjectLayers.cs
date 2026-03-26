@@ -54,9 +54,12 @@ namespace UrbanEcho.FileManagement
 
         private static MemoryLayer? censusOverlayLayer;
 
+        private static MemoryLayer? spawnerLayer;
+
         private static bool backgroundRequiresLoading = false;
         private static bool roadRequiresLoading = false;
         private static bool intersectionRequiresLoading = false;
+        private static bool censusRequiresLoading = false;
         private static bool vehicleRequiresLoading = true;
 
         private static bool roadLoaded = false;
@@ -72,6 +75,7 @@ namespace UrbanEcho.FileManagement
 
         public static bool IsIntersectionsVisible { get; set; } = true;
         public static bool IsCensusOverlayVisible { get; set; } = true;
+        public static bool IsSpawnersVisible { get; set; } = true;
 
         public static List<IFeature> VehicleFeatures = new List<IFeature>();
 
@@ -84,6 +88,9 @@ namespace UrbanEcho.FileManagement
 
         public static MemoryLayer? PinLayer;
         public static List<IFeature> PinLayerFeatures = new List<IFeature>();
+
+        public static MemoryLayer? SpawnerLayer => spawnerLayer;
+        public static List<IFeature> SpawnerFeatures = new List<IFeature>();
 
         public static void LoadProject(string path)
         {
@@ -168,6 +175,7 @@ namespace UrbanEcho.FileManagement
             {
                 currentProjectFile.RoadLayerPath = path;
                 roadRequiresLoading = true;
+                censusRequiresLoading = true;
                 roadLoaded = false;
                 roadLabelLayer = null;
                 roadLayerFirstPass = null;
@@ -216,6 +224,39 @@ namespace UrbanEcho.FileManagement
             }
         }
 
+        public static void LoadCensusFile(string path)
+        {
+            if (currentProjectFile == null || SimManager.Instance.RoadGraph == null)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), "[Census] Cannot load census data: no project or road graph loaded"));
+                return;
+            }
+
+            try
+            {
+                if (!string.IsNullOrEmpty(path))
+                {
+                    currentProjectFile.CensusLayerPath = path;
+                    SimManager.Instance.InitializeCensusSpawning(path);
+
+                    if (SimManager.Instance.CensusSpawn != null && SimManager.Instance.CensusSpawn.IsLoaded)
+                    {
+                        censusOverlayLayer = CreateCensusOverlayLayer(SimManager.Instance.CensusSpawn.Zones);
+                        if (MainWindow.Instance.GetMap() != null)
+                        {
+                            EventQueueForUI.Instance.Add(new AddLayersEvent(MainWindow.Instance.GetMap()));
+                        }
+                        EventQueueForUI.Instance.Add(new CensusLoadedEvent());
+                        EventQueueForUI.Instance.Add(new SetProjectEvent(currentProjectFile));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to load census data: {ex.Message}"));
+            }
+        }
+
         public static bool LayersNeedReAdd()
         {
             return backgroundRequiresLoading || roadRequiresLoading || intersectionRequiresLoading;
@@ -239,7 +280,7 @@ namespace UrbanEcho.FileManagement
             roadRequiresLoading = true;
             intersectionRequiresLoading = true;
             vehicleRequiresLoading = true;
-
+            censusRequiresLoading = true;
             roadLoaded = false;
             intersectionLoaded = false;
             backgroundLayer = null;
@@ -254,11 +295,13 @@ namespace UrbanEcho.FileManagement
             if (pathBlinkTimer != null) { pathBlinkTimer.Stop(); pathBlinkTimer = null; }
             debugLayer = null;
             censusOverlayLayer = null;
+            spawnerLayer = null;
 
             SimManager.Instance.Clear(); //Clear all the existing lists
 
             VehicleFeatures = new List<IFeature>();
             DebugLayerFeatures = new List<IFeature>();
+            SpawnerFeatures = new List<IFeature>();
 
             MainWindow.Instance.GetMap().Refresh();
         }
@@ -440,43 +483,28 @@ namespace UrbanEcho.FileManagement
 
                 SimManager.Instance.InitializeGraph();
 
+                if (censusRequiresLoading)
+                {
+                    if (currentProjectFile != null)
+                    {
+                        LoadCensusFile(currentProjectFile.CensusLayerPath);
+                        if (censusOverlayLayer != null)
+                        {
+                            addLayer = true;
+                            censusRequiresLoading = false;
+                            vehicleRequiresLoading = true;
+                        }
+                    }
+                }
+
                 if (SimManager.Instance.RoadGraph != null)
                 {
                     TrafficVolumeLoader.AssignToGraph(SimManager.Instance.RoadGraph);
                 }
 
-                try
-                {
-                    // Load census data for realistic spawn distribution (before vehicle creation)
-                    if (!string.IsNullOrEmpty(currentProjectFile?.CensusLayerPath))
-                    {
-                        SimManager.Instance.InitializeCensusSpawning(currentProjectFile.CensusLayerPath);
-                    }
-                    else
-                    {
-                        string defaultCensusPath = "Resources/ShapeFiles/Census_2021_Work_Commuting/GIS_DATA_CENSUS_2021_WORK_COMMUTING.shp";
-                        if (System.IO.File.Exists(defaultCensusPath))
-                        {
-                            SimManager.Instance.InitializeCensusSpawning(defaultCensusPath);
-                            if (currentProjectFile != null)
-                            {
-                                currentProjectFile.CensusLayerPath = defaultCensusPath;
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to load a census layer {ex.Message}"));
-                }
-
                 vehicleLayer = CreateVehicleLayer();
                 PinLayer = CreatePinLayer();
-                // Build census zone overlay if census data was loaded
-                if (SimManager.Instance.CensusSpawn != null && SimManager.Instance.CensusSpawn.IsLoaded)
-                {
-                    censusOverlayLayer = CreateCensusOverlayLayer(SimManager.Instance.CensusSpawn.Zones);
-                }
+                spawnerLayer = CreateSpawnerLayer();
                 if (false == true)//Change this to enable debug layer
                 {
                     MemoryLayer tempDebugLayer = CreateDebugLayer();//use this layer for testing
@@ -1043,6 +1071,73 @@ namespace UrbanEcho.FileManagement
             return layer;
         }
 
+        public static MemoryLayer? CreateSpawnerLayer()
+        {
+            MemoryLayer? layer = null;
+            try
+            {
+                layer = new MemoryLayer("Spawners");
+                layer.Features = SpawnerFeatures;
+                layer.Opacity = 1.0f;
+                SpawnerStyles spawnerStyles = new SpawnerStyles();
+                layer.Style = spawnerStyles.CreateThemeStyle();
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Created Spawner Layer"));
+            }
+            catch (Exception ex)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to create Spawner Layer {ex.ToString()}"));
+            }
+            return layer;
+        }
+
+        public static void AddSpawnPoint(SpawnPoint spawnPoint)
+        {
+            SimManager.Instance.SpawnPoints.Add(spawnPoint);
+            RebuildSpawnerFeatures();
+        }
+
+        public static void RemoveSpawnPoint(SpawnPoint spawnPoint)
+        {
+            SimManager.Instance.SpawnPoints.Remove(spawnPoint);
+            RebuildSpawnerFeatures();
+        }
+
+        public static void MoveSpawnPoint(SpawnPoint spawnPoint, double x, double y, int nearestNodeId)
+        {
+            spawnPoint.X = x;
+            spawnPoint.Y = y;
+            spawnPoint.NearestNodeId = nearestNodeId;
+            RebuildSpawnerFeatures();
+        }
+
+        public static void RebuildSpawnerFeatures()
+        {
+            SpawnerFeatures.Clear();
+            foreach (SpawnPoint sp in SimManager.Instance.SpawnPoints)
+            {
+                MPoint mPoint = new MPoint(sp.X, sp.Y);
+                GeometryFeature gf = new GeometryFeature(new NetTopologySuite.Geometries.Point(sp.X, sp.Y));
+                gf["SpawnPointId"] = sp.Id;
+                gf["VehiclesPerMinute"] = sp.VehiclesPerMinute;
+                SpawnerFeatures.Add(gf);
+            }
+
+            if (spawnerLayer != null)
+            {
+                spawnerLayer.Features = SpawnerFeatures;
+                spawnerLayer.DataHasChanged();
+            }
+
+            MainWindow.Instance.GetMap()?.Refresh();
+        }
+
+        public static SpawnPoint? FindSpawnPointByFeature(IFeature feature)
+        {
+            string? id = feature["SpawnPointId"]?.ToString();
+            if (string.IsNullOrEmpty(id)) return null;
+            return SimManager.Instance.SpawnPoints.Find(sp => sp.Id == id);
+        }
+
         public static MemoryLayer? CreateDebugLayer()
         {
             MemoryLayer? layer = null;
@@ -1265,6 +1360,11 @@ namespace UrbanEcho.FileManagement
             if (vehicleLayer != null)
             {
                 myMap?.Layers.Add(vehicleLayer);
+            }
+
+            if (IsSpawnersVisible && spawnerLayer != null)
+            {
+                myMap?.Layers.Add(spawnerLayer);
             }
 
             if (PinLayer != null)

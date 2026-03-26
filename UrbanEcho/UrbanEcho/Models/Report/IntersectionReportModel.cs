@@ -9,6 +9,7 @@ namespace UrbanEcho.Models.Report
 {
     public class IntersectionReportModel
     {
+        public int IntersectionReportModelId { get; set; }
         public string IntersectionName { get; set; } = "";
         public double AverageTimeSpent { get; set; }
         public double TotalTimeSpent { get; set; }
@@ -20,7 +21,13 @@ namespace UrbanEcho.Models.Report
 
         public List<RoadEdgeReportModel> Edges { get; set; } = new List<RoadEdgeReportModel>();
 
-        public string BlankString { get; set; } = "";//For template
+        public double Lat { get; private set; }
+
+        public double Lon { get; private set; }
+
+        private IntersectionReportModel() //For database creation not used otherwise
+        {
+        }
 
         public IntersectionReportModel(string intersectionName, RecordedStats stats, List<RoadEdgeReportModel> edges)
         {
@@ -32,6 +39,8 @@ namespace UrbanEcho.Models.Report
             AverageWaitTime = stats.AverageWaitTime;
             TotalWaitTime = stats.TotalWaitTime;
             VehicleCount = stats.VehicleCount;
+            Lat = stats.Lat;
+            Lon = stats.Lon;
         }
     }
 }

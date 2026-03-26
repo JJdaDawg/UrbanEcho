@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
 using UrbanEcho.Helpers;
 using UrbanEcho.Models;
-using UrbanEcho.Sim;
 using UrbanEcho.ViewModels;
 using static Box2dNet.Interop.B2Api;
 

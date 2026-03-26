@@ -52,6 +52,11 @@
     <PackageReference Include="DotSpatial.Projections" Version="4.0.656" />
     <PackageReference Include="Mapsui.Avalonia" Version="5.0.2" />
     <PackageReference Include="Mapsui.Extensions" Version="5.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.*">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.*" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="OsmSharp" Version="6.2.0" />
@@ -59,6 +64,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Resources\Tableau Report\" />
     <Folder Include="Resources\ShapeFiles\intersections_kitchener\" />
     <Folder Include="Resources\ShapeFiles\Census_2021_Work_Commuting\" />
   </ItemGroup>
@@ -179,9 +185,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Resources\ShapeFiles\Traffic_Volumes\Traffic_Volumes.shx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\Templates\templateSmall.xlsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Resources\Templates\template.xlsx">

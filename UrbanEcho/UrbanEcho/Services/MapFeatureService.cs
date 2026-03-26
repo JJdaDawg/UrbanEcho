@@ -12,7 +12,7 @@ namespace UrbanEcho.Services
     {
         IntersectionUI? MapIntersection(IFeature feature);
 
-        Vehicle? MapVehicle(IFeature feature);
+        VehicleReadOnly? MapVehicle(IFeature feature);
     }
 
     public class MapFeatureService : IMapFeatureService
@@ -47,11 +47,13 @@ namespace UrbanEcho.Services
             };
         }
 
-        public Vehicle? MapVehicle(IFeature feature)
+        public VehicleReadOnly? MapVehicle(IFeature feature)
         {
             var rawId = feature["VehicleNumber"]?.ToString();
             if (!int.TryParse(rawId, out int vehicleId)) return null;
-            var simVehicle = SimManager.Instance.GetVehicles().ElementAtOrDefault(vehicleId);
+
+            VehicleReadOnly? simVehicle = SimManager.Instance.GetVehicles().ElementAtOrDefault(vehicleId);
+
             if (simVehicle is null)
             {
                 WeakReferenceMessenger.Default.Send(new LogMessage($"Vehicle {vehicleId} not found", LogSource.Map));

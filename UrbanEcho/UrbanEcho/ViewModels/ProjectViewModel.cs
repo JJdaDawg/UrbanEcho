@@ -198,6 +198,19 @@ namespace UrbanEcho.ViewModels
             }
         }
 
+        [RelayCommand(CanExecute = nameof(CanImportData))]
+        private async Task ImportCensus()
+        {
+            var path = await _fileDialogService.OpenShapeFileAsync("Import Census Data", FileTypes.ShapeFile);
+            if (path is null) return;
+            Map? map = MainWindow.Instance.GetMap();
+            if (map != null)
+            {
+                LoadFileEvent loadCensusEvent = new LoadFileEvent(UrbanEcho.FileManagement.FileTypes.FileType.CensusLayerFile, path, map);
+                EventQueueForSim.Instance.Add(loadCensusEvent);
+            }
+        }
+
         private bool CanSave() => _currentProject is not null;
 
         private bool CanClose() => _currentProject is not null;
@@ -214,6 +227,7 @@ namespace UrbanEcho.ViewModels
             ImportBackgroundCommand.NotifyCanExecuteChanged();
             ImportRoadsCommand.NotifyCanExecuteChanged();
             ImportIntersectionsCommand.NotifyCanExecuteChanged();
+            ImportCensusCommand.NotifyCanExecuteChanged();
         }
     }
 }

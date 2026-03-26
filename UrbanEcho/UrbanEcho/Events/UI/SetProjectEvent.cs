@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.ViewModels;
-using UrbanEcho.Sim;
 using UrbanEcho.FileManagement;
 
 namespace UrbanEcho.Events.UI

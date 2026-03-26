@@ -108,6 +108,24 @@ namespace UrbanEcho.Graph
         }
 
         /// <summary>
+        /// Pick a destination node weighted by zone employment (attraction model).
+        /// Zones with more jobs attract proportionally more trip ends.
+        /// </summary>
+        public int PickDestinationNode()
+        {
+            double total = _zones.Sum(z => (double)Math.Max(1, z.TotalEmployed));
+            double pick = _rng.NextDouble() * total;
+            double cumulative = 0.0;
+            foreach (var zone in _zones)
+            {
+                cumulative += Math.Max(1, zone.TotalEmployed);
+                if (pick <= cumulative)
+                    return PickNodeFromZone(zone);
+            }
+            return PickNodeFromZone(_zones[^1]);
+        }
+
+        /// <summary>
         /// Pick a single spawn node ID weighted by zone car commuter counts.
         /// </summary>
         public int PickWeightedSpawnNode()

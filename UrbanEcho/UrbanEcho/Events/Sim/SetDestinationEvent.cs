@@ -3,24 +3,26 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UrbanEcho.Sim;
 
 namespace UrbanEcho.Events.Sim
 {
     public class SetDestinationEvent : IEventForSim
     {
         private int? nearestNode;
-        private UrbanEcho.Sim.Vehicle vehicle;
+        private UrbanEcho.Models.Vehicle? vehicle;
 
-        public SetDestinationEvent(UrbanEcho.Sim.Vehicle vehicle, int? nearestNode)
+        public SetDestinationEvent(UrbanEcho.Models.VehicleReadOnly vehicle, int? nearestNode)
         {
             this.nearestNode = nearestNode;
-            this.vehicle = vehicle;
+            this.vehicle = SimManager.Instance.GetVehicle(vehicle);
         }
 
         public void Run()
         {
             if (nearestNode is null) return;
-            vehicle.SetDestination(nearestNode.Value);
+            if (vehicle is null) return;
+            vehicle.RequestSetDestination(nearestNode.Value);
         }
     }
 }

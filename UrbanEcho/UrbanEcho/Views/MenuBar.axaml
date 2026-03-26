@@ -45,6 +45,7 @@
                         <MenuItem Header="Background" Command="{Binding Project.ImportBackgroundCommand}" />
                         <MenuItem Header="Roads" Command="{Binding Project.ImportRoadsCommand}" />
                         <MenuItem Header="Intersections" Command="{Binding Project.ImportIntersectionsCommand}" />
+                        <MenuItem Header="Census Data" Command="{Binding Project.ImportCensusCommand}" />
                     </MenuItem>
                 </MenuItem>
 

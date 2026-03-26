@@ -18,6 +18,12 @@ namespace UrbanEcho.Reporting
 
         public int VehicleCount { get; private set; }
 
+        public double Lat { get; private set; }
+
+        public double Lon { get; private set; }
+
+        public int Closed { get; private set; }
+
         public RecordedStats()
         {
         }
@@ -36,6 +42,17 @@ namespace UrbanEcho.Reporting
             AverageWaitTime = TotalWaitTime / VehicleCount;
         }
 
+        public void SetClosed()//Flag that gets set if closed any time during simulation
+        {
+            Closed = 1;
+        }
+
+        public void SetPosition(double lat, double lon)
+        {
+            Lat = lat;
+            Lon = lon;
+        }
+
         public void Reset()
         {
             AverageTimeSpent = 0;
@@ -45,6 +62,7 @@ namespace UrbanEcho.Reporting
             AverageWaitTime = 0;
             TotalWaitTime = 0;
             VehicleCount = 0;
+            Closed = 0;
         }
     }
 }

@@ -41,6 +41,10 @@ namespace UrbanEcho.Events.Sim
             {
                 ProjectLayers.LoadIntersectionsFile(path);
             }
+            if (fileType == FileType.CensusLayerFile)
+            {
+                ProjectLayers.LoadCensusFile(path);
+            }
         }
 
         public FileType GetFileType()

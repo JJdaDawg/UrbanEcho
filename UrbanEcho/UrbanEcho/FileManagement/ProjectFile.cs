@@ -8,7 +8,6 @@ using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.Events.Sim;
 using UrbanEcho.Events.UI;
-using UrbanEcho.Sim;
 
 namespace UrbanEcho.FileManagement
 {

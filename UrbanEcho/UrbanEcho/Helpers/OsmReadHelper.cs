@@ -3,6 +3,7 @@ using BruTile;
 using DocumentFormat.OpenXml.Bibliography;
 using DocumentFormat.OpenXml.Drawing.Charts;
 using DocumentFormat.OpenXml.Office2010.ExcelAc;
+using DocumentFormat.OpenXml.Office2013.Drawing.ChartStyle;
 using FluentAvalonia.UI.Media;
 using Mapsui;
 using Mapsui.Nts;
@@ -28,6 +29,9 @@ namespace UrbanEcho.Helpers
 {
     public static class OsmReadHelper
     {
+        private static List<string> AllowableRoadTypes = PopulateAllowableRoadTypes();
+        private static List<string> AllowableIntersectionTypes = PopulateAllowableIntersectionTypes();
+
         public static List<IFeature> GetRoadFeatures(string path)
         {
             //part of this code from here
@@ -122,7 +126,90 @@ namespace UrbanEcho.Helpers
                 EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Loaded the max number of roads for viewport (1000)"));
             }
             TestIfFeatureListHasDuplicateNodes(featuresList, true);
+
+            SetToAndFromNames(featuresList);
             return featuresList;
+        }
+
+        public static void SetToAndFromNames(List<IFeature> featuresList)
+        {
+            foreach (IFeature feature in featuresList)
+            {
+                if (feature is GeometryFeature gf)
+                {
+                    if (gf.Geometry != null)
+                    {
+                        if (gf.Geometry is LineString ls)
+                        {
+                            foreach (IFeature otherFeature in featuresList)
+                            {
+                                if (feature != otherFeature)
+                                {
+                                    if (otherFeature is GeometryFeature otherGf)
+                                    {
+                                        if (otherGf.Geometry != null)
+                                        {
+                                            if (otherGf.Geometry is LineString otherLs)
+                                            {
+                                                if (!feature.Fields.Contains("TO_STREET") || Helpers.Helper.TryGetFeatureKVPToString(feature, "STREET", "") == Helpers.Helper.TryGetFeatureKVPToString(otherFeature, "STREET", ""))
+                                                {
+                                                    if (Helpers.Helper.TryGetFeatureKVPToString(otherFeature, "STREET", "") != "Unnamed")
+                                                    {
+                                                        if (ls.Coordinates.Last<Coordinate>().Equals2D(otherLs.Coordinates.Last<Coordinate>(), 0.1f))
+                                                        {
+                                                            feature["TO_STREET"] = Helpers.Helper.TryGetFeatureKVPToString(otherFeature, "STREET", "");
+                                                        }
+                                                        else
+                                                        {
+                                                            if (ls.Coordinates.Last<Coordinate>().Equals2D(otherLs.Coordinates.First<Coordinate>(), 0.1f))
+                                                            {
+                                                                feature["TO_STREET"] = Helpers.Helper.TryGetFeatureKVPToString(otherFeature, "STREET", "");
+                                                            }
+                                                        }
+                                                    }
+                                                }
+
+                                                if (!feature.Fields.Contains("FROM_STREE") || Helpers.Helper.TryGetFeatureKVPToString(feature, "STREET", "") == Helpers.Helper.TryGetFeatureKVPToString(otherFeature, "STREET", ""))
+                                                {
+                                                    if (Helpers.Helper.TryGetFeatureKVPToString(otherFeature, "STREET", "") != "Unnamed")
+                                                    {
+                                                        if (ls.Coordinates.First<Coordinate>().Equals2D(otherLs.Coordinates.Last<Coordinate>(), 0.1f))
+                                                        {
+                                                            feature["FROM_STREE"] = Helpers.Helper.TryGetFeatureKVPToString(otherFeature, "STREET", "");
+                                                        }
+                                                        else
+                                                        {
+                                                            if (ls.Coordinates.First<Coordinate>().Equals2D(otherLs.Coordinates.First<Coordinate>(), 0.1f))
+                                                            {
+                                                                feature["FROM_STREE"] = Helpers.Helper.TryGetFeatureKVPToString(otherFeature, "STREET", "");
+                                                            }
+                                                        }
+                                                    }
+                                                }
+
+                                                if (feature.Fields.Contains("TO_STREET") && feature.Fields.Contains("FROM_STREE"))
+                                                {
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (!feature.Fields.Contains("TO_STREET"))
+                {
+                    feature["TO_STREET"] = "";
+                }
+
+                if (!feature.Fields.Contains("FROM_STREE"))
+                {
+                    feature["FROM_STREE"] = "";
+                }
+            }
         }
 
         public static void TestIfFeatureListHasDuplicateNodes(List<IFeature> featuresList, bool afterSplitting)
@@ -485,11 +572,100 @@ namespace UrbanEcho.Helpers
                 EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to get features from {path} - {ex.Message}"));
             }
 
+            featuresList = JoinStopIntersectionsCloseBy(featuresList);
+
             return featuresList;
         }
 
-        private static List<string> AllowableRoadTypes = PopulateAllowableRoadTypes();
-        private static List<string> AllowableIntersectionTypes = PopulateAllowableIntersectionTypes();
+        public static List<IFeature> JoinStopIntersectionsCloseBy(List<IFeature> featuresList)
+        {
+            List<IFeature> newFeatures = new List<IFeature>();
+
+            List<IFeature> toRemoveFeatures = new List<IFeature>();
+
+            double tolerance = 40.0f;
+
+            foreach (IFeature feature in featuresList)
+            {
+                List<IFeature> thisPassRemoveFeatures = new List<IFeature>();
+                bool joinTheFeature = false;
+
+                if (Helper.TryGetFeatureKVPToString(feature, "Intersec_1", "") == "All Way Stop")
+                {
+                    if (!toRemoveFeatures.Contains(feature))
+                    {
+                        foreach (IFeature otherFeature in featuresList)
+                        {
+                            if (Helper.TryGetFeatureKVPToString(otherFeature, "Intersec_1", "") == "All Way Stop")
+                            {
+                                if (feature != otherFeature && !toRemoveFeatures.Contains(otherFeature))
+                                {
+                                    if (feature is GeometryFeature gf1 && gf1.Geometry is Point p1 && otherFeature is GeometryFeature gf2 && gf2.Geometry is Point p2)
+                                    {
+                                        double distance = p1.Distance(p2);
+                                        EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"stop distance {distance}"));
+
+                                        if (p1.Coordinate.Equals2D(p2.Coordinate, tolerance))
+                                        {
+                                            joinTheFeature = true;
+
+                                            if (!thisPassRemoveFeatures.Contains(feature))
+                                            {
+                                                thisPassRemoveFeatures.Add(feature);
+                                            }
+
+                                            if (!thisPassRemoveFeatures.Contains(otherFeature))
+                                            {
+                                                thisPassRemoveFeatures.Add(otherFeature);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (joinTheFeature)
+                {
+                    double averagePosX = 0;
+                    double averagePosY = 0;
+
+                    foreach (IFeature addToRemoveFeature in thisPassRemoveFeatures)
+                    {
+                        if (addToRemoveFeature is GeometryFeature gf1 && gf1.Geometry is Point p1)
+                        {
+                            averagePosX = averagePosX + p1.X / (double)(thisPassRemoveFeatures.Count);
+                            averagePosY = averagePosY + p1.Y / (double)(thisPassRemoveFeatures.Count);
+
+                            if (!toRemoveFeatures.Contains(addToRemoveFeature))
+                                toRemoveFeatures.Add(addToRemoveFeature);
+                        }
+                    }
+
+                    if (feature is GeometryFeature gfOld)
+                    {
+                        Point newPoint = new Point(averagePosX, averagePosY);
+                        GeometryFeature gf = new GeometryFeature(newPoint);
+
+                        gf["Intersecti"] = gfOld["Intersecti"];
+                        gf["Intersec_1"] = gfOld["Intersec_1"];
+                        gf["highway"] = gfOld["highway"];
+
+                        newFeatures.Add(gf);
+                    }
+                }
+                else
+                {
+                    if (!toRemoveFeatures.Contains(feature))
+                    {
+                        newFeatures.Add(feature);
+                    }
+                }
+            }
+
+            return newFeatures;
+        }
 
         public static bool CheckRoadTypeAllowed(string stringToCheck)
         {
@@ -559,6 +735,7 @@ namespace UrbanEcho.Helpers
             gf["FLOW_DIREC"] = oldFeature["FLOW_DIREC"];
             gf["highway"] = oldFeature["highway"];
             gf["CARTO_CLAS"] = oldFeature["CARTO_CLAS"];
+            gf["TRUCK_ACCE"] = oldFeature["TRUCK_ACCE"];
             return gf;
         }
 
@@ -570,6 +747,15 @@ namespace UrbanEcho.Helpers
             gf["FLOW_DIREC"] = GetDirection(way);
             gf["highway"] = GetHighway(way);
             gf["CARTO_CLAS"] = GetRoadType(way);
+            string truckString = "NO ACCESS";
+            if (gf["CARTO_CLAS"]?.ToString() is string cartoClass)
+            {
+                if (cartoClass != "Local Street")
+                {
+                    truckString = "24HR";
+                }
+            }
+            gf["TRUCK_ACCE"] = truckString;
             return gf;
         }
 

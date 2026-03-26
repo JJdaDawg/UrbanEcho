@@ -25,8 +25,9 @@ public partial class MapViewModel : ObservableObject
 
     private SelectionLayer _activeLayer = SelectionLayer.None;
 
-    private Vehicle? _trackedVehicle;
-    private Vehicle? _pendingDestinationVehicle;
+    private VehicleReadOnly? _trackedVehicle;
+    private VehicleReadOnly? _pendingDestinationVehicle;
+    private SpawnPoint? _pendingMoveSpawner;
 
     [ObservableProperty] private Map myMap = new Map();
     [ObservableProperty] private bool isVolumeVisible = true;
@@ -49,6 +50,7 @@ public partial class MapViewModel : ObservableObject
         WeakReferenceMessenger.Default.Register<MapFeatureDeselectedMessage>(this, (r, m) =>
         {
             _trackedVehicle = null;
+            _pendingMoveSpawner = null;
             ProjectLayers.SetRoadSelection(null, MyMap);
             ProjectLayers.SetPathOverlay(null, MyMap);
         });
@@ -67,6 +69,24 @@ public partial class MapViewModel : ObservableObject
         {
             ProjectLayers.SetPathOverlay(null, MyMap);
         });
+        WeakReferenceMessenger.Default.Register<DeleteSpawnerMessage>(this, (r, m) =>
+        {
+            ProjectLayers.RemoveSpawnPoint(m.SpawnPoint);
+            WeakReferenceMessenger.Default.Send(new MapFeatureDeselectedMessage());
+            WeakReferenceMessenger.Default.Send(new LogMessage($"Spawner deleted", LogSource.Map));
+        });
+        WeakReferenceMessenger.Default.Register<MoveSpawnerMessage>(this, (r, m) =>
+        {
+            _pendingMoveSpawner = m.SpawnPoint;
+        });
+        WeakReferenceMessenger.Default.Register<CancelMoveSpawnerMessage>(this, (r, m) =>
+        {
+            _pendingMoveSpawner = null;
+        });
+        WeakReferenceMessenger.Default.Register<AutoPlaceSpawnersFromExtentMessage>(this, (r, m) =>
+            HandleAutoPlaceFromExtent(m));
+        WeakReferenceMessenger.Default.Register<AutoPlaceSpawnersFromOsmResidentialMessage>(this, (r, m) =>
+            HandleAutoPlaceFromOsmResidential(m));
 
         var trackingTimer = new Avalonia.Threading.DispatcherTimer
         {
@@ -85,12 +105,26 @@ public partial class MapViewModel : ObservableObject
             return;
         }
 
+        if (_pendingMoveSpawner is not null)
+        {
+            var worldPos = e.WorldPosition;
+            if (worldPos is not null) { HandleSpawnerMove(_pendingMoveSpawner, worldPos); }
+            return;
+        }
+
         var layers = new List<ILayer>();
 
         if (_activeLayer == SelectionLayer.Road)
         {
             var worldPos = e.WorldPosition;
             if (worldPos is not null) HandleRoadClick(worldPos);
+            return;
+        }
+
+        if (_activeLayer == SelectionLayer.Spawner)
+        {
+            var worldPos = e.WorldPosition;
+            if (worldPos is not null) HandleSpawnerClick(worldPos);
             return;
         }
 
@@ -168,6 +202,79 @@ public partial class MapViewModel : ObservableObject
         return best;
     }
 
+    private const double SpawnerSelectionThreshold = 500.0;
+
+    private void HandleSpawnerClick(MPoint worldPos)
+    {
+        // First, try to select an existing spawn point near the click
+        SpawnPoint? nearest = null;
+        double bestDist = SpawnerSelectionThreshold;
+        foreach (var sp in SimManager.Instance.SpawnPoints)
+        {
+            double dx = sp.X - worldPos.X;
+            double dy = sp.Y - worldPos.Y;
+            double dist = Math.Sqrt(dx * dx + dy * dy);
+            if (dist < bestDist)
+            {
+                bestDist = dist;
+                nearest = sp;
+            }
+        }
+
+        if (nearest is not null)
+        {
+            WeakReferenceMessenger.Default.Send(new MapFeatureSelectedMessage(MapFeatureType.Spawner, nearest));
+            return;
+        }
+
+        // No nearby spawner found — add a new one at this location
+        var node = FindNearestSpawnableNode(worldPos);
+        if (node is null)
+        {
+            WeakReferenceMessenger.Default.Send(new LogMessage("No road graph node with outgoing edges found near click", LogSource.Map));
+            return;
+        }
+
+        var spawnPoint = new SpawnPoint
+        {
+            X = node.X,
+            Y = node.Y,
+            NearestNodeId = node.Id,
+            VehiclesPerMinute = 5
+        };
+        ProjectLayers.AddSpawnPoint(spawnPoint);
+        WeakReferenceMessenger.Default.Send(new MapFeatureSelectedMessage(MapFeatureType.Spawner, spawnPoint));
+        WeakReferenceMessenger.Default.Send(new LogMessage($"Spawner added at node {node.Id}", LogSource.Map));
+    }
+
+    private void HandleSpawnerMove(SpawnPoint spawnPoint, MPoint worldPos)
+    {
+        _pendingMoveSpawner = null;
+        var node = FindNearestSpawnableNode(worldPos);
+        if (node is null) return;
+        ProjectLayers.MoveSpawnPoint(spawnPoint, node.X, node.Y, node.Id);
+        WeakReferenceMessenger.Default.Send(new SpawnerMovedMessage());
+        WeakReferenceMessenger.Default.Send(new MapFeatureSelectedMessage(MapFeatureType.Spawner, spawnPoint));
+        WeakReferenceMessenger.Default.Send(new LogMessage($"Spawner moved to node {node.Id}", LogSource.Map));
+    }
+
+    private RoadNode? FindNearestSpawnableNode(MPoint worldPos)
+    {
+        if (SimManager.Instance.RoadGraph is null) return null;
+        double bestDist = double.MaxValue;
+        RoadNode? bestNode = null;
+        foreach (var kvp in SimManager.Instance.RoadGraph.Nodes)
+        {
+            if (SimManager.Instance.RoadGraph.GetOutgoingEdges(kvp.Key).Count == 0)
+                continue;
+            double dx = kvp.Value.X - worldPos.X;
+            double dy = kvp.Value.Y - worldPos.Y;
+            double dist = dx * dx + dy * dy;
+            if (dist < bestDist) { bestDist = dist; bestNode = kvp.Value; }
+        }
+        return bestNode;
+    }
+
     partial void OnIsVolumeVisibleChanged(bool value)
     {
         ProjectLayers.IsVolumeVisible = value;
@@ -175,15 +282,15 @@ public partial class MapViewModel : ObservableObject
         WeakReferenceMessenger.Default.Send(new LogMessage("Volume visibility toggled", LogSource.Map));
     }
 
-    private void HandleDestinationPick(Vehicle vehicle, MPoint worldPos)
+    private void HandleDestinationPick(VehicleReadOnly vehicle, MPoint worldPos)
     {
         _pendingDestinationVehicle = null;
         int? nearestNode = FindNearestNode(worldPos);
         if (nearestNode is null) return;
-        EventQueueForSim.Instance.Add(new SetDestinationEvent(vehicle, nearestNode));
-        vehicle.SetDestination(nearestNode.Value);
+        EventQueueForSim.Instance.Add(new SetDestinationEvent(vehicle, nearestNode.Value));
+
         WeakReferenceMessenger.Default.Send(new DestinationPickedMessage());
-        WeakReferenceMessenger.Default.Send(new LogMessage($"Destination set for vehicle {vehicle.VehicleUI.Id}", LogSource.Map));
+        WeakReferenceMessenger.Default.Send(new LogMessage($"Destination set for vehicle {vehicle.Id()}", LogSource.Map));
     }
 
     private int? FindNearestNode(MPoint worldPos)
@@ -256,7 +363,7 @@ public partial class MapViewModel : ObservableObject
             Vector2 pos = Vector2.Zero;
             if (_trackedVehicle != null)
             {
-                pos = _trackedVehicle.Pos;
+                pos = _trackedVehicle.PinPos();
 
                 if (float.IsNaN(pos.X) || float.IsNaN(pos.Y))
                 {
@@ -347,4 +454,97 @@ public partial class MapViewModel : ObservableObject
     [RelayCommand] private void ToggleIntersectionDetails() => IsIntersectionsVisible = !IsIntersectionsVisible;
 
     [RelayCommand] private void ToggleCensusOverlay() => IsCensusOverlayVisible = !IsCensusOverlayVisible;
+
+    private void HandleAutoPlaceFromExtent(AutoPlaceSpawnersFromExtentMessage m)
+    {
+        var graph = SimManager.Instance.RoadGraph;
+        if (graph == null)
+        {
+            WeakReferenceMessenger.Default.Send(new LogMessage("Road graph not loaded", LogSource.Map));
+            return;
+        }
+
+        var coords = graph.Nodes.Values
+            .Select(n => new Coordinate(n.X, n.Y))
+            .ToArray();
+
+        if (coords.Length < 3)
+        {
+            WeakReferenceMessenger.Default.Send(new LogMessage("Not enough road nodes to compute boundary", LogSource.Map));
+            return;
+        }
+
+        var factory = new GeometryFactory();
+        var hull = factory.CreateMultiPointFromCoords(coords).ConvexHull();
+        if (hull == null || hull.IsEmpty)
+        {
+            WeakReferenceMessenger.Default.Send(new LogMessage("Could not compute road network boundary", LogSource.Map));
+            return;
+        }
+
+        var gateNodes = UrbanEcho.Graph.PolygonSpawnerHelper.GetBoundaryNodes(hull, graph, m.Tolerance, m.MaxGates);
+        if (gateNodes.Count == 0)
+        {
+            WeakReferenceMessenger.Default.Send(new LogMessage("No road nodes found near network boundary — try increasing tolerance", LogSource.Map));
+            return;
+        }
+
+        var spawnPoints = gateNodes.Select(node => new SpawnPoint
+        {
+            X = node.X,
+            Y = node.Y,
+            NearestNodeId = node.Id,
+            VehiclesPerMinute = m.VehiclesPerMinute
+        }).ToList();
+
+        EventQueueForSim.Instance.Add(new AutoPlaceSpawnersEvent(spawnPoints));
+        WeakReferenceMessenger.Default.Send(new LogMessage(
+            $"Auto-placed {gateNodes.Count} gateway spawner(s) at network boundary", LogSource.Map));
+    }
+
+    private void HandleAutoPlaceFromOsmResidential(AutoPlaceSpawnersFromOsmResidentialMessage m)
+    {
+        var graph = SimManager.Instance.RoadGraph;
+        if (graph == null)
+        {
+            WeakReferenceMessenger.Default.Send(new LogMessage("Road graph not loaded", LogSource.Map));
+            return;
+        }
+
+        var polygons = UrbanEcho.Graph.PolygonSpawnerHelper.GetOsmResidentialPolygons(m.OsmPath);
+        if (polygons.Count == 0)
+        {
+            WeakReferenceMessenger.Default.Send(new LogMessage("No residential areas (landuse=residential) found in OSM file", LogSource.Map));
+            return;
+        }
+
+        var spawnPoints = new List<SpawnPoint>();
+        foreach (var (name, polygon) in polygons)
+        {
+            var gateNodes = UrbanEcho.Graph.PolygonSpawnerHelper.GetBoundaryNodes(
+                polygon, graph, toleranceMercator: 400.0, maxGates: m.MaxGatesPerArea);
+
+            foreach (var node in gateNodes)
+            {
+                spawnPoints.Add(new SpawnPoint
+                {
+                    X = node.X,
+                    Y = node.Y,
+                    NearestNodeId = node.Id,
+                    VehiclesPerMinute = m.VehiclesPerMinute
+                });
+            }
+        }
+
+        if (spawnPoints.Count == 0)
+        {
+            WeakReferenceMessenger.Default.Send(new LogMessage(
+                $"Found {polygons.Count} residential area(s) but no road nodes near their boundaries", LogSource.Map));
+            return;
+        }
+
+        EventQueueForSim.Instance.Add(new AutoPlaceSpawnersEvent(spawnPoints));
+        WeakReferenceMessenger.Default.Send(new LogMessage(
+            $"Auto-placed {spawnPoints.Count} spawner(s) from {polygons.Count} residential area(s)", LogSource.Map));
+    }
 }

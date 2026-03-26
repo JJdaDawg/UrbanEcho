@@ -6,7 +6,6 @@ using UrbanEcho.Messages;
 using UrbanEcho.Models;
 using UrbanEcho.Models.UI;
 using UrbanEcho.Services;
-using UrbanEcho.Sim;
 using UrbanEcho.ViewModels.Properties;
 using static UrbanEcho.Models.TrafficSignal;
 
@@ -60,8 +59,9 @@ namespace UrbanEcho.ViewModels
                 SelectedProperties = m.Type switch
                 {
                     MapFeatureType.Signal when m.Data is IntersectionUI i => new SignalPropertiesViewModel(i),
-                    MapFeatureType.Vehicle when m.Data is Vehicle v => new VehiclePropertiesViewModel(v, _vehicleService),
+                    MapFeatureType.Vehicle when m.Data is VehicleReadOnly v => new VehiclePropertiesViewModel(v, _vehicleService),
                     MapFeatureType.Road when m.Data is RoadEdge edge => new RoadPropertiesViewModel(edge),
+                    MapFeatureType.Spawner when m.Data is SpawnPoint sp => new SpawnerPropertiesViewModel(sp),
                     _ => null
                 };
             });

@@ -1,4 +1,7 @@
-﻿using Mapsui;
+﻿using DocumentFormat.OpenXml.Drawing;
+using Mapsui;
+using Mapsui.Projections;
+using NetTopologySuite.Geometries;
 using UrbanEcho.Helpers;
 using UrbanEcho.Reporting;
 using UrbanEcho.Sim;
@@ -20,7 +23,11 @@ public sealed class RoadEdge
 
     public bool IsClosed { get; private set; }
 
-    public void Close() => IsClosed = true;
+    public void Close()
+    {
+        IsClosed = true;
+        stats.SetClosed();
+    }
 
     public void Open() => IsClosed = false;
 
@@ -35,6 +42,12 @@ public sealed class RoadEdge
         Feature = feature;
 
         IsFromStartOfLineString = isFromStartOfLineString;
+
+        if (feature is Mapsui.Nts.GeometryFeature gf && gf.Geometry is LineString ls)
+        {
+            (double lon, double lat) = SphericalMercator.ToLonLat(ls.Centroid.X, ls.Centroid.Y);
+            stats.SetPosition(lat, lon);
+        }
     }
 
     public void VehicleLeaving(Stats incomingStats)

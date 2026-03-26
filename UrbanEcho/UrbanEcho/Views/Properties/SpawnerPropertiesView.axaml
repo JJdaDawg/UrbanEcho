@@ -1,0 +1,57 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:UrbanEcho.ViewModels.Properties"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="400"
+             x:Class="UrbanEcho.SpawnerPropertiesView"
+             x:DataType="vm:SpawnerPropertiesViewModel">
+    <UserControl.Styles>
+        <Style Selector="Button.active">
+            <Setter Property="Background" Value="{DynamicResource SystemAccentColor}" />
+        </Style>
+    </UserControl.Styles>
+    <StackPanel Spacing="0">
+        <!-- INFO -->
+        <TextBlock Text="INFO" Opacity="0.4" FontWeight="SemiBold"
+                   Margin="14,12,14,6" />
+        <StackPanel Margin="14,0,14,12" Spacing="8">
+            <StackPanel Spacing="2">
+                <TextBlock Text="ID" Opacity="0.5" />
+                <TextBlock Text="{Binding SpawnPointId}" Opacity="0.85" />
+            </StackPanel>
+            <StackPanel Spacing="2">
+                <TextBlock Text="Nearest Node" Opacity="0.5" />
+                <TextBlock Text="{Binding NearestNodeId}" Opacity="0.85" />
+            </StackPanel>
+        </StackPanel>
+        <Separator Margin="0" Opacity="0.15" />
+
+        <!-- SETTINGS -->
+        <TextBlock Text="SETTINGS" Opacity="0.4" FontWeight="SemiBold"
+                   Margin="14,10,14,6" />
+        <StackPanel Margin="14,0,14,12" Spacing="8">
+            <StackPanel Spacing="2">
+                <TextBlock Text="Vehicles Per Minute" Opacity="0.5" />
+                <NumericUpDown Value="{Binding VehiclesPerMinute}"
+                               Minimum="1"
+                               Maximum="60"
+                               IsEnabled="{Binding IsEditing}" />
+            </StackPanel>
+        </StackPanel>
+        <Separator Margin="0" Opacity="0.15" IsVisible="{Binding IsEditing}" />
+
+        <!-- EDIT ACTIONS -->
+        <StackPanel IsVisible="{Binding IsEditing}">
+            <TextBlock Text="EDIT" Opacity="0.4" FontWeight="SemiBold"
+                       Margin="14,10,14,8" />
+            <StackPanel Orientation="Horizontal" Margin="14,0,14,12" Spacing="6">
+                <Button Content="Move" Height="26" Padding="10,0"
+                        Command="{Binding MoveCommand}"
+                        Classes.active="{Binding IsMoving}" />
+                <Button Content="Delete" Height="26" Padding="10,0"
+                        Command="{Binding DeleteCommand}" />
+            </StackPanel>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

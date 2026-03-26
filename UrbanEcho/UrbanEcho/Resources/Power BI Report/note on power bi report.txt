@@ -1,0 +1,2 @@
+﻿Would like to create tableau file of the report
+The power bi report project file just for reference (will have path issues when loading data source)

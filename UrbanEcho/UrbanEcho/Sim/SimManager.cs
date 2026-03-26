@@ -39,6 +39,27 @@ namespace UrbanEcho.Sim
         SpeedDown = 4
     }
 
+    public enum SpawnMode
+    {
+        Gates,
+        Census
+    }
+
+    /// <summary>
+    /// Controls how vehicles select their next destination node when building a path.
+    /// </summary>
+    public enum RoutingMode
+    {
+        /// <summary>Destinations weighted by AADT traffic volume (default).</summary>
+        Aadt,
+
+        /// <summary>Destinations chosen uniformly at random.</summary>
+        Random,
+
+        /// <summary>Destinations weighted by census zone employment (attraction model). Requires census data.</summary>
+        CensusOD
+    }
+
     public sealed class SimManager
     {
         private static SimManager? instance;
@@ -54,10 +75,19 @@ namespace UrbanEcho.Sim
 
         public CensusSpawnManager? CensusSpawn;
 
+        public List<SpawnPoint> SpawnPoints = new List<SpawnPoint>();
+
+        public SpawnMode SpawnMode { get; set; } = SpawnMode.Gates;
+
+        public RoutingMode RoutingMode { get; set; } = RoutingMode.Aadt;
+
         public long TaskUpdates = 0;
 
         public AStarPathfinder? pathfinder;
         public List<int>? nodes;
+
+        /// <summary>Node IDs that have at least one open, truck-allowed outgoing edge. Used as fallback spawn pool for trucks.</summary>
+        public List<int> TruckEligibleNodes { get; private set; } = new List<int>();
 
         private bool intersectionBodiesCreated = false;
 
@@ -117,8 +147,8 @@ namespace UrbanEcho.Sim
             totalRunTime.Start();
 
             //TODO: Remove this once we have UI for loading project
-            //LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/ProjectFiles/myFile.uep", MainWindow.Instance.GetMap());
-            LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/OsmFiles/osmTest.uep", MainWindow.Instance.GetMap());
+            LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/ProjectFiles/myFile.uep", MainWindow.Instance.GetMap());
+            //LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/OsmFiles/osmTest.uep", MainWindow.Instance.GetMap());
 
             EventQueueForSim.Instance.Add(loadProjectEvent); //will usually happen from UI
 
@@ -214,9 +244,14 @@ namespace UrbanEcho.Sim
             return currentSim.GetSimTime();
         }
 
-        public List<Vehicle> GetVehicles()
+        public List<VehicleReadOnly> GetVehicles()
         {
-            return currentSim.Vehicles;
+            return currentSim.GetVehicles();
+        }
+
+        public Vehicle? GetVehicle(VehicleReadOnly vehicleReadOnly)
+        {
+            return currentSim.GetVehicle(vehicleReadOnly);
         }
 
         public int GetGroupToUpdate()
@@ -241,8 +276,7 @@ namespace UrbanEcho.Sim
 
             lock (LockChangeVehicleFeatureList)
             {
-                foreach (Vehicle vehicle in currentSim.Vehicles)
-                    vehicle.RerouteAroundEdge(edge);
+                currentSim.CloseRoad(edge);
             }
         }
 
@@ -279,11 +313,7 @@ namespace UrbanEcho.Sim
             {
                 lock (LockChangeVehicleFeatureList)
                 {
-                    foreach (Vehicle vehicle in currentSim.Vehicles)
-                    {
-                        if (vehicle.IsTruck)
-                            vehicle.RerouteAroundEdge(edge);
-                    }
+                    currentSim.SetTruckAllowance(edge);
                 }
             }
         }
@@ -302,11 +332,7 @@ namespace UrbanEcho.Sim
 
             lock (LockChangeVehicleFeatureList)
             {
-                foreach (Vehicle vehicle in currentSim.Vehicles)
-                {
-                    if (vehicle.GetRoadEdge().Feature == edge.Feature)
-                        vehicle.SpeedLimit = corrected;
-                }
+                currentSim.SetSpeedLimit(edge, corrected);
             }
         }
 
@@ -362,6 +388,12 @@ namespace UrbanEcho.Sim
 
             pathfinder = new AStarPathfinder(RoadGraph);
             nodes = RoadGraph.Nodes.Keys.ToList();
+
+            // Build the truck-eligible spawn pool once so we never waste a spawn slot.
+            TruckEligibleNodes = nodes
+                .Where(nid => RoadGraph.GetOutgoingEdges(nid)
+                    .Any(e => !e.IsClosed && e.Metadata.TruckAllowance))
+                .ToList();
         }
 
         /// <summary>
@@ -443,8 +475,12 @@ namespace UrbanEcho.Sim
 
             RoadGraph = null;
             CensusSpawn = null;
+            SpawnPoints = new List<SpawnPoint>();
+            SpawnMode = SpawnMode.Gates;
+            RoutingMode = RoutingMode.Aadt;
             pathfinder = null;
             nodes = null;
+            TruckEligibleNodes = new List<int>();
             intersectionBodiesCreated = false;
             NodePenalties = new Dictionary<int, double>();
         }
@@ -459,11 +495,11 @@ namespace UrbanEcho.Sim
                 {
                     SimTask.Wait();
 
-                    if (Report.ReportTask != null)
+                    if (ReportTask.ExportTask != null)
                     {
-                        if (!Report.ReportTask.IsCompleted)
+                        if (!ReportTask.ExportTask.IsCompleted)
                         {
-                            Report.ReportTask.Wait();
+                            ReportTask.ExportTask.Wait();
                         }
                     }
 
