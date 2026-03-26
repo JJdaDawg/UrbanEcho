@@ -464,6 +464,16 @@ namespace UrbanEcho.Sim
             return simTime;
         }
 
+        public int GetVehicleCount()
+        {
+            return Vehicles.Count;
+        }
+
+        public string GetSimTimeOfDay()
+        {
+            return Clock.FormatTimeOfDay(simTime);
+        }
+
         public bool IsDisposed()
         {
             return isDisposed;

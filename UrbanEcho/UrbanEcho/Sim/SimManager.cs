@@ -248,7 +248,7 @@ namespace UrbanEcho.Sim
                     Thread.Sleep(timeToSleep);
                 }
 
-                if (FooterNeedsUpdate())
+                if (FooterNeedsUpdate() && TaskUpdates % 30 == 0)
                 {
                     UpdateFooter();
                 }
@@ -257,7 +257,7 @@ namespace UrbanEcho.Sim
 
         public bool FooterNeedsUpdate()
         {
-            bool returnValue = (projectNameChanged || lastSimulationReadyValue != simulationReady);
+            bool returnValue = (projectNameChanged || lastSimulationReadyValue != simulationReady || RunSimulation);
             return returnValue;
         }
 
@@ -275,7 +275,9 @@ namespace UrbanEcho.Sim
             {
                 projectText = projectText + " Project";
             }
-            EventQueueForUI.Instance.Add(new UpdateFooterEvent(readyText, projectText));
+            string simTimeText = GetSimTimeOfDay();
+            int vehicleCount = RunSimulation ? GetVehicleCount() : 0;
+            EventQueueForUI.Instance.Add(new UpdateFooterEvent(readyText, projectText, simTimeText, vehicleCount));
         }
 
         public void SetProjectNameChanged()
@@ -291,6 +293,16 @@ namespace UrbanEcho.Sim
         public float GetSimTime()
         {
             return currentSim.GetSimTime();
+        }
+
+        public int GetVehicleCount()
+        {
+            return currentSim.GetVehicleCount();
+        }
+
+        public string GetSimTimeOfDay()
+        {
+            return RunSimulation ? currentSim.GetSimTimeOfDay() : "--:--";
         }
 
         public List<VehicleReadOnly> GetVehicles()

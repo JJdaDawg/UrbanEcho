@@ -11,18 +11,30 @@
             Height="32"
             Background="Black">
 
-        <Grid ColumnDefinitions="*, Auto">
-             
+        <Grid ColumnDefinitions="Auto, Auto, Auto, *, Auto">
+
             <TextBlock Text="{Binding ReadyText}"
                        Grid.Column="0"
                        VerticalAlignment="Center"
+                       Margin="0,0,16,0"
                        Foreground="White"/>
 
-            <TextBlock Text="{Binding ProjectText}"
+            <TextBlock Text="{Binding SimTimeText}"
                        Grid.Column="1"
                        VerticalAlignment="Center"
+                       Margin="0,0,16,0"
+                       Foreground="LightGray"/>
+
+            <TextBlock Text="{Binding VehicleCountText}"
+                       Grid.Column="2"
+                       VerticalAlignment="Center"
+                       Foreground="LightGray"/>
+
+            <TextBlock Text="{Binding ProjectText}"
+                       Grid.Column="4"
+                       VerticalAlignment="Center"
                        Foreground="White"/>
-                    
+
         </Grid>
     </Border>
 </UserControl>

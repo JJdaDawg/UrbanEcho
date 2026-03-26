@@ -18,17 +18,19 @@ namespace UrbanEcho.ViewModels
     {
         [ObservableProperty] private string readyText = "Not Ready";
         [ObservableProperty] private string projectText = "No Project Loaded";
+        [ObservableProperty] private string simTimeText = "--:--";
+        [ObservableProperty] private string vehicleCountText = "Vehicles: 0";
 
         public FooterBarViewModel()
         {
         }
 
-        public void UpdateFooterView(string readyText, string projectText)
+        public void UpdateFooterView(string readyText, string projectText, string simTimeText, int vehicleCount)
         {
             ReadyText = readyText;
             ProjectText = projectText;
-            OnPropertyChanged(nameof(ReadyText));
-            OnPropertyChanged(nameof(ProjectText));
+            SimTimeText = simTimeText;
+            VehicleCountText = $"Vehicles: {vehicleCount}";
         }
     }
 }

@@ -13,11 +13,15 @@ namespace UrbanEcho.Events.UI
     {
         private string readyText;
         private string projectText;
+        private string simTimeText;
+        private int vehicleCount;
 
-        public UpdateFooterEvent(string readyText, string projectText)
+        public UpdateFooterEvent(string readyText, string projectText, string simTimeText, int vehicleCount)
         {
             this.readyText = readyText;
             this.projectText = projectText;
+            this.simTimeText = simTimeText;
+            this.vehicleCount = vehicleCount;
         }
 
         public void Run()
@@ -25,7 +29,7 @@ namespace UrbanEcho.Events.UI
             MainViewModel? mvm = MainWindow.Instance.GetMainViewModel();
             if (mvm is not null)
             {
-                mvm.Footer.UpdateFooterView(readyText, projectText);
+                mvm.Footer.UpdateFooterView(readyText, projectText, simTimeText, vehicleCount);
             }
         }
     }
