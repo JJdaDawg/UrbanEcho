@@ -874,6 +874,16 @@ namespace UrbanEcho.Models
                             anotherVehicleAhead = false;
                             insideAnotherVehicleCount = 0;
                         }
+                        else
+                        {
+                            if (vehicleInFrontElaspedTime > vehicleInFrontThresholdWaitTime * 0.25f && thisVehicleIsInAIntersection)
+                            {
+                                ResetVehicleToNewPos();
+                                insideAnotherVehicle = false;//Reset this so resetVehicle to new position isn't called twice
+                                anotherVehicleAhead = false;
+                                insideAnotherVehicleCount = 0;
+                            }
+                        }
                     }
                     else
                     {
