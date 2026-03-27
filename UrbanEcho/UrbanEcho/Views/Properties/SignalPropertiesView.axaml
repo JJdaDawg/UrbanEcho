@@ -20,22 +20,6 @@
                         <TextBlock Text="Type" Opacity="0.5" />
                         <TextBlock Text="{Binding Type}" TextWrapping="Wrap" Opacity="0.85" />
                     </StackPanel>
-                    <StackPanel Spacing="2" IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                        <TextBlock Text="Status" Opacity="0.5" />
-                        <TextBlock Text="{Binding Status}" Opacity="0.85" />
-                    </StackPanel>
-                    <StackPanel Spacing="2" IsVisible="{Binding Municipality, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                        <TextBlock Text="Municipality" Opacity="0.5" />
-                        <TextBlock Text="{Binding Municipality}" Opacity="0.85" />
-                    </StackPanel>
-                    <StackPanel Spacing="2" IsVisible="{Binding OwnedBy, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                        <TextBlock Text="Owned By" Opacity="0.5" />
-                        <TextBlock Text="{Binding OwnedBy}" Opacity="0.85" />
-                    </StackPanel>
-                    <StackPanel Spacing="2" IsVisible="{Binding MaintainedBy, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                        <TextBlock Text="Maintained By" Opacity="0.5" />
-                        <TextBlock Text="{Binding MaintainedBy}" Opacity="0.85" />
-                    </StackPanel>
                 </StackPanel>
             </Expander>
         </StackPanel>

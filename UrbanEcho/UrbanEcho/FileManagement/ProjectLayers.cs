@@ -11,6 +11,8 @@ using Mapsui.Providers;
 using Mapsui.Styles;
 using Mapsui.Styles.Thematics;
 using Mapsui.Tiling.Layers;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+
 
 //using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
@@ -48,6 +50,7 @@ namespace UrbanEcho.FileManagement
         private static MemoryLayer? vehicleLayer;
         private static MemoryLayer? roadSelectionLayer;
         private static MemoryLayer? pathOverlayLayer;
+        private static MemoryLayer? intersectionOverlayLayer;
         private static Avalonia.Threading.DispatcherTimer? pathBlinkTimer;
 
         private static RasterizingLayer? debugLayer;
@@ -292,6 +295,7 @@ namespace UrbanEcho.FileManagement
             PinLayer = null;
             roadSelectionLayer = null;
             pathOverlayLayer = null;
+            intersectionOverlayLayer = null;
             if (pathBlinkTimer != null) { pathBlinkTimer.Stop(); pathBlinkTimer = null; }
             debugLayer = null;
             censusOverlayLayer = null;
@@ -573,6 +577,7 @@ namespace UrbanEcho.FileManagement
             };
         }
 
+
         public static void SetPathOverlay(IReadOnlyList<IFeature>? features, Map? map)
         {
             if (pathOverlayLayer == null) return;
@@ -587,6 +592,36 @@ namespace UrbanEcho.FileManagement
 
             pathOverlayLayer.Features = new List<IFeature>(features);
             //StartPathBlink(map);
+            map?.Refresh();
+        }
+
+        private static MemoryLayer CreateIntersectionOverlayLayer()
+        {
+            return new MemoryLayer("Intersection Overlay")
+            {
+                Features = new List<IFeature>(),
+                Style = new VectorStyle
+                {
+                    Line = new Pen
+                    {
+                        Color = Color.FromArgb(220, 0, 200, 255),
+                        Width = 6,
+                        PenStrokeCap = PenStrokeCap.Round,
+                        StrokeJoin = StrokeJoin.Round
+                    }
+                }
+            };
+        }
+
+        public static void SetIntersectionOverlay(IReadOnlyList<IFeature>? roadFeatures, Map? map)
+        {
+            if (intersectionOverlayLayer == null) return;
+
+            intersectionOverlayLayer.Features = roadFeatures != null && roadFeatures.Count > 0
+                ? new List<IFeature>(roadFeatures)
+                : new List<IFeature>();
+
+            intersectionOverlayLayer.DataHasChanged();
             map?.Refresh();
         }
 
@@ -1348,6 +1383,11 @@ namespace UrbanEcho.FileManagement
             if (pathOverlayLayer == null)
                 pathOverlayLayer = CreatePathOverlayLayer();
             myMap?.Layers.Add(pathOverlayLayer);
+
+            if (intersectionOverlayLayer == null)
+                intersectionOverlayLayer = CreateIntersectionOverlayLayer();
+            myMap?.Layers.Add(intersectionOverlayLayer);
+
             if (IsCensusOverlayVisible && censusOverlayLayer != null)
             {
                 myMap?.Layers.Add(censusOverlayLayer);

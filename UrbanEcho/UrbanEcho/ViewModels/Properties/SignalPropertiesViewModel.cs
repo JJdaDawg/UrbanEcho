@@ -1,29 +1,41 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System.Collections.Generic;
+using System.Linq;
+using UrbanEcho.Models;
 using UrbanEcho.Models.UI;
+using UrbanEcho.Services;
+using static UrbanEcho.Models.RoadIntersection;
 
 namespace UrbanEcho.ViewModels.Properties
 {
     public partial class SignalPropertiesViewModel : ObservableObject, IPropertiesViewModel
     {
-        private readonly IntersectionUI _intersection;
+        private readonly RoadIntersection _intersection;
+        private readonly IIntersectionService _intersectionService;
 
         public string Title => "Traffic Signal";
         public string Subtitle => "";
         public string Name => _intersection.Name;
-        public string Type => _intersection.Type;
-        public string Status => _intersection.Status;
-        public string Municipality => _intersection.Municipality;
-        public string OwnedBy => _intersection.OwnedBy;
-        public string MaintainedBy => _intersection.MaintainedBy;
-        public IEnumerable<string> ConnectingRoads => _intersection.ConnectingRoads;
+        public SignalType Type => _intersection.TheSignalType;
+        public IEnumerable<string> ConnectingRoads => _intersection.EdgesInto
+            .Select(etr => etr.RoadEdge.Metadata.RoadName)
+            .Concat(_intersection.EdgesOut.Select(e => e.Metadata.RoadName))
+            .Where(n => !string.IsNullOrEmpty(n))
+            .Distinct();
 
         [ObservableProperty]
         private bool _isEditing;
 
-        public SignalPropertiesViewModel(IntersectionUI intersection)
+        [ObservableProperty]
+        private bool _isShowingIntersectionOverlay;
+
+        public RelayCommand IntersectionOverlayCommand { get; }
+
+        public SignalPropertiesViewModel(RoadIntersection intersection, IIntersectionService intersectionService)
         {
             _intersection = intersection;
+            _intersectionService = intersectionService;
         }
 
         public void UpdatePropertyView()

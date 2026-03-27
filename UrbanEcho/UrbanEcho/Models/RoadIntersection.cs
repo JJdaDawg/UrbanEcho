@@ -952,6 +952,16 @@ namespace UrbanEcho.Models
             }
         }
 
+        public IReadOnlyList<IFeature> GetConnectedRoadFeatures()
+        {
+            var features = new List<IFeature>();
+            foreach (EdgeTrafficRule etr in EdgesInto)
+                features.Add(etr.RoadEdge.Feature);
+            foreach (RoadEdge edge in EdgesOut)
+                features.Add(edge.Feature);
+            return features.Distinct().ToList();
+        }
+
         public RecordedStats GetStats()
         {
             return this.stats;

@@ -10,14 +10,14 @@ namespace UrbanEcho.Services
 {
     public interface IMapFeatureService
     {
-        IntersectionUI? MapIntersection(IFeature feature);
+        RoadIntersection? MapIntersection(IFeature feature);
 
         VehicleReadOnly? MapVehicle(IFeature feature);
     }
 
     public class MapFeatureService : IMapFeatureService
     {
-        public IntersectionUI? MapIntersection(IFeature feature)
+        public RoadIntersection? MapIntersection(IFeature feature)
         {
             var rawId = feature["OBJECTID"]?.ToString();
 
@@ -30,21 +30,7 @@ namespace UrbanEcho.Services
                 return null;
             }
 
-            return new IntersectionUI
-            {
-                Id = int.TryParse(rawId, out int id) ? id : 0,
-                GeoId = feature["GeoID"]?.ToString() ?? string.Empty,
-                Name = feature["Intersecti"]?.ToString() ?? "Unknown",
-                Municipality = feature["Municipali"]?.ToString() ?? string.Empty,
-                OwnedBy = feature["OwnedBy"]?.ToString() ?? string.Empty,
-                MaintainedBy = feature["Maintained"]?.ToString() ?? string.Empty,
-                Status = feature["LifeStatus"]?.ToString() ?? string.Empty,
-                Type = feature["Intersec_1"]?.ToString() ?? string.Empty,
-                ConnectingRoads = new[] { "StreetName", "StreetNa_1", "StreetNa_2", "StreetNa_3", "StreetNa_4" }
-                    .Select(f => feature[f]?.ToString())
-                    .Where(v => !string.IsNullOrEmpty(v))
-                    .ToList()!
-            };
+            return simIntersection;
         }
 
         public VehicleReadOnly? MapVehicle(IFeature feature)
