@@ -772,7 +772,7 @@ namespace UrbanEcho.Models
                         }
 
                         anotherVehicleAhead = false;
-                        if (vehicleInFrontCount == 0 && state == VehicleStates.SlowDownForTurn)
+                        if (vehicleInFrontCount == 0 && (state == VehicleStates.SlowDownForTurn || state == VehicleStates.Decelerating))
                         {
                             (Vector2 pos, b2Rot angle, bool valid) = GetLookAheadPosAndAngle(2.0f);
                             if (valid)
@@ -782,7 +782,7 @@ namespace UrbanEcho.Models
                                 B2Api.b2World_OverlapShape(World.WorldId, b2ShapeProxyAhead, queryFilter, overlapDelegateVehicleAhead, 1);
                                 if (anotherVehicleAhead)
                                 {
-                                    Kmh = 0;//just stop vehicle right away
+                                    //Kmh = 0;//just stop vehicle right away
                                 }
                             }
                         }
@@ -963,7 +963,7 @@ namespace UrbanEcho.Models
 
                 float updateToSpeed = Kmh;
 
-                if (VehicleInFront == false)
+                if (VehicleInFront == false && anotherVehicleAhead == false)
                 {
                     if (Kmh <= 0.1f && targetSpeed <= 0.1f)
                     {
