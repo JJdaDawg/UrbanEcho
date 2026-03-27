@@ -334,6 +334,7 @@ namespace UrbanEcho.Models
                     ResetVehicleToNewPos();
                     return;
                 }
+
                 int currentNodeId = path[path.Count - 1];
                 setNewPath(currentNodeId);
             }
@@ -1236,14 +1237,6 @@ namespace UrbanEcho.Models
 
         private void ResetVehicleToNewPos(bool useCurrentPos = false)
         {
-            // If the sim already has more active vehicles than the demand target,
-            // send this vehicle dormant instead of giving it a new path.
-            if (!useCurrentPos && !IsDormant && SimManager.Instance.ShouldVehicleGoDormant())
-            {
-                GoDormant();
-                return;
-            }
-
             int goalNode;
             int startNode;
 

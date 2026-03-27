@@ -1,12 +1,11 @@
 namespace UrbanEcho.Sim
 {
     /// <summary>
-    /// Maps simulation time (real elapsed seconds at 60 fps) to a configurable
-    /// time-of-day and drives vehicle spawn interval timing.
+    /// Maps simulation time (real elapsed seconds at 60 fps) to a
+    /// time-of-day clock that starts at the observation window's start hour.
     ///
-    /// Time compression: at SimMinutesPerRealSecond = 1, one real simulation
-    /// second equals one simulated minute, so a full 24-hour day plays out in
-    /// 24 real minutes of simulation time.
+    /// At the default SimMinutesPerRealSecond = 1/60, the clock runs 1:1
+    /// with real time: one real second equals one simulated second.
     /// </summary>
     public class SimClock
     {
@@ -14,7 +13,7 @@ namespace UrbanEcho.Sim
         public float SimMinutesPerRealSecond { get; set; }
 
         /// <summary>The hour of day (0–23) at which the simulation begins.</summary>
-        public int StartHourOfDay { get; }
+        public int StartHourOfDay { get; set; }
 
         private float _lastSpawnTime = 0f;
 
@@ -93,19 +92,46 @@ namespace UrbanEcho.Sim
         };
 
         /// <summary>
-        /// Returns a 0.0–1.0 fraction representing traffic demand at the current
-        /// simulated time.  Linearly interpolates between hourly anchor values
-        /// so the target vehicle count changes gradually instead of jumping.
+        /// Returns the average 0.0–1.0 demand fraction for the given observation
+        /// window.  The window wraps around midnight (e.g. 22–05 is valid).
+        /// Because the fraction is constant for the entire run, the target
+        /// vehicle count stays fixed — no ramp-up / ramp-down.
         /// </summary>
-        public float GetTrafficDemandFraction(float simTime)
+        public float GetTrafficDemandFraction(int observationStartHour, int observationEndHour)
         {
-            int h = CurrentHour(simTime);
-            int m = CurrentMinute(simTime);
-            float t = m / 60f; // 0.0 at :00, ~1.0 at :59
-            float current = DemandByHour[h];
-            float next = DemandByHour[(h + 1) % 24];
-            return current + (next - current) * t;
+            int start = observationStartHour % 24;
+            int end   = observationEndHour   % 24;
+            if (start == end)
+                return DemandByHour[start];
+
+            float total = 0;
+            int   count = 0;
+            int   h     = start;
+            while (h != end)
+            {
+                total += DemandByHour[h];
+                count++;
+                h = (h + 1) % 24;
+            }
+            return count > 0 ? total / count : DemandByHour[start];
         }
+
+        /// <summary>
+        /// Returns the wall-clock duration of the observation window in real
+        /// simulation seconds, taking <see cref="SimMinutesPerRealSecond"/> into
+        /// account.  Wraps correctly across midnight (e.g. 22–05 = 7 hours).
+        /// </summary>
+        public float GetWindowDurationSeconds(int startHour, int endHour)
+        {
+            int hours = ((endHour - startHour) % 24 + 24) % 24;
+            if (hours == 0) hours = 24;
+            float simMinutes = hours * 60f;
+            return simMinutes / SimMinutesPerRealSecond;
+        }
+
+        /// <summary>Returns a display label such as "07:00–09:00".</summary>
+        public static string FormatObservationWindow(int startHour, int endHour) =>
+            $"{startHour:D2}:00\u2013{endHour:D2}:00";
 
         /// <summary>Resets the clock back to time zero.</summary>
         public void Reset()

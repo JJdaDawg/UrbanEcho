@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using UrbanEcho.Events.Sim;
 using UrbanEcho.Messages;
 using UrbanEcho.Models;
+using UrbanEcho.Sim;
 
 namespace UrbanEcho.ViewModels
 {
@@ -107,6 +108,31 @@ namespace UrbanEcho.ViewModels
         private void RealTime()
         { }
 
+        [ObservableProperty]
+        private string _observationPeriodLabel = "AM Peak (07:00\u201309:00)";
+
+        [RelayCommand]
+        private void SetPeriodAmPeak() => SetObservationPeriod(7, 9, "AM Peak (07:00\u201309:00)");
+
+        [RelayCommand]
+        private void SetPeriodMidday() => SetObservationPeriod(11, 13, "Midday (11:00\u201313:00)");
+
+        [RelayCommand]
+        private void SetPeriodPmPeak() => SetObservationPeriod(16, 18, "PM Peak (16:00\u201318:00)");
+
+        [RelayCommand]
+        private void SetPeriodEvening() => SetObservationPeriod(19, 22, "Evening (19:00\u201322:00)");
+
+        [RelayCommand]
+        private void SetPeriodOffPeak() => SetObservationPeriod(22, 5, "Off-Peak (22:00\u201305:00)");
+
+        private void SetObservationPeriod(int startHour, int endHour, string label)
+        {
+            SimManager.Instance.ObservationStartHour = startHour;
+            SimManager.Instance.ObservationEndHour = endHour % 24;
+            ObservationPeriodLabel = label;
+        }
+
         private bool CanStart() => !IsRunning && _hasProject;
 
         private bool CanStop() => IsPausedOrRunning && _hasProject;
@@ -125,5 +151,6 @@ namespace UrbanEcho.ViewModels
             SpeedUpCommand.NotifyCanExecuteChanged();
             SpeedDownCommand.NotifyCanExecuteChanged();
         }
-    }
-}
+
+            }
+        }

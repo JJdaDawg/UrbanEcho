@@ -21,7 +21,9 @@ namespace UrbanEcho.Sim
     public class Sim
     {
         private List<Vehicle> Vehicles = new List<Vehicle>();
-        public SimClock Clock = new SimClock(startHourOfDay: 6, simMinutesPerRealSecond: 1f);
+        public SimClock Clock = new SimClock(
+            startHourOfDay: 7,
+            simMinutesPerRealSecond: 1f / 60f);
         private readonly Random spawnRng = new Random();
         private float simTime = 0;
         public long SimFrames = 0;
@@ -86,6 +88,7 @@ namespace UrbanEcho.Sim
             if (!didFirstRun)
             {
                 didFirstRun = true;
+                Clock.StartHourOfDay = SimManager.Instance.ObservationStartHour;
                 ResetStats();
             }
             float stepSize = SimManager.Instance.BaseStepSize * SimManager.Instance.SimSpeed;
@@ -95,6 +98,21 @@ namespace UrbanEcho.Sim
             simTime += stepSize;
 
             SimFrames++;
+
+            // --- Auto-stop when the observation window has elapsed ---
+            float windowSeconds = Clock.GetWindowDurationSeconds(
+                SimManager.Instance.ObservationStartHour,
+                SimManager.Instance.ObservationEndHour);
+            if (simTime >= windowSeconds)
+            {
+                SimManager.Instance.RunSimulation = false;
+                SimManager.Instance.Paused = false;
+                EventQueueForUI.Instance.Add(new ResetSimControlEvent());
+                EventQueueForUI.Instance.Add(new LogToConsole(
+                    MainWindow.Instance.GetMainViewModel(),
+                    $"Observation period complete – report generated. Select a new period to run again."));
+                return;
+            }
 
             bool useCensusSpawning = SimManager.Instance.SpawnMode == SpawnMode.Census
                 && SimManager.Instance.CensusSpawn?.IsLoaded == true;
@@ -118,19 +136,15 @@ namespace UrbanEcho.Sim
                     WakeDormantVehicles(targetCount - activeCount);
                     TrySpawnFromSpawners(false);
                 }
-                else if (activeCount > targetCount)
-                {
-                    SendExcessDormant(activeCount - targetCount);
-                }
             }
             else
             {
                 // Fallback to census / random spawning
                 if (Vehicles.Count == 0)
                 {
-                    // Over-request by 25 % to compensate for nodes with no valid
-                    // outgoing edges that silently skip inside TrySpawnVehicle.
-                    int burstTarget = (int)(maxVehicles * 1.25);
+                    // Spawn to the observation-window target, over-requesting by 25 %
+                    // to compensate for nodes with no valid outgoing edges.
+                    int burstTarget = (int)(targetCount * 1.25);
                     TrySpawnVehicle(burstTarget, false);
                     foreach (Vehicle v in Vehicles)
                     {
@@ -141,10 +155,6 @@ namespace UrbanEcho.Sim
                 {
                     WakeDormantVehicles(targetCount - activeCount);
                     TrySpawnVehicle();
-                }
-                else if (activeCount > targetCount)
-                {
-                    SendExcessDormant(activeCount - targetCount);
                 }
             }
 
@@ -237,17 +247,20 @@ namespace UrbanEcho.Sim
         }
 
         /// <summary>
-        /// Returns the ideal number of active vehicles right now based on
-        /// the time-of-day demand curve and the hard vehicle cap.
+        /// Returns the ideal number of active vehicles based on the graph size
+        /// (capped at 5 000) scaled by the average demand for the observation window.
         /// </summary>
         public int GetTargetVehicleCount()
         {
-            float demand = Clock.GetTrafficDemandFraction(simTime);
-            return (int)(maxVehicles * demand);
+            int nodeCount = SimManager.Instance.nodes?.Count ?? 0;
+            int base_ = Math.Min(nodeCount, maxVehicles);
+            float demand = Clock.GetTrafficDemandFraction(
+                SimManager.Instance.ObservationStartHour,
+                SimManager.Instance.ObservationEndHour);
+            return Math.Max(1, (int)(base_ * demand));
         }
 
         private const int MaxWakePerFrame = 10;
-        private const int MaxDormantPerFrame = 10;
 
         /// <summary>
         /// Wakes up to <paramref name="count"/> dormant vehicles so they
@@ -265,26 +278,6 @@ namespace UrbanEcho.Sim
                 {
                     v.WakeUp();
                     woken++;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Sends up to <paramref name="count"/> excess active vehicles dormant
-        /// so the active count drops toward the target.  Capped per frame for
-        /// a gradual visual ramp-down.
-        /// </summary>
-        private void SendExcessDormant(int count)
-        {
-            int toSleep = Math.Min(count, MaxDormantPerFrame);
-            int slept = 0;
-            foreach (Vehicle v in Vehicles)
-            {
-                if (slept >= toSleep) break;
-                if (!v.IsDormant)
-                {
-                    v.GoDormant();
-                    slept++;
                 }
             }
         }
