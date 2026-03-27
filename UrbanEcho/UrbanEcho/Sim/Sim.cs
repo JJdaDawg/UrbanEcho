@@ -25,8 +25,7 @@ namespace UrbanEcho.Sim
         private readonly Random spawnRng = new Random();
         private float simTime = 0;
         public long SimFrames = 0;
-        private int startingNumberOfVehicles = 3000; //Using number of nodes later in code
-        private int maxVehicles = 5000;
+        private int maxVehicles =5000;
         public int GroupToUpdate = 0;
         private bool flasher;
 
@@ -100,6 +99,9 @@ namespace UrbanEcho.Sim
             bool useCensusSpawning = SimManager.Instance.SpawnMode == SpawnMode.Census
                 && SimManager.Instance.CensusSpawn?.IsLoaded == true;
 
+            int targetCount = GetTargetVehicleCount();
+            int activeCount = GetActiveVehicleCount();
+
             if (SimManager.Instance.SpawnPoints.Count > 0 && !useCensusSpawning)
             {
                 // Use spawner-based spawning when spawn points exist
@@ -111,9 +113,14 @@ namespace UrbanEcho.Sim
                         v.ResetStats();
                     }
                 }
-                else
+                else if (activeCount < targetCount)
                 {
+                    WakeDormantVehicles(targetCount - activeCount);
                     TrySpawnFromSpawners(false);
+                }
+                else if (activeCount > targetCount)
+                {
+                    SendExcessDormant(activeCount - targetCount);
                 }
             }
             else
@@ -121,19 +128,23 @@ namespace UrbanEcho.Sim
                 // Fallback to census / random spawning
                 if (Vehicles.Count == 0)
                 {
-                    if (SimManager.Instance.RoadGraph != null)
-                    {
-                        startingNumberOfVehicles = SimManager.Instance.RoadGraph.Nodes.Count / 2;
-                    }
-                    TrySpawnVehicle(startingNumberOfVehicles, false);
+                    // Over-request by 25 % to compensate for nodes with no valid
+                    // outgoing edges that silently skip inside TrySpawnVehicle.
+                    int burstTarget = (int)(maxVehicles * 1.25);
+                    TrySpawnVehicle(burstTarget, false);
                     foreach (Vehicle v in Vehicles)
                     {
-                        v.ResetStats();//Reset stats at start else the loading time is included when many are loaded
+                        v.ResetStats();
                     }
                 }
-                else
+                else if (activeCount < targetCount)
                 {
+                    WakeDormantVehicles(targetCount - activeCount);
                     TrySpawnVehicle();
+                }
+                else if (activeCount > targetCount)
+                {
+                    SendExcessDormant(activeCount - targetCount);
                 }
             }
 
@@ -141,7 +152,8 @@ namespace UrbanEcho.Sim
 
             foreach (Vehicle v in Vehicles)
             {
-                v.Update();
+                if (!v.IsDormant)
+                    v.Update();
             }
 
             foreach (RoadIntersection roadIntersection in SimManager.Instance.RoadIntersections)
@@ -211,6 +223,70 @@ namespace UrbanEcho.Sim
             }
 
             EventQueueForUI.Instance.Add(new RefreshMapEvent(MainWindow.Instance.GetMap()));
+        }
+
+        /// <summary>Returns the number of vehicles that are not dormant.</summary>
+        public int GetActiveVehicleCount()
+        {
+            int count = 0;
+            foreach (Vehicle v in Vehicles)
+            {
+                if (!v.IsDormant) count++;
+            }
+            return count;
+        }
+
+        /// <summary>
+        /// Returns the ideal number of active vehicles right now based on
+        /// the time-of-day demand curve and the hard vehicle cap.
+        /// </summary>
+        public int GetTargetVehicleCount()
+        {
+            float demand = Clock.GetTrafficDemandFraction(simTime);
+            return (int)(maxVehicles * demand);
+        }
+
+        private const int MaxWakePerFrame = 10;
+        private const int MaxDormantPerFrame = 10;
+
+        /// <summary>
+        /// Wakes up to <paramref name="count"/> dormant vehicles so they
+        /// rejoin traffic with fresh paths.  Capped per frame to avoid
+        /// A* pathfinding spikes.
+        /// </summary>
+        private void WakeDormantVehicles(int count)
+        {
+            int toWake = Math.Min(count, MaxWakePerFrame);
+            int woken = 0;
+            foreach (Vehicle v in Vehicles)
+            {
+                if (woken >= toWake) break;
+                if (v.IsDormant)
+                {
+                    v.WakeUp();
+                    woken++;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Sends up to <paramref name="count"/> excess active vehicles dormant
+        /// so the active count drops toward the target.  Capped per frame for
+        /// a gradual visual ramp-down.
+        /// </summary>
+        private void SendExcessDormant(int count)
+        {
+            int toSleep = Math.Min(count, MaxDormantPerFrame);
+            int slept = 0;
+            foreach (Vehicle v in Vehicles)
+            {
+                if (slept >= toSleep) break;
+                if (!v.IsDormant)
+                {
+                    v.GoDormant();
+                    slept++;
+                }
+            }
         }
 
         /// <summary>

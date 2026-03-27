@@ -70,6 +70,43 @@ namespace UrbanEcho.Sim
             return false;
         }
 
+        // Hourly demand anchors (index = hour 0–23). Interpolated by minute
+        // for smooth transitions instead of abrupt jumps on the hour.
+        private static readonly float[] DemandByHour =
+        {
+            0.10f, 0.10f, 0.10f, 0.10f, 0.10f, // 00–04  deep night
+            0.25f,                                // 05     early morning
+            0.50f,                                // 06     morning commute begins
+            1.00f, 1.00f,                         // 07–08  AM rush
+            0.75f,                                // 09     post-rush tapering
+            0.60f, 0.60f,                         // 10–11  mid-morning
+            0.65f, 0.65f,                         // 12–13  lunch
+            0.60f,                                // 14     early afternoon
+            0.75f,                                // 15     pre-rush ramp
+            1.00f, 1.00f,                         // 16–17  PM rush
+            0.75f,                                // 18     post-rush tapering
+            0.55f,                                // 19     evening
+            0.40f,                                // 20     late evening
+            0.30f,                                // 21
+            0.20f,                                // 22
+            0.15f                                 // 23
+        };
+
+        /// <summary>
+        /// Returns a 0.0–1.0 fraction representing traffic demand at the current
+        /// simulated time.  Linearly interpolates between hourly anchor values
+        /// so the target vehicle count changes gradually instead of jumping.
+        /// </summary>
+        public float GetTrafficDemandFraction(float simTime)
+        {
+            int h = CurrentHour(simTime);
+            int m = CurrentMinute(simTime);
+            float t = m / 60f; // 0.0 at :00, ~1.0 at :59
+            float current = DemandByHour[h];
+            float next = DemandByHour[(h + 1) % 24];
+            return current + (next - current) * t;
+        }
+
         /// <summary>Resets the clock back to time zero.</summary>
         public void Reset()
         {

@@ -276,7 +276,7 @@ namespace UrbanEcho.Sim
                 projectText = projectText + " Project";
             }
             string simTimeText = GetSimTimeOfDay();
-            int vehicleCount = RunSimulation ? GetVehicleCount() : 0;
+            int vehicleCount = RunSimulation ? GetActiveVehicleCount() : 0;
             EventQueueForUI.Instance.Add(new UpdateFooterEvent(readyText, projectText, simTimeText, vehicleCount));
         }
 
@@ -298,6 +298,25 @@ namespace UrbanEcho.Sim
         public int GetVehicleCount()
         {
             return currentSim.GetVehicleCount();
+        }
+
+        public int GetActiveVehicleCount()
+        {
+            return currentSim.GetActiveVehicleCount();
+        }
+
+        public int GetTargetVehicleCount()
+        {
+            return currentSim.GetTargetVehicleCount();
+        }
+
+        /// <summary>
+        /// Returns true when the active vehicle count exceeds the demand target,
+        /// signalling that a vehicle finishing its path should go dormant.
+        /// </summary>
+        public bool ShouldVehicleGoDormant()
+        {
+            return currentSim.GetActiveVehicleCount() > currentSim.GetTargetVehicleCount();
         }
 
         public string GetSimTimeOfDay()
