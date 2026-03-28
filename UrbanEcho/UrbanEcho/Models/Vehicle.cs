@@ -35,6 +35,8 @@ namespace UrbanEcho.Models
     public class Vehicle : IBodyParent
     {
         public bool IsForceStopped = false;
+        public bool IsDormant = false;
+        private static readonly Vector2 DormantPosition = new Vector2(-999999, -999999);
 
         private b2OverlapResultFcn overlapDelegateVehicle;
 
@@ -332,6 +334,7 @@ namespace UrbanEcho.Models
                     ResetVehicleToNewPos();
                     return;
                 }
+
                 int currentNodeId = path[path.Count - 1];
                 setNewPath(currentNodeId);
             }
@@ -1200,6 +1203,41 @@ namespace UrbanEcho.Models
         public void SetForceStop(bool stopCommand)
         {
             IsForceStopped = stopCommand;
+        }
+
+        /// <summary>
+        /// Teleports the vehicle off-screen, hides it, and zeroes velocity.
+        /// The Box2D body stays alive — no creation/destruction needed.
+        /// </summary>
+        public void GoDormant()
+        {
+            if (IsDormant || Body == null) return;
+            IsDormant = true;
+            B2Api.b2Body_SetLinearVelocity(Body.BodyId, Vector2.Zero);
+            B2Api.b2Body_SetAngularVelocity(Body.BodyId, 0);
+            b2Rot rot = b2Rot.FromAngle(0);
+            B2Api.b2Body_SetTransform(Body.BodyId, DormantPosition, rot);
+            Pos = DormantPosition;
+            if (feature != null)
+            {
+                feature["Hidden"] = "true";
+                feature.Point.X = DormantPosition.X;
+                feature.Point.Y = DormantPosition.Y;
+            }
+        }
+
+        /// <summary>
+        /// Wakes a dormant vehicle: picks a fresh path and un-hides it.
+        /// </summary>
+        public void WakeUp()
+        {
+            if (!IsDormant || Body == null) return;
+            IsDormant = false;
+            ResetVehicleToNewPos();
+            if (feature != null)
+            {
+                feature["Hidden"] = "false";
+            }
         }
 
         public void RequestResetVehicleToNewPos()

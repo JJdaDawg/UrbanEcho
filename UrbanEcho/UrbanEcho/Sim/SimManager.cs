@@ -82,6 +82,12 @@ namespace UrbanEcho.Sim
 
         public RoutingMode RoutingMode { get; set; } = RoutingMode.Aadt;
 
+        /// <summary>Start hour (0–23) of the observation window the user wants to study.</summary>
+        public int ObservationStartHour { get; set; } = 7;
+
+        /// <summary>End hour (0–23) of the observation window.</summary>
+        public int ObservationEndHour { get; set; } = 9;
+
         public long TaskUpdates = 0;
 
         public AStarPathfinder? pathfinder;
@@ -275,8 +281,10 @@ namespace UrbanEcho.Sim
             {
                 projectText = projectText + " Project";
             }
-            string simTimeText = GetSimTimeOfDay();
-            int vehicleCount = RunSimulation ? GetVehicleCount() : 0;
+            string simTimeText = RunSimulation
+                ? $"{SimClock.FormatObservationWindow(ObservationStartHour, ObservationEndHour)} | {GetSimTimeOfDay()}"
+                : "--:--";
+            int vehicleCount = RunSimulation ? GetActiveVehicleCount() : 0;
             EventQueueForUI.Instance.Add(new UpdateFooterEvent(readyText, projectText, simTimeText, vehicleCount));
         }
 
@@ -298,6 +306,16 @@ namespace UrbanEcho.Sim
         public int GetVehicleCount()
         {
             return currentSim.GetVehicleCount();
+        }
+
+        public int GetActiveVehicleCount()
+        {
+            return currentSim.GetActiveVehicleCount();
+        }
+
+        public int GetTargetVehicleCount()
+        {
+            return currentSim.GetTargetVehicleCount();
         }
 
         public string GetSimTimeOfDay()
