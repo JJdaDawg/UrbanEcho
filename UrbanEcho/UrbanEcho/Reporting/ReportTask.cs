@@ -12,6 +12,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 using UrbanEcho.Events.UI;
@@ -195,10 +196,17 @@ namespace UrbanEcho.Reporting
                     Viewport viewport = new Viewport(mRect.Centroid.X, mRect.Centroid.Y, resolution, 0, 1024, 768);
                     Mapsui.Rendering.Skia.MapRenderer mapRenderer = new Mapsui.Rendering.Skia.MapRenderer();
 
-                    ms = mapRenderer.RenderToBitmapStream(viewport, map.Layers, map.RenderService, Mapsui.Styles.Color.White, 1);
-
                     try
                     {
+                        Thread.Sleep(1000);//Give time for map to zoom out so export image looks correct
+                        foreach (ILayer layer in map.Layers)
+                        {
+                            while (layer.Busy)
+                            {
+                                Thread.Sleep(100);//Wait until all layers are not busy
+                            }
+                        }
+                        ms = mapRenderer.RenderToBitmapStream(viewport, map.Layers, map.RenderService, Mapsui.Styles.Color.White, 1);
                         //https://stackoverflow.com/questions/8624071/save-and-load-memorystream-to-from-a-file/19302609
                         using (FileStream file = new FileStream(@$".\Output\Map-{dateTime.ToString("MM-dd-yyyy_hh-mm-ss-tt")}.png", FileMode.Create, System.IO.FileAccess.Write))
                         {

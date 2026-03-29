@@ -112,7 +112,7 @@ namespace UrbanEcho.Styles
                                     ImageStyle style = CopyStyle((ImageStyle)Styles[vehicleType]);
 
                                     float angle = -(float)f["Angle"];
-                                    style.RelativeOffset.X = 0.5f;
+                                    style.RelativeOffset.X = 0.25f;
                                     style.RelativeOffset.Y = 0.0f;
                                     style.SymbolRotation = angle;
                                     return style;

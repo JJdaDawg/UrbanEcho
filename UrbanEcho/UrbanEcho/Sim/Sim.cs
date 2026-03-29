@@ -21,13 +21,15 @@ namespace UrbanEcho.Sim
     public class Sim
     {
         private List<Vehicle> Vehicles = new List<Vehicle>();
+
         public SimClock Clock = new SimClock(
             startHourOfDay: 7,
             simMinutesPerRealSecond: 1f / 60f);
+
         private readonly Random spawnRng = new Random();
         private float simTime = 0;
         public long SimFrames = 0;
-        private int maxVehicles =5000;
+        private int maxVehicles = 5000;
         public int GroupToUpdate = 0;
         private bool flasher;
 
@@ -220,14 +222,7 @@ namespace UrbanEcho.Sim
                 Map map = MainWindow.Instance.GetMap();
 
                 EventQueueForUI.Instance.Add(new ZoomEvent(map));
-                Thread.Sleep(1000);//Give time for map to zoom out so export image looks correct
-                foreach (ILayer layer in map.Layers)
-                {
-                    while (layer.Busy)
-                    {
-                        Thread.Sleep(100);//Wait until all layers are not busy
-                    }
-                }
+
                 EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Generating Report"));
                 ReportTask report = new ReportTask(SimManager.Instance.RoadIntersections, SimManager.Instance.RoadGraph);
             }

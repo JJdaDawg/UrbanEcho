@@ -46,7 +46,9 @@ namespace UrbanEcho.Physics
             bodyCreated = true;
             b2ShapeDef shapeDef = b2DefaultShapeDef();
             //b2Polygon polygon = Helper.CreatePolygon([new(-rect.Width / 2, -rect.Height / 2), new(-rect.Width / 2, rect.Height / 2), new(rect.Width / 2, rect.Height / 2), new(rect.Width / 2, -rect.Height / 2)]);
-            b2Polygon polygon = Helper.CreatePolygon([new(0, -rect.Height / 2), new(0, rect.Height / 2), new(rect.Width, rect.Height / 2), new(rect.Width, -rect.Height / 2)]);
+
+            //body center is 25% from back so vehicle pivots from back axel
+            b2Polygon polygon = Helper.CreatePolygon([new(-rect.Width * 0.25f, -rect.Height / 2), new(-rect.Width * 0.25f, rect.Height / 2), new(rect.Width * 0.75f, rect.Height / 2), new(rect.Width * 0.75f, -rect.Height / 2)]);
 
             vertices = new Vector2[polygon.count];
             for (int i = 0; i < polygon.count; i++)

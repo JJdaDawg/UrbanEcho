@@ -541,7 +541,6 @@ namespace UrbanEcho.Sim
             if (!currentSim.IsDisposed())
             {
                 ResetSim();
-                currentSim.CreateReport();
             }
 
             World.Clear(); //Reset world and Destroy all existing bodies
