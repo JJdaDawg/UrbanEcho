@@ -199,7 +199,7 @@ namespace UrbanEcho.Sim
 
         public void CreateReport()
         {
-            /*This part is just for showing on console highest vehicle incoming stat*/
+            /*This part is just for showing on console highest vehicle incoming stat
             RoadIntersection? highestIncomingVehiclesIntersection = null;
             int highestIncomingVehiclesCount = 0;
             foreach (RoadIntersection roadIntersection in SimManager.Instance.RoadIntersections)
@@ -216,7 +216,7 @@ namespace UrbanEcho.Sim
             {
                 //Just to test
                 EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Intersection {highestIncomingVehiclesIntersection.Name} had the most vehicles entered with {highestIncomingVehiclesCount} vehicles entered"));
-            }
+            }*/
             if (SimManager.Instance.RoadGraph != null)
             {
                 Map map = MainWindow.Instance.GetMap();

@@ -180,33 +180,35 @@ namespace UrbanEcho.Reporting
                 Map map = mvm.Map.MyMap;
                 //https://github.com/Mapsui/Mapsui/blob/98c282bfc8873332c44f551f42f22a7791be5b97/Mapsui.Rendering.Skia/MapRenderer.cs#L87
 
-                MRect? mRect = map.Extent;
+                LayerCollection layers = new LayerCollection();
+                Thread.Sleep(3000);//Give time for map to zoom out so export image looks correct
+                foreach (ILayer layer in map.Layers)
+                {
+                    while (layer.Busy && (layer.Name == "background" || layer.Name == "Roads"))
+                    {
+                        Thread.Sleep(100);//Wait until background and roads layer is not busy
+                    }
 
-                if (mRect == null)
-                {
-                    mRect = ProjectLayers.TryGetRoadLayerExtent();//Fallback to reading background extent if failed to get map extents
+                    if (layer.Name == "background" || layer.Name == "Roads")
+                    {
+                        layers.Add(layer);
+                    }
                 }
-                if (mRect != null && double.IsNaN(mRect.Centroid.X))
+
+                MRect? extent = ProjectLayers.TryGetRoadLayerExtent();
+
+                if (extent != null)
                 {
-                    mRect = ProjectLayers.TryGetRoadLayerExtent();//Fallback to reading background extent if failed to get map extents
-                }
-                if (mRect != null && !double.IsNaN(mRect.Centroid.X))//Only create the image if we could get the extents
-                {
-                    double resolution = Math.Max((mRect.Width / 1024), (mRect.Height / 768));
-                    Viewport viewport = new Viewport(mRect.Centroid.X, mRect.Centroid.Y, resolution, 0, 1024, 768);
-                    Mapsui.Rendering.Skia.MapRenderer mapRenderer = new Mapsui.Rendering.Skia.MapRenderer();
+                    double centerX = extent.MinX + (extent.MaxX - extent.MinX) / 2;
+                    double centerY = extent.MinY + (extent.MaxY - extent.MinY) / 2;
+
+                    double resolution = Math.Max(extent.Width / 1024, extent.Height / 768);
+                    Viewport viewport = new Viewport(centerX, centerY, resolution, 0, 1024, 768);
 
                     try
                     {
-                        Thread.Sleep(1000);//Give time for map to zoom out so export image looks correct
-                        foreach (ILayer layer in map.Layers)
-                        {
-                            while (layer.Busy)
-                            {
-                                Thread.Sleep(100);//Wait until all layers are not busy
-                            }
-                        }
-                        ms = mapRenderer.RenderToBitmapStream(viewport, map.Layers, map.RenderService, Mapsui.Styles.Color.White, 1);
+                        Mapsui.Rendering.Skia.MapRenderer mapRenderer = new Mapsui.Rendering.Skia.MapRenderer();
+                        ms = mapRenderer.RenderToBitmapStream(viewport, layers, map.RenderService, Mapsui.Styles.Color.White, 1);
                         //https://stackoverflow.com/questions/8624071/save-and-load-memorystream-to-from-a-file/19302609
                         using (FileStream file = new FileStream(@$".\Output\Map-{dateTime.ToString("MM-dd-yyyy_hh-mm-ss-tt")}.png", FileMode.Create, System.IO.FileAccess.Write))
                         {
@@ -220,6 +222,7 @@ namespace UrbanEcho.Reporting
                         EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Error while exporting image of map {ex.Message}"));
                     }
                 }
+
                 if (!savedFile)
                 {
                     EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Image of map for report was not saved"));
