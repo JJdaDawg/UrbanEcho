@@ -414,6 +414,10 @@ namespace UrbanEcho.Sim
         /// <summary>
         /// Iterates over all spawn points and spawns vehicles from each one
         /// according to its configured VehiclesPerMinute rate.
+        /// Low-rate gates (&lt;60 VPM) trickle one vehicle at a time to avoid
+        /// pile-ups. High-rate gates (≥60 VPM) distribute spawns across the
+        /// gate node and nearby graph nodes so traffic enters from multiple
+        /// approach roads instead of all stacking at one point.
         /// </summary>
         private void TrySpawnFromSpawners(bool initialBurst)
         {
@@ -428,34 +432,108 @@ namespace UrbanEcho.Sim
                 int toSpawn;
                 if (initialBurst)
                 {
-                    // On first frame, give each spawner a small initial batch
-                    toSpawn = Math.Min(sp.VehiclesPerMinute, 20);
+                    if (sp.VehiclesPerMinute < 60)
+                        toSpawn = 1; // low rate: trickle, no burst
+                    else
+                        toSpawn = Math.Min(sp.VehiclesPerMinute, 20);
                 }
                 else
                 {
-                    // Convert VehiclesPerMinute to a sim-time interval.
-                    // SimMinutesPerRealSecond controls the sim clock rate.
-                    // At 60 fps, one step ≈ 1/60 real second.
-                    float spawnIntervalSec = 60.0f / (sp.VehiclesPerMinute * Clock.SimMinutesPerRealSecond);
-                    if (spawnIntervalSec < 0.016f) spawnIntervalSec = 0.016f;
+                    if (sp.VehiclesPerMinute >= 60)
+                    {
+                        // High rate: spawn ceil(VPM/60) vehicles at once (one per
+                        // nearby node), at a wider interval that keeps the total
+                        // rate equal to VPM.  e.g. 120 VPM → 2 nodes, 180 → 3.
+                        int nodesNeeded = (int)Math.Ceiling(sp.VehiclesPerMinute / 60.0);
+                        float spawnIntervalSec = nodesNeeded / (sp.VehiclesPerMinute * Clock.SimMinutesPerRealSecond);
+                        if (spawnIntervalSec < 0.016f) spawnIntervalSec = 0.016f;
 
-                    if (simTime - sp.LastSpawnTime < spawnIntervalSec)
-                        continue;
+                        if (simTime - sp.LastSpawnTime < spawnIntervalSec)
+                            continue;
 
-                    toSpawn = 1;
+                        toSpawn = nodesNeeded;
+                    }
+                    else
+                    {
+                        // Low rate: one vehicle at a time
+                        float spawnIntervalSec = 1.0f / (sp.VehiclesPerMinute * Clock.SimMinutesPerRealSecond);
+                        if (spawnIntervalSec < 0.016f) spawnIntervalSec = 0.016f;
+
+                        if (simTime - sp.LastSpawnTime < spawnIntervalSec)
+                            continue;
+
+                        toSpawn = 1;
+                    }
                 }
 
-                for (int i = 0; i < toSpawn; i++)
+                if (sp.VehiclesPerMinute >= 60)
                 {
-                    if (Vehicles.Count >= maxVehicles)
-                        return;
-
-                    if (SpawnVehicleAtNode(sp.NearestNodeId))
+                    // High rate: spread spawns across nearby nodes
+                    var spawnNodes = GetNearbySpawnNodes(sp.NearestNodeId);
+                    for (int i = 0; i < toSpawn; i++)
                     {
-                        sp.LastSpawnTime = simTime;
+                        if (Vehicles.Count >= maxVehicles) return;
+                        int nodeId = spawnNodes[i % spawnNodes.Count];
+                        if (SpawnVehicleAtNode(nodeId))
+                            sp.LastSpawnTime = simTime;
+                    }
+                }
+                else
+                {
+                    // Low rate: single spawn at the gate node
+                    for (int i = 0; i < toSpawn; i++)
+                    {
+                        if (Vehicles.Count >= maxVehicles) return;
+                        if (SpawnVehicleAtNode(sp.NearestNodeId))
+                            sp.LastSpawnTime = simTime;
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Returns a list of node IDs near the given gate node, suitable for
+        /// distributing high-rate spawns. Includes the gate node itself plus
+        /// nodes reachable within two hops on the road graph.
+        /// </summary>
+        private List<int> GetNearbySpawnNodes(int gateNodeId)
+        {
+            var graph = SimManager.Instance.RoadGraph!;
+            var visited = new HashSet<int> { gateNodeId };
+
+            // 1-hop neighbors
+            foreach (var edge in graph.GetOutgoingEdges(gateNodeId))
+            {
+                if (!edge.IsClosed)
+                    visited.Add(edge.To);
+            }
+
+            // 2-hop neighbors
+            var oneHop = visited.ToList();
+            foreach (int n in oneHop)
+            {
+                foreach (var edge in graph.GetOutgoingEdges(n))
+                {
+                    if (!edge.IsClosed)
+                        visited.Add(edge.To);
+                }
+            }
+
+            // Keep only nodes that have at least one open outgoing edge
+            var result = new List<int>();
+            foreach (int n in visited)
+            {
+                foreach (var edge in graph.GetOutgoingEdges(n))
+                {
+                    if (!edge.IsClosed)
+                    {
+                        result.Add(n);
+                        break;
+                    }
+                }
+            }
+
+            return result.Count > 0 ? result : new List<int> { gateNodeId };
         }
 
         /// <summary>
