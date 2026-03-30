@@ -1,19 +1,20 @@
-﻿using Mapsui;
+﻿using Box2dNet;
 using Box2dNet.Interop;
-using System.Numerics;
-using UrbanEcho.Physics;
+using ExCSS;
+using Mapsui;
 using Mapsui.Layers;
-using UrbanEcho.Helpers;
-using System.Collections.Generic;
-using UrbanEcho.Reporting;
-using UrbanEcho.Graph;
-using UrbanEcho.Events.UI;
-using System;
-using UrbanEcho.Sim;
-using System.Linq;
 using Mapsui.Nts;
 using NetTopologySuite.Geometries;
-using Box2dNet;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
+using UrbanEcho.Events.UI;
+using UrbanEcho.Graph;
+using UrbanEcho.Helpers;
+using UrbanEcho.Physics;
+using UrbanEcho.Reporting;
+using UrbanEcho.Sim;
 
 namespace UrbanEcho.Models
 {
@@ -74,7 +75,20 @@ namespace UrbanEcho.Models
 
         private PointFeature? feature;//The feature this vehicle is connected to
 
-        private RoadEdge currentRoadEdge;
+        private RoadEdge currentRoadEdge
+        {
+            get
+            {
+                if (vehiclePath == null)
+                {
+                    return null;
+                }
+                else
+                {
+                    return vehiclePath.GetCurrentRoadEdge();
+                }
+            }
+        }
 
         public bool IsCreated = false;
 
@@ -84,13 +98,6 @@ namespace UrbanEcho.Models
         private int indexLineString;
 
         private int updateGroup = 0;
-
-        private List<int>? path;
-        private List<PathStep>? pathSteps;
-
-        private int pathSegmentIndex = 0;
-        private RoadGraph graph;
-        private int originNodeId;
 
         private float vehicleInFrontThresholdWaitTime = 120.0f;//Set long so we know it isn't just a light
 
@@ -231,7 +238,7 @@ namespace UrbanEcho.Models
             }
         }
 
-        private string roadType = "road";
+        private string roadName = "road";
 
         public string RoadName
         {
@@ -241,16 +248,18 @@ namespace UrbanEcho.Models
             }
             set
             {
-                roadType = value;
+                roadName = value;
             }
         }
 
         public int Id;
         public string VehicleType = string.Empty;
 
+        private VehiclePath vehiclePath;
+
         public Vehicle(PointFeature feature, RoadEdge currentRoadEdge, string carType, int updateGroup, RoadGraph roadGraph)
         {
-            graph = roadGraph;
+            vehiclePath = new VehiclePath(this, roadGraph, currentRoadEdge);
 
             VehicleType = Helper.TryGetFeatureKVPToString(feature, "VehicleType", string.Empty);
             Id = Helper.TryGetFeatureKVPToInt(feature, "VehicleNumber", 0);
@@ -258,9 +267,6 @@ namespace UrbanEcho.Models
             settings = new VehicleSettings(carType);
             IsTruck = carType == "TransportTruck";
             currentTrafficRule = TrafficRule.SetDefaultTrafficRule();
-
-            this.currentRoadEdge = SetCurrentRoadEdge(currentRoadEdge);
-            originNodeId = currentRoadEdge.From;
 
             if (!settings.IsValid())
             {
@@ -300,100 +306,31 @@ namespace UrbanEcho.Models
             Pos = B2Api.b2Body_GetPosition(Body.BodyId);
             if (float.IsNaN(Pos.X) || float.IsNaN(Pos.Y))
             {
-                bool breakhere = true;
-            }
-            IsCreated = true;
-        }
-
-        private void AdvanceToNextRoad()
-        {
-            if (graph == null || Body == null)
-                return;
-
-            if (path == null || pathSteps == null)
-            {
-                ResetVehicleToNewPos();
-                return;
-            }
-
-            if (pathSegmentIndex >= pathSteps.Count)
-            {
-                // Route complete — respawn at original gate/census node and start a new trip.
-                ResetVehicleToNewPos();
-                return;
-            }
-
-            // setNewPath may have nulled the path on failure — re-check before proceeding
-            if (path == null || pathSteps == null) return;
-
-            stepThroughPath();
-        }
-
-        private void setNewPath(int currentNodeId)
-        {
-            pathSegmentIndex = 0;
-            if (graph == null || Body == null)
-            {
-                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Could not run advance to next road"));
-                path = null; pathSteps = null;
-                return;
-            }
-
-            var nodes = graph.Nodes.Keys.ToList();
-            if (nodes.Count < 2)
-            {
-                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Nodes in graph were less than 2"));
-                path = null; pathSteps = null;
-                return;
-            }
-            var pathfinder = new AStarPathfinder(graph, SimManager.Instance.NodePenalties, IsTruck);
-            int goalNode = SimManager.Instance.RoutingMode switch
-            {
-                RoutingMode.Random => TrafficVolumeLoader.PickRandomDestination(graph, currentNodeId),
-                RoutingMode.CensusOD when SimManager.Instance.CensusSpawn?.IsLoaded == true
-                    => SimManager.Instance.CensusSpawn.PickDestinationNode(),
-                _ => TrafficVolumeLoader.PickWeightedDestination(graph, currentNodeId)
-            };
-
-            var newPathEdges = pathfinder.FindPathEdges(currentNodeId, goalNode);
-            if (newPathEdges.Count < 1)
-            {
-                path = null; pathSteps = null;
-                return;
-            }
-            pathSteps = PathStepBuilder.Build(newPathEdges, graph);
-            path = new List<int> { newPathEdges[0].From };
-            for (int i = 0; i < newPathEdges.Count; i++)
-                path.Add(newPathEdges[i].To);
-            // Old: var newPath = pathfinder.FindPath(currentNodeId, goalNode).ToList();
-            // Old: if (newPath.Count < 2) { ResetVehicleToNewPos(); return; }
-            // Old: path = newPath;
-        }
-
-        private void stepThroughPath()
-        {
-            if (pathSteps == null || pathSegmentIndex >= pathSteps.Count)
-            {
-                ResetVehicleToNewPos();
-                return;
-            }
-
-            PathStep step = pathSteps[pathSegmentIndex];
-
-            if (step.Edge.Feature is GeometryFeature theRoad && theRoad.Geometry is LineString newLineString)
-            {
-                currentRoadEdge = SetCurrentRoadEdge(step.Edge, step.Turn);
-
-                StepThroughLineString(true);
-
-                pathSegmentIndex++;
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Vehicle position set to a NaN value"));
             }
             else
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to advance to next road"));
-                ResetVehicleToNewPos();
+                IsCreated = true;
+            }
+        }
+
+        public void ResetBodyTransform()
+        {
+            B2Api.b2Body_SetLinearVelocity(Body.BodyId, Vector2.Zero);
+            B2Api.b2Body_SetAngularVelocity(Body.BodyId, 0);
+            float getAngle = GetTargetAngle();
+            if (float.IsNaN(getAngle))
+            {
+                getAngle = 0;
+            }
+            b2Rot rot = b2Rot.FromAngle(getAngle);
+            Vector2 initialPosition = GetRandomOffsetFromRoad();
+            if (float.IsNaN(initialPosition.X) || float.IsNaN(initialPosition.Y))
+            {
                 return;
             }
+
+            B2Api.b2Body_SetTransform(Body.BodyId, initialPosition, rot);
         }
 
         public void RefreshTrafficRuleReferences()
@@ -488,30 +425,6 @@ namespace UrbanEcho.Models
             requestDestination = new RequestDestination(goalNodeId);
         }
 
-        private void SetDestination(int goalNodeId)
-        {
-            if (graph == null) return;
-
-            var pathfinder = new AStarPathfinder(graph, SimManager.Instance.NodePenalties, IsTruck);
-            var newPathEdges = pathfinder.FindPathEdges(currentRoadEdge.From, goalNodeId);
-
-            if (newPathEdges.Count < 1)
-            {
-                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Could not find path to destination {goalNodeId}"));
-                return;
-            }
-
-            pathSteps = PathStepBuilder.Build(newPathEdges, graph);
-            path = new List<int> { newPathEdges[0].From };
-            for (int i = 0; i < newPathEdges.Count; i++)
-            {
-                path.Add(newPathEdges[i].To);
-            }
-
-            pathSegmentIndex = 0;
-            stepThroughPath();
-        }
-
         public RoadEdge GetRoadEdge()
         {
             return currentRoadEdge;
@@ -523,22 +436,7 @@ namespace UrbanEcho.Models
         /// </summary>
         public IReadOnlyList<IFeature> GetRemainingPathFeatures()
         {
-            var features = new List<IFeature>();
-
-            // Always include the edge the vehicle is currently driving on.
-            IFeature? current = currentRoadEdge?.Feature;
-            if (current != null)
-                features.Add(current);
-
-            if (pathSteps == null) return features;
-
-            for (int i = pathSegmentIndex; i < pathSteps.Count; i++)
-            {
-                // Avoid duplicating the current edge if pathSegmentIndex hasn't advanced yet.
-                if (pathSteps[i].Edge.Feature is IFeature f && f != current)
-                    features.Add(f);
-            }
-            return features;
+            return vehiclePath.GetRemainingPathFeatures();
         }
 
         /// <summary>
@@ -548,47 +446,7 @@ namespace UrbanEcho.Models
         /// </summary>
         public void RerouteAroundEdge(RoadEdge closedEdge)
         {
-            if (pathSteps == null) return;
-
-            bool needsReroute = currentRoadEdge.Feature == closedEdge.Feature;
-
-            if (!needsReroute)
-            {
-                for (int i = pathSegmentIndex; i < pathSteps.Count; i++)
-                {
-                    if (pathSteps[i].Edge.Feature == closedEdge.Feature)
-                    {
-                        needsReroute = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!needsReroute) return;
-
-            // Preserve the original destination so the vehicle doesn't lose its goal.
-            int originalGoal = path != null && path.Count > 1 ? path[path.Count - 1] : -1;
-            int fromNode = currentRoadEdge.To;
-
-            if (originalGoal >= 0 && graph != null)
-            {
-                var pathfinder = new AStarPathfinder(graph, SimManager.Instance.NodePenalties, IsTruck);
-                var newPathEdges = pathfinder.FindPathEdges(fromNode, originalGoal);
-
-                if (newPathEdges.Count > 0)
-                {
-                    pathSteps = PathStepBuilder.Build(newPathEdges, graph);
-                    path = new List<int> { newPathEdges[0].From };
-                    for (int i = 0; i < newPathEdges.Count; i++)
-                        path.Add(newPathEdges[i].To);
-                    pathSegmentIndex = 0;
-                    return;
-                }
-            }
-
-            // Original destination is unreachable — pick a new one as a fallback.
-            setNewPath(fromNode);
-            pathSegmentIndex = 0;
+            vehiclePath.RerouteAroundEdge(closedEdge);
         }
 
         private bool IsCollidedVehicleSameEdgeOrIntersection(Vehicle otherVehicle)
@@ -598,6 +456,9 @@ namespace UrbanEcho.Models
             {
                 return true;
             }
+
+            RoadGraph? graph = vehiclePath.GetRoadGraph();
+
             if (graph is not null)
             {
                 if ((Vector2.Distance(Pos, endPos) < 30 || Vector2.Distance(Pos, startPos) < 30) && (Vector2.Distance(otherVehicle.Pos, otherVehicle.endPos) < 30 || Vector2.Distance(otherVehicle.Pos, otherVehicle.startPos) < 30))
@@ -652,7 +513,7 @@ namespace UrbanEcho.Models
                 Pos = B2Api.b2Body_GetPosition(Body.BodyId);
                 if (float.IsNaN(Pos.X) || float.IsNaN(Pos.Y))
                 {
-                    ResetVehicleToNewPos();
+                    vehiclePath.ResetVehicleToNewPos();
                     Pos = B2Api.b2Body_GetPosition(Body.BodyId);
                     return;
                 }
@@ -665,13 +526,13 @@ namespace UrbanEcho.Models
                 }
                 if (requestDestination != null)
                 {
-                    SetDestination(requestDestination.NodeId);
+                    vehiclePath.SetDestination(requestDestination.NodeId);
                     requestDestination = null;
                 }
 
                 if (requestResetPosition != null)
                 {
-                    ResetVehicleToNewPos();
+                    vehiclePath.ResetVehicleToNewPos();
                     requestResetPosition = null;
                 }
 
@@ -854,7 +715,7 @@ namespace UrbanEcho.Models
 
                         if (stoppedElaspedTime > stoppedThresholdWaitTime)
                         {
-                            ResetVehicleToNewPos();
+                            vehiclePath.ResetVehicleToNewPos();
                             stoppedElaspedTime = 0;
                             startedStoppedTimer = false;
                             vehicleInFrontCount = 0;//Reset this so resetVehicle to new position isn't called twice
@@ -877,7 +738,7 @@ namespace UrbanEcho.Models
 
                         if (vehicleInFrontElaspedTime > vehicleInFrontThresholdWaitTime)
                         {
-                            ResetVehicleToNewPos();
+                            vehiclePath.ResetVehicleToNewPos();
                             insideAnotherVehicle = false;//Reset this so resetVehicle to new position isn't called twice
                             anotherVehicleAhead = false;
                             insideAnotherVehicleCount = 0;
@@ -886,7 +747,7 @@ namespace UrbanEcho.Models
                         {
                             if (vehicleInFrontElaspedTime > vehicleInFrontThresholdWaitTime * 0.25f && thisVehicleIsInAIntersection)
                             {
-                                ResetVehicleToNewPos();
+                                vehiclePath.ResetVehicleToNewPos();
                                 insideAnotherVehicle = false;//Reset this so resetVehicle to new position isn't called twice
                                 anotherVehicleAhead = false;
                                 insideAnotherVehicleCount = 0;
@@ -901,7 +762,7 @@ namespace UrbanEcho.Models
 
                     if (insideAnotherVehicle)
                     {
-                        ResetVehicleToNewPos();
+                        vehiclePath.ResetVehicleToNewPos();
                         insideAnotherVehicle = false;
                         anotherVehicleAhead = false;
                         insideAnotherVehicleCount = 0;
@@ -1077,15 +938,7 @@ namespace UrbanEcho.Models
 
             if (didFirstUpdate == false)//Set the enabled one time after first scan
             {
-                if (path == null || pathSteps == null)
-                {
-                    ResetVehicleToNewPos();
-                }
-
-                // Only make the vehicle visible and active once it has a valid path.
-                // Without a path the vehicle would drive in a straight line from its
-                // body position toward the road — through the map, not the network.
-                if (path != null && pathSteps != null)
+                if (vehiclePath.SetInitialPath())
                 {
                     try
                     {
@@ -1099,6 +952,11 @@ namespace UrbanEcho.Models
                     didFirstUpdate = true;
                 }
             }
+        }
+
+        public void SetUsingShorterRayForTurn(bool value)
+        {
+            usingShorterRayForTurn = value;
         }
 
         private (Vector2 pos, b2Rot angle, bool valid) GetLookAheadPosAndAngle(float lookAheadValue)
@@ -1236,7 +1094,7 @@ namespace UrbanEcho.Models
         {
             if (!IsDormant || Body == null) return;
             IsDormant = false;
-            ResetVehicleToNewPos();
+            vehiclePath.ResetVehicleToNewPos();
             if (feature != null)
             {
                 feature["Hidden"] = "false";
@@ -1248,77 +1106,54 @@ namespace UrbanEcho.Models
             requestResetPosition = new RequestResetPosition();
         }
 
-        private void ResetVehicleToNewPos(bool useCurrentPos = false)
+        public void StepThroughLineString(bool isNewRoad)
         {
-            int goalNode;
-            int startNode;
-
-            if (graph == null)
+            if (currentRoadEdge.Feature is GeometryFeature g)
             {
-                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Tried to set path when graph was null"));
-                return;
-            }
-            if (!useCurrentPos)
-            {
-                bool useCensus = SimManager.Instance.SpawnMode == SpawnMode.Census
-                    && SimManager.Instance.CensusSpawn?.IsLoaded == true;
-
-                if (SimManager.Instance.SpawnPoints.Count > 0 && !useCensus)
+                if (g.Geometry is LineString lineString)
                 {
-                    // Gates mode: respawn back to this vehicle's original spawn node
-                    startNode = originNodeId;
+                    if (isNewRoad)
+                    {
+                        if (lineString.Count >= 2)
+                        {
+                            prevIndexLineString = currentRoadEdge.IsFromStartOfLineString ? 0 : lineString.Count - 1;
+                            indexLineString = currentRoadEdge.IsFromStartOfLineString ? 1 : lineString.Count - 2;
+                        }
+                        else
+                        {
+                            EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"A line string was less than 2 points"));
+                        }
+                    }
+                    else
+                    {
+                        if (currentRoadEdge.IsFromStartOfLineString)
+                        {
+                            if (indexLineString + 1 < lineString.Count)
+                            {
+                                prevIndexLineString = indexLineString;
+                                indexLineString++;
+                            }
+                            else
+                            {
+                                vehiclePath.AdvanceToNextRoad();
+                            }
+                        }
+                        else
+                        {
+                            if (indexLineString - 1 >= 0 && lineString.Count >= 1)
+                            {
+                                prevIndexLineString = indexLineString;
+                                indexLineString--;
+                            }
+                            else
+                            {
+                                vehiclePath.AdvanceToNextRoad();
+                            }
+                        }
+                    }
+                    UpdateEndPos();
                 }
-                else if (SimManager.Instance.CensusSpawn != null && SimManager.Instance.CensusSpawn.IsLoaded)
-                {
-                    // Return to the node this vehicle originally spawned from.
-                    startNode = originNodeId;
-                }
-                else
-                {
-                    startNode = TrafficVolumeLoader.PickWeightedDestination(graph, -1);
-                }
-                usingShorterRayForTurn = false;
             }
-            else
-            {
-                startNode = currentRoadEdge.To;//TODO: .From before need to confirm if correct now
-            }
-
-            goalNode = TrafficVolumeLoader.PickWeightedDestination(graph, startNode); //  we donmt use goal node here but it is needed to call pick weighted destination which also sets the path for the vehicle
-
-            setNewPath(startNode);
-            pathSegmentIndex = 0;
-
-            if (path is not null)
-            {
-                AdvanceToNextRoad();
-            }
-            else
-            {
-                // startNode failed — try one random fallback to avoid getting permanently stuck
-                int fallbackNode = TrafficVolumeLoader.PickWeightedDestination(graph, -1);
-                setNewPath(fallbackNode);
-                pathSegmentIndex = 0;
-                if (path is not null)
-                    AdvanceToNextRoad();
-                else
-                    return; // Give up this cycle; vehicle will retry on the next update
-            }
-            B2Api.b2Body_SetLinearVelocity(Body.BodyId, Vector2.Zero);
-            B2Api.b2Body_SetAngularVelocity(Body.BodyId, 0);
-            float getAngle = GetTargetAngle();
-            if (float.IsNaN(getAngle))
-            {
-                getAngle = 0;
-            }
-            b2Rot rot = b2Rot.FromAngle(getAngle);
-            Vector2 initialPosition = GetRandomOffsetFromRoad();
-            if (float.IsNaN(initialPosition.X) || float.IsNaN(initialPosition.Y))
-            {
-                return;
-            }
-
-            B2Api.b2Body_SetTransform(Body.BodyId, initialPosition, rot);
         }
 
         private Vector2 GetRandomOffsetFromRoad()
@@ -1398,56 +1233,6 @@ namespace UrbanEcho.Models
             }
         }
 
-        private void StepThroughLineString(bool isNewRoad)
-        {
-            if (currentRoadEdge.Feature is GeometryFeature g)
-            {
-                if (g.Geometry is LineString lineString)
-                {
-                    if (isNewRoad)
-                    {
-                        if (lineString.Count >= 2)
-                        {
-                            prevIndexLineString = currentRoadEdge.IsFromStartOfLineString ? 0 : lineString.Count - 1;
-                            indexLineString = currentRoadEdge.IsFromStartOfLineString ? 1 : lineString.Count - 2;
-                        }
-                        else
-                        {
-                            EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"A line string was less than 2 points"));
-                        }
-                    }
-                    else
-                    {
-                        if (currentRoadEdge.IsFromStartOfLineString)
-                        {
-                            if (indexLineString + 1 < lineString.Count)
-                            {
-                                prevIndexLineString = indexLineString;
-                                indexLineString++;
-                            }
-                            else
-                            {
-                                AdvanceToNextRoad();
-                            }
-                        }
-                        else
-                        {
-                            if (indexLineString - 1 >= 0 && lineString.Count >= 1)
-                            {
-                                prevIndexLineString = indexLineString;
-                                indexLineString--;
-                            }
-                            else
-                            {
-                                AdvanceToNextRoad();
-                            }
-                        }
-                    }
-                    UpdateEndPos();
-                }
-            }
-        }
-
         private void UpdateEndPos()
         {
             if (currentRoadEdge.Feature is GeometryFeature gf)
@@ -1502,35 +1287,7 @@ namespace UrbanEcho.Models
             }
         }
 
-        private RoadEdge SetCurrentRoadEdge(RoadEdge updatedRoadEdge, TurnDirection turn = TurnDirection.Straight)
-        {
-            float newSpeedLimit = (float)(updatedRoadEdge.Metadata.SpeedLimit * 3.6);
-            if (newSpeedLimit < 30.0f)
-            {
-                newSpeedLimit = 30.0f;
-            }
-            SpeedLimit = Helper.DoMapCorrection(newSpeedLimit);
-
-            if (updatedRoadEdge.Feature is GeometryFeature g)
-            {
-                if (g.Geometry is LineString lineString)
-                {
-                    if (lineString.Count >= 2)
-                    {
-                        prevIndexLineString = updatedRoadEdge.IsFromStartOfLineString ? 0 : lineString.Count - 1;
-                        indexLineString = updatedRoadEdge.IsFromStartOfLineString ? 1 : lineString.Count - 2;
-                    }
-                }
-            }
-
-            SetLane(updatedRoadEdge, turn);
-
-            UpdateStatsOnNewRoad();
-
-            return updatedRoadEdge;
-        }
-
-        private void SetLane(RoadEdge roadEdge, TurnDirection turn = TurnDirection.Straight)
+        public void SetLane(RoadEdge roadEdge, TurnDirection turn = TurnDirection.Straight)
         {
             bool hasSamePropertiesAsOldEdge = true;
 
@@ -1607,6 +1364,21 @@ namespace UrbanEcho.Models
             };
         }
 
+        public void UpdatePrevIndexLineString(int value)
+        {
+            prevIndexLineString = value;
+        }
+
+        public void UpdateIndexLineString(int value)
+        {
+            indexLineString = value;
+        }
+
+        public void UpdateSpeedLimit(float value)
+        {
+            SpeedLimit = value;
+        }
+
         private void UpdateStats()
         {
             double timeDelta = SimManager.Instance.GetSimTime() - lastUpdateSimTime;
@@ -1635,7 +1407,7 @@ namespace UrbanEcho.Models
             stats.Reset();
         }
 
-        private void UpdateStatsOnNewRoad()
+        public void UpdateStatsOnNewRoad()
         {
             if (currentRoadEdge != null && currentEdgeStartTime > 0)
             {
