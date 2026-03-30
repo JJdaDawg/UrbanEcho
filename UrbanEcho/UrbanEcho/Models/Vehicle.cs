@@ -318,27 +318,15 @@ namespace UrbanEcho.Models
 
             if (pathSegmentIndex >= pathSteps.Count)
             {
-                bool hasGates = SimManager.Instance.SpawnPoints.Count > 0;
-                bool useCensus = SimManager.Instance.SpawnMode == SpawnMode.Census
-                    && SimManager.Instance.CensusSpawn?.IsLoaded == true;
-
-                //if (hasGates || useCensus)
-                //{
-                //    // Gates mode: return to origin node; Census mode: teleport to new census origin
-                //    ResetVehicleToNewPos();
-                //    return;
-                //}
-                GoDormant();
-                //int currentNodeId = path[path.Count - 1];
-                //setNewPath(currentNodeId);
+                // Route complete — respawn at original gate/census node and start a new trip.
+                ResetVehicleToNewPos();
+                return;
             }
-            if (!IsDormant)
-            {
-                // setNewPath may have nulled the path on failure — re-check before proceeding
-                if (path == null || pathSteps == null) return;
 
-                stepThroughPath();
-            }
+            // setNewPath may have nulled the path on failure — re-check before proceeding
+            if (path == null || pathSteps == null) return;
+
+            stepThroughPath();
         }
 
         private void setNewPath(int currentNodeId)
@@ -1282,7 +1270,8 @@ namespace UrbanEcho.Models
                 }
                 else if (SimManager.Instance.CensusSpawn != null && SimManager.Instance.CensusSpawn.IsLoaded)
                 {
-                    startNode = SimManager.Instance.CensusSpawn.PickWeightedSpawnNode();
+                    // Return to the node this vehicle originally spawned from.
+                    startNode = originNodeId;
                 }
                 else
                 {

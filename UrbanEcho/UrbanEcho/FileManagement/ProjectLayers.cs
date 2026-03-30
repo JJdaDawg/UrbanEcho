@@ -301,6 +301,7 @@ namespace UrbanEcho.FileManagement
             spawnerLayer = null;
 
             SimManager.Instance.Clear(); //Clear all the existing lists
+            TrafficVolumeLoader.Reset();
 
             VehicleFeatures = new List<IFeature>();
             DebugLayerFeatures = new List<IFeature>();

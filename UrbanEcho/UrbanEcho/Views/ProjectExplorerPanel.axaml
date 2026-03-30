@@ -76,7 +76,9 @@
                         <ComboBox SelectedIndex="{Binding RoutingModeIndex}"
                                   HorizontalAlignment="Stretch"
                                   ToolTip.Tip="Controls how vehicles pick their next destination">
-                            <ComboBoxItem Content="AADT weighted" />
+                            <ComboBoxItem Content="AADT weighted"
+                                          IsEnabled="{Binding HasRealAadt}"
+                                          ToolTip.Tip="Requires AADT traffic count data (not available for OSM networks)" />
                             <ComboBoxItem Content="Random" />
                             <ComboBoxItem Content="Census (employment)"
                                           IsEnabled="{Binding IsCensusLoaded}"

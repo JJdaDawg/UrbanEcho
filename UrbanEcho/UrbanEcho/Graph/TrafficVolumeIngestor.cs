@@ -26,6 +26,15 @@ namespace UrbanEcho.Graph
         public static bool HasRealAadt { get; private set; }
 
         /// <summary>
+        /// Clears AADT state so stale values do not persist across project switches.
+        /// </summary>
+        public static void Reset()
+        {
+            HasRealAadt = false;
+            _weightedDestinationNodes = null;
+        }
+
+        /// <summary>
         /// Processes the graph edges that already carry AADT from the main shapefile.
         /// Edges with no AADT (0) get a small default volume so they remain routable,
         /// then builds the weighted destination node list.
@@ -61,6 +70,8 @@ namespace UrbanEcho.Graph
             // Build the weighted destination node list now that volumes are assigned
             HasRealAadt = matched > 0;
             _weightedDestinationNodes = BuildWeightedDestinationNodes(graph);
+
+            EventQueueForUI.Instance.Add(new AadtReadyEvent(HasRealAadt));
 
             LogStats(graph, matched, unmatched, minAADT, maxAADT, totalAADT);
         }
