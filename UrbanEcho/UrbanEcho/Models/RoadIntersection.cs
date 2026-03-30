@@ -961,8 +961,14 @@ namespace UrbanEcho.Models
 
             foreach (EdgeTrafficRule etr in EdgesInto)
             {
-                bool hasRightOfWay = etr.TrafficRule.IsNeverBlockingTraffic();
                 if (etr.RoadEdge.Feature is not GeometryFeature gf || gf.Geometry is null) continue;
+
+                bool hasRightOfWay = TheSignalType switch
+                {
+                    SignalType.FullSignal => !etr.TrafficRule.IsBlockingTraffic(), 
+                    SignalType.TwoWayStop => etr.TrafficRule.IsNeverBlockingTraffic(),
+                    _ => false
+                };
 
                 var clone = new GeometryFeature(gf.Geometry);
                 clone["RightOfWay"] = hasRightOfWay ? 1 : 0;

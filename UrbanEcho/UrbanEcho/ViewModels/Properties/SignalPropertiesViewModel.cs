@@ -1,7 +1,9 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using System.Collections.Generic;
 using System.Linq;
+using UrbanEcho.Messages;
 using UrbanEcho.Models;
 using UrbanEcho.Models.UI;
 using UrbanEcho.Services;
@@ -38,6 +40,7 @@ namespace UrbanEcho.ViewModels.Properties
 
         public void UpdatePropertyView()
         {
+            WeakReferenceMessenger.Default.Send(new ShowIntersectionOverlayMessage(_intersection)); 
         }
     }
 }
