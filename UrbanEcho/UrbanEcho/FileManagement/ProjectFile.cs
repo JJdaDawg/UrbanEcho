@@ -14,15 +14,21 @@ namespace UrbanEcho.FileManagement
 {
     public class ProjectFile
     {
-        public string FileName = "";
-        public string PathForThisFile = "";
-        public string BackgroundLayerPath = "";
-        public string RoadLayerPath = "";
-        public string IntersectionLayerPath = "";
-        public string CensusLayerPath = "";
+        public string FileName;
+        public string PathForThisFile;
+        public string BackgroundLayerPath;
+        public string RoadLayerPath;
+        public string IntersectionLayerPath;
+        public string CensusLayerPath;
 
         public ProjectFile()
         {
+            FileName = "";
+            PathForThisFile = "";
+            BackgroundLayerPath = "";
+            RoadLayerPath = "";
+            IntersectionLayerPath = "";
+            CensusLayerPath = "";
         }
 
         //https://www.newtonsoft.com/json/help/html/serializingjson.htm
@@ -49,7 +55,7 @@ namespace UrbanEcho.FileManagement
             {
                 projectFile.FileName = System.IO.Path.GetFileNameWithoutExtension(path);
             }
-            
+
             return projectFile;
         }
 

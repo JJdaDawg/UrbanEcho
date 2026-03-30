@@ -188,7 +188,7 @@ namespace UrbanEcho.Sim
                         {
                             EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), "Started adding intersection bodies"));
 
-                            if (ProjectLayers.CreateRoadIntersections())
+                            if (CreateLayers.CreateRoadIntersections(ProjectLayers.GetIntersectionLayer()))
                             {
                                 SetIntersectionBodiesCreated();
                             }

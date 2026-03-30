@@ -9,7 +9,7 @@ namespace UrbanEcho.Events.Sim
 {
     public class ForceStopEvent : IEventForSim
     {
-        private bool stopCommand = false;
+        private bool stopCommand;
         private UrbanEcho.Models.Vehicle? vehicle;
 
         public ForceStopEvent(UrbanEcho.Models.VehicleReadOnly vehicle, bool stopCommand)
