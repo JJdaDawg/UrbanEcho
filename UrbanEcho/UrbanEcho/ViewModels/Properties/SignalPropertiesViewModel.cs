@@ -30,8 +30,6 @@ namespace UrbanEcho.ViewModels.Properties
         [ObservableProperty]
         private bool _isShowingIntersectionOverlay;
 
-        public RelayCommand IntersectionOverlayCommand { get; }
-
         public SignalPropertiesViewModel(RoadIntersection intersection, IIntersectionService intersectionService)
         {
             _intersection = intersection;
