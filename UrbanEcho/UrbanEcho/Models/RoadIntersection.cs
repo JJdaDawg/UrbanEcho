@@ -1009,6 +1009,15 @@ namespace UrbanEcho.Models
             SetStaticTrafficRules();
         }
 
+        public void ApplyStopSignAssignment(List<(EdgeTrafficRule edge, bool hasStopSign)> assignments)
+        {
+            foreach (var (edge, hasStopSign) in assignments)
+            {
+                edge.TrafficRule = hasStopSign ? TrafficRule.SetStopSignTrafficRule() : TrafficRule.SetStopSignTrafficRule();
+                if (!hasStopSign) { edge.TrafficRule.SetNeverBlock(); }
+            }
+        }
+
         public RecordedStats GetStats()
         {
             return this.stats;

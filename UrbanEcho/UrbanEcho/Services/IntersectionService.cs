@@ -17,6 +17,7 @@ namespace UrbanEcho.Services
         void ShowIntersectionOverlay(RoadIntersection intersection);
         void HideIntersectionOverlay();
         void SetSignalType(RoadIntersection intersection, SignalType signalType);
+        void SetStopSignAssignment(RoadIntersection intersection, List<(EdgeTrafficRule edge, bool hasStopSign)> assignments);
     }
 
     public class IntersectionService : IIntersectionService
@@ -37,6 +38,11 @@ namespace UrbanEcho.Services
             intersection.ChangeSignalType(signalType);
             Map? map = MainWindow.Instance.GetMap();
             if (map != null) { ProjectLayers.AddLayers(map); }
+        }
+
+        public void SetStopSignAssignment(RoadIntersection intersection, List<(EdgeTrafficRule edge, bool hasStopSign)> assignments)
+        {
+            intersection.ApplyStopSignAssignment(assignments);
         }
     }
 }

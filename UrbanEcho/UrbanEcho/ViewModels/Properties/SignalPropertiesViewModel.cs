@@ -42,7 +42,11 @@ namespace UrbanEcho.ViewModels.Properties
         [ObservableProperty]
         private SignalType _selectedSignalType;
 
-        public RelayCommand ApplySignalTypeCommand { get; }
+        public bool IsTwoWayStop => SelectedSignalType == SignalType.TwoWayStop;
+
+        public List<RoadSignOption> RoadSignOptions { get; private set; } = new();
+
+        public RelayCommand ApplyStopSignAssignmentCommand { get; }
 
         public SignalPropertiesViewModel(RoadIntersection intersection, IIntersectionService intersectionService)
         {
@@ -50,11 +54,15 @@ namespace UrbanEcho.ViewModels.Properties
             _intersectionService = intersectionService;
             _selectedSignalType = intersection.TheSignalType;
 
-            ApplySignalTypeCommand = new RelayCommand(() =>
+            RoadSignOptions = _intersection.EdgesInto
+                .Select(etr => new RoadSignOption(etr))
+                .ToList();
+
+            ApplyStopSignAssignmentCommand = new RelayCommand(() =>
             {
-                _intersectionService.SetSignalType(_intersection, _selectedSignalType);
-                OnPropertyChanged(nameof(Type));
-                OnPropertyChanged(nameof(SelectedSignalType));
+                _intersectionService.SetStopSignAssignment(_intersection, RoadSignOptions
+                    .Select(o => (o.EdgeTrafficRule, o.HasStopSign))
+                    .ToList());
                 WeakReferenceMessenger.Default.Send(new ShowIntersectionOverlayMessage(_intersection));
             });
         }
@@ -62,6 +70,35 @@ namespace UrbanEcho.ViewModels.Properties
         public void UpdatePropertyView()
         {
             WeakReferenceMessenger.Default.Send(new ShowIntersectionOverlayMessage(_intersection));
+        }
+
+        partial void OnSelectedSignalTypeChanged(SignalType value)
+        {
+            OnPropertyChanged(nameof(IsTwoWayStop));
+            _intersectionService.SetSignalType(_intersection, value);
+
+            RoadSignOptions = _intersection.EdgesInto
+                .Select(etr => new RoadSignOption(etr))
+                .ToList();
+            OnPropertyChanged(nameof(RoadSignOptions));
+
+            WeakReferenceMessenger.Default.Send(new ShowIntersectionOverlayMessage(_intersection));
+        }
+    }
+
+    public partial class RoadSignOption : ObservableObject
+    {
+        public string RoadName { get; }
+        public EdgeTrafficRule EdgeTrafficRule { get; }
+
+        [ObservableProperty]
+        private bool _hasStopSign;
+
+        public RoadSignOption(EdgeTrafficRule etr)
+        {
+            EdgeTrafficRule = etr;
+            RoadName = etr.RoadEdge.Metadata.RoadName;
+            _hasStopSign = !etr.TrafficRule.IsNeverBlockingTraffic();
         }
     }
 }
