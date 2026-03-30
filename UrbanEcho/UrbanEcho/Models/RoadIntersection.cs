@@ -1,4 +1,5 @@
-﻿using DocumentFormat.OpenXml.Drawing.Charts;
+﻿using CommunityToolkit.Mvvm.Messaging;
+using DocumentFormat.OpenXml.Drawing.Charts;
 using Mapsui;
 using Mapsui.Nts;
 using Mapsui.Projections;
@@ -9,6 +10,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Numerics;
 using UrbanEcho.Events.UI;
+using UrbanEcho.Messages;
 using UrbanEcho.Physics;
 using UrbanEcho.Reporting;
 using UrbanEcho.Sim;
@@ -955,11 +957,30 @@ namespace UrbanEcho.Models
         public IReadOnlyList<IFeature> GetConnectedRoadFeatures()
         {
             var features = new List<IFeature>();
+            var addedGeometries = new HashSet<Geometry>();
+
             foreach (EdgeTrafficRule etr in EdgesInto)
-                features.Add(etr.RoadEdge.Feature);
+            {
+                bool hasRightOfWay = etr.TrafficRule.IsNeverBlockingTraffic();
+                if (etr.RoadEdge.Feature is not GeometryFeature gf || gf.Geometry is null) continue;
+
+                var clone = new GeometryFeature(gf.Geometry);
+                clone["RightOfWay"] = hasRightOfWay ? 1 : 0;
+                features.Add(clone);
+                addedGeometries.Add(gf.Geometry);
+            }
+
             foreach (RoadEdge edge in EdgesOut)
-                features.Add(edge.Feature);
-            return features.Distinct().ToList();
+            {
+                if (edge.Feature is not GeometryFeature gf || gf.Geometry is null) continue;
+                if (addedGeometries.Contains(gf.Geometry)) continue;
+
+                var clone = new GeometryFeature(gf.Geometry);
+                clone["RightOfWay"] = 0;
+                features.Add(clone);
+            }
+
+            return features;
         }
 
         public RecordedStats GetStats()

@@ -601,16 +601,20 @@ namespace UrbanEcho.FileManagement
             return new MemoryLayer("Intersection Overlay")
             {
                 Features = new List<IFeature>(),
-                Style = new VectorStyle
+                Style = new ThemeStyle(f =>
                 {
-                    Line = new Pen
+                    bool hasRightOfWay = f["RightOfWay"] is int v && v == 1;
+                    return new VectorStyle
                     {
-                        Color = Color.FromArgb(220, 0, 200, 255),
-                        Width = 6,
-                        PenStrokeCap = PenStrokeCap.Round,
-                        StrokeJoin = StrokeJoin.Round
-                    }
-                }
+                        Line = new Pen
+                        {
+                            Color = hasRightOfWay ? Color.FromArgb(220, 50, 205, 50) : Color.FromArgb(220, 220, 30, 30), 
+                            Width = 6,
+                            PenStrokeCap = PenStrokeCap.Round,
+                            StrokeJoin = StrokeJoin.Round
+                        }
+                    };
+                })
             };
         }
 
