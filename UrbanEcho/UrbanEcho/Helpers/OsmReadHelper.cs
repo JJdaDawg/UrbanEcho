@@ -585,6 +585,8 @@ namespace UrbanEcho.Helpers
 
             featuresList = JoinStopIntersectionsCloseBy(featuresList);
 
+            SetObjectIds(featuresList);
+
             return featuresList;
         }
 
