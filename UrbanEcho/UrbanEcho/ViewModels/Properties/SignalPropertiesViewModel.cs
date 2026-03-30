@@ -13,6 +13,13 @@ namespace UrbanEcho.ViewModels.Properties
 {
     public partial class SignalPropertiesViewModel : ObservableObject, IPropertiesViewModel
     {
+        public IEnumerable<SignalType> AvailableSignalTypes { get; } = new[]
+        {
+            SignalType.FullSignal,
+            SignalType.TwoWayStop,
+            SignalType.AllWayStop
+        };
+
         private readonly RoadIntersection _intersection;
         private readonly IIntersectionService _intersectionService;
 
@@ -32,10 +39,21 @@ namespace UrbanEcho.ViewModels.Properties
         [ObservableProperty]
         private bool _isShowingIntersectionOverlay;
 
+        [ObservableProperty]
+        private SignalType _selectedSignalType;
+
+        public RelayCommand ApplySignalTypeCommand { get; }
+
         public SignalPropertiesViewModel(RoadIntersection intersection, IIntersectionService intersectionService)
         {
             _intersection = intersection;
             _intersectionService = intersectionService;
+            _selectedSignalType = intersection.TheSignalType;
+
+            ApplySignalTypeCommand = new RelayCommand(() =>
+            {
+                _intersectionService.SetSignalType(_intersection, _selectedSignalType);
+            });
         }
 
         public void UpdatePropertyView()

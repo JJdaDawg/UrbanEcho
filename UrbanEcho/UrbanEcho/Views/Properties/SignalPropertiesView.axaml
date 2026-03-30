@@ -10,7 +10,7 @@
     <StackPanel Spacing="0">
 
         <StackPanel Spacing="2">
-            <Expander Header="Intersection Information" IsExpanded="True">
+            <Expander Header="Intersection Info" IsExpanded="True">
                 <StackPanel Spacing="8">
 					<StackPanel Spacing="2">
                         <TextBlock Text="Name" Opacity="0.5" />
@@ -33,6 +33,15 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
+            </StackPanel>
+        </Expander>
+
+        <!-- EDIT -->
+        <Expander Header="Edit" IsExpanded="True" IsVisible="{Binding IsEditing}">
+            <StackPanel Spacing="8">
+                <TextBlock Text="Signal Type"/>
+                <ComboBox SelectedItem="{Binding SelectedSignalType}" ItemsSource="{Binding AvailableSignalTypes}"/>
+                <Button Content="Apply" Command="{Binding ApplySignalTypeCommand}"/>
             </StackPanel>
         </Expander>
     </StackPanel>

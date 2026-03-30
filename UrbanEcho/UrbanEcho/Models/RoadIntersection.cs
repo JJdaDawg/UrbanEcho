@@ -989,6 +989,26 @@ namespace UrbanEcho.Models
             return features;
         }
 
+        public void ChangeSignalType(SignalType newSignalType)
+        {
+            TheSignalType = newSignalType;
+
+            Feature["Intersec_1"] = newSignalType switch
+            {
+                SignalType.TwoWayStop => "Two Way Stop",
+                SignalType.AllWayStop => "All Way Stop",
+                SignalType.FullSignal => "Full Signal",
+                SignalType.Flasher => "Flasher",
+                _ => ""
+            };
+
+            pairedRoads.Clear();
+            ratioForSignal = 0;
+            firstCycleInitialized = false;
+
+            SetStaticTrafficRules();
+        }
+
         public RecordedStats GetStats()
         {
             return this.stats;

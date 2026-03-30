@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UrbanEcho.Messages;
 using UrbanEcho.Models;
+using static UrbanEcho.Models.RoadIntersection;
 
 namespace UrbanEcho.Services
 {
@@ -13,6 +14,7 @@ namespace UrbanEcho.Services
     {
         void ShowIntersectionOverlay(RoadIntersection intersection);
         void HideIntersectionOverlay();
+        void SetSignalType(RoadIntersection intersection, SignalType signalType);
     }
 
     public class IntersectionService : IIntersectionService
@@ -26,6 +28,11 @@ namespace UrbanEcho.Services
         public void HideIntersectionOverlay()
         {
             WeakReferenceMessenger.Default.Send(new HideIntersectionOverlayMessage());
+        }
+
+        public void SetSignalType(RoadIntersection intersection, SignalType signalType)
+        {
+            intersection.ChangeSignalType(signalType);
         }
     }
 }
