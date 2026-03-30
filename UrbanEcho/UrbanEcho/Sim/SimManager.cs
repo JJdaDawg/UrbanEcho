@@ -261,6 +261,11 @@ namespace UrbanEcho.Sim
             }
         }
 
+        public void RefreshTrafficRuleReferences()
+        {
+            currentSim.RefreshTrafficRuleReferences();
+        }
+
         public bool FooterNeedsUpdate()
         {
             bool returnValue = (projectNameChanged || lastSimulationReadyValue != simulationReady || RunSimulation);

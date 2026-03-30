@@ -408,6 +408,22 @@ namespace UrbanEcho.Models
             }
         }
 
+        public void RefreshTrafficRuleReferences()
+        {
+            if (currentRoadEdge != null && intersectionLastAt != null)
+            {
+                EdgeTrafficRule? edgeTrafficRule = intersectionLastAt.EdgesInto.Find(e => e.RoadEdge == currentRoadEdge);
+                if (edgeTrafficRule != null)
+                {
+                    currentTrafficRule = edgeTrafficRule.TrafficRule;
+                }
+                else
+                {
+                    currentTrafficRule = intersectionLastAt.FallBackTrafficRule;
+                }
+            }
+        }
+
         private void SetIntersectionLastAt(b2ShapeId shapeId)
         {
             //If it isn't same shape again get the shapes userdata

@@ -1,5 +1,4 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
-using DocumentFormat.OpenXml.Drawing.Charts;
 using Mapsui;
 using Mapsui.Nts;
 using Mapsui.Projections;
@@ -54,6 +53,8 @@ namespace UrbanEcho.Models
         private bool firstCycleInitialized = false;
 
         private RecordedStats stats = new RecordedStats();
+
+        private List<Vector2> roadEndPoints = new List<Vector2>();
 
         public enum SignalType
         {
@@ -118,7 +119,7 @@ namespace UrbanEcho.Models
             {
                 returnValue.offsetTime = 5.0f + (float)Random.Shared.NextDouble() * 10.0f;
 
-                List<(Vector2 direction, float width)> connectionsForBody = returnValue.setConnections(graph, 15.0f);
+                List<(Vector2 pos, float width)> connectionsForBody = returnValue.setConnections(graph, 15.0f);
                 if (connectionsForBody.Count == 0)
                 {
                     //Try again with higher threshold for connecting roads (don't use higher at first or some roads get linked when they shouldn't)
@@ -127,7 +128,21 @@ namespace UrbanEcho.Models
 
                 if (returnValue.isCenterSet && graph is not null)
                 {
-                    returnValue.Body = new IntersectionBody(returnValue, connectionsForBody);
+                    if (feature.Fields.Contains("highway"))//adjust center for osm files
+                    {
+                        if (returnValue.roadEndPoints.Count > 1)
+                        {
+                            returnValue.Center = AdjustCenter(returnValue);
+                            if (feature is GeometryFeature gf && gf.Geometry is Point p)
+                            {
+                                p.X = (double)(World.Offset.X + returnValue.Center.X);
+                                p.Y = (double)(World.Offset.Y + returnValue.Center.Y);
+                            }
+                        }
+                    }
+
+                    returnValue.Body = new IntersectionBody(returnValue, connectionsForBody, false);
+
                     returnValue.isBodySet = true;
                     returnValue.FallBackTrafficRule = TrafficRule.SetDefaultTrafficRule();
 
@@ -166,6 +181,18 @@ namespace UrbanEcho.Models
                 }
             }
             return returnValue;
+        }
+
+        private static Vector2 AdjustCenter(RoadIntersection r)
+        {
+            Vector2 pos = new Vector2(0, 0);
+
+            foreach (Vector2 p in r.roadEndPoints)
+            {
+                pos += p / (float)r.roadEndPoints.Count;
+            }
+
+            return pos;
         }
 
         //Set stop type if osm data was used
@@ -741,7 +768,7 @@ namespace UrbanEcho.Models
             return isBodySet;
         }
 
-        private List<(Vector2 pos, float width)> setConnections(RoadGraph graph, float thresholdToUse)
+        private List<(Vector2 direction, float width)> setConnections(RoadGraph graph, float thresholdToUse)
         {
             List<(Vector2 pos, float width)> connectingPoints = new List<(Vector2 pos, float width)>();
 
@@ -790,12 +817,14 @@ namespace UrbanEcho.Models
                                     bool connectionAdded = false;
                                     if (Vector2.Distance(Center, roadFeaturePos) < threshold)
                                     {
+                                        Vector2 roadEndPoint = Helpers.Helper.Convert2Box2dWorldPosition(lineString.Coordinates[startIndex].X, lineString.Coordinates[startIndex].Y);
                                         int nextIndexForSegment = (directionToUse) ? startIndex + 1 : startIndex - 1;
                                         Vector2 end = Helpers.Helper.Convert2Box2dWorldPosition(lineString.Coordinates[nextIndexForSegment].X, lineString.Coordinates[nextIndexForSegment].Y);
 
                                         double pavementWidth = 0;
 
                                         int lanes = Helpers.Helper.TryGetFeatureKVPToInt(gf, "LANES", 2);
+
                                         pavementWidth = lanes * Helpers.Helper.DefaultLaneWidth * Helpers.Helper.ExtraPavementFactor;
 
                                         if (checkingOutGoing)
@@ -804,6 +833,7 @@ namespace UrbanEcho.Models
                                             if (!(connectingPoints.Any(point => point.pos == end)))
                                             {
                                                 connectingPoints.Add((end, (float)pavementWidth));
+                                                roadEndPoints.Add(roadEndPoint);
                                             }
                                         }
                                         else
@@ -816,6 +846,7 @@ namespace UrbanEcho.Models
                                             if (!(connectingPoints.Any(point => point.pos == end)))
                                             {
                                                 connectingPoints.Add((end, (float)pavementWidth));
+                                                roadEndPoints.Add(roadEndPoint);
                                             }
                                         }
                                         connectionAdded = true;
@@ -1004,15 +1035,13 @@ namespace UrbanEcho.Models
             };
 
             EventQueueForUI.Instance.Add(new RefreshMapEvent(MainWindow.Instance.GetMainViewModel().Map.MyMap));
-            //pairedRoads.Clear();
-            //ratioForSignal = 0;
-            //firstCycleInitialized = false;
+            pairedRoads.Clear();
+            ratioForSignal = 0;
+            firstCycleInitialized = false;
 
-            RecalculateStaticTrafficRules();
-        }
+            SetStaticTrafficRules();
 
-        private void RecalculateStaticTrafficRules()
-        {
+            SimManager.Instance.RefreshTrafficRuleReferences();
         }
 
         public void ApplyStopSignAssignment(List<(EdgeTrafficRule edge, bool hasStopSign)> assignments)

@@ -37,7 +37,7 @@ namespace UrbanEcho.Physics
         private b2BodyDef bodyDef;
         private b2ShapeDef shapeDef;
 
-        public IntersectionBody(RoadIntersection parent, List<(Vector2 pos, float width)> connectingPoints)
+        public IntersectionBody(RoadIntersection parent, List<(Vector2 pos, float width)> connectingPoints, bool useCircle = false)
         {
             this.parent = parent;
             // Define the intersection body.
@@ -54,7 +54,7 @@ namespace UrbanEcho.Physics
             shapeDef.userData = intPtr;
 
             shapeDef.filter.categoryBits = (ulong)ShapeCategories.Intersection;
-            if (connectingPoints.Count > 4 || connectingPoints.Count <= 1)
+            if (connectingPoints.Count > 4 || connectingPoints.Count <= 1 || useCircle)
             {
                 Vector2[]? Points = CircleOfPoints();
                 polygon = Helper.CreatePolygon(Points);

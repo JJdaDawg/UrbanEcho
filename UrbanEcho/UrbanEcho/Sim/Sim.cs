@@ -177,6 +177,14 @@ namespace UrbanEcho.Sim
             updatePropertyPanel();
         }
 
+        public void RefreshTrafficRuleReferences()
+        {
+            foreach (Vehicle v in Vehicles)
+            {
+                v.RefreshTrafficRuleReferences();
+            }
+        }
+
         private void updatePropertyPanel()
         {
             bool flasherLastValue = flasher;
