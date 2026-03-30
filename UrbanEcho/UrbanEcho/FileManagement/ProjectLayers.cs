@@ -105,7 +105,7 @@ namespace UrbanEcho.FileManagement
                 EventQueueForUI.Instance.Clear();
 
                 currentProjectFile = openProject;
-
+                SimManager.Instance.SetProjectNameChanged();
                 resetLayers();
 
                 if (Load(currentProjectFile))
@@ -322,6 +322,7 @@ namespace UrbanEcho.FileManagement
                         if (currentProjectFile.BackgroundLayerPath == "osm")
                         {
                             backgroundLayer = Mapsui.Tiling.OpenStreetMap.CreateTileLayer();
+                            backgroundLayer.Name = "background";
                         }
                         else
                         {
@@ -1302,12 +1303,16 @@ namespace UrbanEcho.FileManagement
                     {
                         //map.Navigator.OverridePanBounds = panBounds;
                         map.Navigator.OverrideZoomBounds = new MMinMax(0.01, 2500);
+                        double centerX = extent.MinX + (extent.MaxX - extent.MinX) / 2;
+                        double centerY = extent.MinY + (extent.MaxY - extent.MinY) / 2;
 
-                        map.Navigator.CenterOnAndZoomTo(new MPoint(extent.MinX + (extent.MaxX - extent.MinX) / 2,
-                            extent.MinY + (extent.MaxY - extent.MinY) / 2), 15.0);
                         double resolution = Math.Max(extent.Width / 1024, extent.Height / 768);
-                        Viewport viewport = new Viewport(extent.Centroid.X, extent.Centroid.Y, resolution, 0, 1024, 768);
-                        map.RefreshData(viewport);
+                        Viewport viewport = new Viewport(centerX, centerY, resolution, 0, 1024, 768);
+
+                        map.Navigator.CenterOnAndZoomTo(new MPoint(centerX,
+                            centerY), resolution);
+
+                        map.Refresh();
                     }
                 }
 
@@ -1479,6 +1484,7 @@ namespace UrbanEcho.FileManagement
         public static void NewProject()
         {
             currentProjectFile = new ProjectFile();
+            SimManager.Instance.SetProjectNameChanged();
             resetLayers();
             EventQueueForUI.Instance.Add(new SetProjectEvent(currentProjectFile));
         }

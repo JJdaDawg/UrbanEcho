@@ -26,6 +26,8 @@ namespace UrbanEcho.ViewModels
         public ProjectExplorerPanelViewModel ProjectExplorer { get; }
         public EditModeViewModel EditMode { get; }
         public ProjectViewModel Project { get; }
+
+        public FooterBarViewModel Footer { get; }
         public bool IsEditMode => EditMode.IsEditMode;
 
         public MainViewModel(IPanelService panelService, IFileDialogService fileDialogService, IMapFeatureService mapFeatureService, IVehicleService vehicleService, IIntersectionService intersectionService)
@@ -37,6 +39,7 @@ namespace UrbanEcho.ViewModels
             EditMode = new EditModeViewModel();
             Project = new ProjectViewModel(fileDialogService);
             Simulation = new SimulationViewModel();
+            Footer = new FooterBarViewModel();
         }
     }
 }

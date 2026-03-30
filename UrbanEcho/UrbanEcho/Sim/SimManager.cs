@@ -11,6 +11,7 @@ using Mapsui.Layers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Threading;
@@ -81,6 +82,12 @@ namespace UrbanEcho.Sim
 
         public RoutingMode RoutingMode { get; set; } = RoutingMode.Aadt;
 
+        /// <summary>Start hour (0–23) of the observation window the user wants to study.</summary>
+        public int ObservationStartHour { get; set; } = 7;
+
+        /// <summary>End hour (0–23) of the observation window.</summary>
+        public int ObservationEndHour { get; set; } = 9;
+
         public long TaskUpdates = 0;
 
         public AStarPathfinder? pathfinder;
@@ -137,6 +144,10 @@ namespace UrbanEcho.Sim
             }
         }
 
+        private bool simulationReady = false;
+        private bool projectNameChanged = false;
+        private bool lastSimulationReadyValue = false;
+
         private SimManager()
         {
         }
@@ -185,6 +196,8 @@ namespace UrbanEcho.Sim
                         }
                     }
 
+                    simulationReady = true;
+
                     if (RunSimulation)
                     {
                         if (!startedSimulation)
@@ -215,6 +228,10 @@ namespace UrbanEcho.Sim
                         startedSimulation = false;
                     }
                 }
+                else
+                {
+                    simulationReady = false;
+                }
 
                 //Only update vehicle layer if ui queue is empty and do it every couple updates
                 if (EventQueueForUI.Instance.IsEmpty() && TaskUpdates % 2 == 0 && !currentSim.IsDisposed())
@@ -236,12 +253,74 @@ namespace UrbanEcho.Sim
                 {
                     Thread.Sleep(timeToSleep);
                 }
+
+                if (FooterNeedsUpdate() && TaskUpdates % 30 == 0)
+                {
+                    UpdateFooter();
+                }
+            }
+        }
+
+        public bool FooterNeedsUpdate()
+        {
+            bool returnValue = (projectNameChanged || lastSimulationReadyValue != simulationReady || RunSimulation);
+            return returnValue;
+        }
+
+        public void UpdateFooter()
+        {
+            lastSimulationReadyValue = simulationReady;
+            projectNameChanged = false;
+            string readyText = (simulationReady) ? "Ready" : "Not Ready - check that all required layers are added";
+            string projectText = Path.GetFileNameWithoutExtension(ProjectLayers.GetProject()?.PathForThisFile ?? "");
+            if (string.IsNullOrEmpty(projectText))
+            {
+                projectText = "Untitled Project";
+            }
+            else
+            {
+                projectText = projectText + " Project";
+            }
+            string simTimeText = RunSimulation
+                ? $"{SimClock.FormatObservationWindow(ObservationStartHour, ObservationEndHour)} | {GetSimTimeOfDay()}"
+                : "--:--";
+            int vehicleCount = RunSimulation ? GetActiveVehicleCount() : 0;
+            EventQueueForUI.Instance.Add(new UpdateFooterEvent(readyText, projectText, simTimeText, vehicleCount));
+        }
+
+        public void SetProjectNameChanged()
+        {
+            projectNameChanged = true;
+            simulationReady = false;
+            if (FooterNeedsUpdate())
+            {
+                UpdateFooter();
             }
         }
 
         public float GetSimTime()
         {
             return currentSim.GetSimTime();
+        }
+
+        public int GetVehicleCount()
+        {
+            return currentSim.GetVehicleCount();
+        }
+
+        public int GetActiveVehicleCount()
+        {
+            return currentSim.GetActiveVehicleCount();
+        }
+
+        public int GetTargetVehicleCount()
+        {
+            return currentSim.GetTargetVehicleCount();
+        }
+
+        public string GetSimTimeOfDay()
+        {
+            return RunSimulation ? currentSim.GetSimTimeOfDay() : "--:--";
         }
 
         public List<VehicleReadOnly> GetVehicles()
@@ -462,7 +541,6 @@ namespace UrbanEcho.Sim
             if (!currentSim.IsDisposed())
             {
                 ResetSim();
-                currentSim.CreateReport();
             }
 
             World.Clear(); //Reset world and Destroy all existing bodies
