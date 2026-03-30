@@ -40,8 +40,11 @@
         <Expander Header="Edit" IsExpanded="True" IsVisible="{Binding IsEditing}">
             <StackPanel Spacing="8">
                 <TextBlock Text="Signal Type"/>
-                <ComboBox SelectedItem="{Binding SelectedSignalType}" ItemsSource="{Binding AvailableSignalTypes}"/>
-                <Button Content="Apply" Command="{Binding ApplySignalTypeCommand}"/>
+                <StackPanel Spacing="4" Orientation="Horizontal">
+					<ComboBox SelectedItem="{Binding SelectedSignalType}" ItemsSource="{Binding AvailableSignalTypes}"/>
+                    <Button Content="Apply" Command="{Binding ApplySignalTypeCommand}"/>
+                </StackPanel>
+                
             </StackPanel>
         </Expander>
     </StackPanel>

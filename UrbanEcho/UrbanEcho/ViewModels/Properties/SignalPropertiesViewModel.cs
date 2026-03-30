@@ -53,12 +53,15 @@ namespace UrbanEcho.ViewModels.Properties
             ApplySignalTypeCommand = new RelayCommand(() =>
             {
                 _intersectionService.SetSignalType(_intersection, _selectedSignalType);
+                OnPropertyChanged(nameof(Type));
+                OnPropertyChanged(nameof(SelectedSignalType));
+                WeakReferenceMessenger.Default.Send(new ShowIntersectionOverlayMessage(_intersection));
             });
         }
 
         public void UpdatePropertyView()
         {
-            WeakReferenceMessenger.Default.Send(new ShowIntersectionOverlayMessage(_intersection)); 
+            WeakReferenceMessenger.Default.Send(new ShowIntersectionOverlayMessage(_intersection));
         }
     }
 }
