@@ -16,6 +16,7 @@ namespace UrbanEcho.ViewModels
         private readonly IFileDialogService _fileDialogService;
         private ProjectFile? _currentProject;
 
+        [ObservableProperty] private string _projectName = string.Empty;
         [ObservableProperty] private bool _hasProject;
 
         public ProjectViewModel(IFileDialogService fileDialogService)
@@ -46,6 +47,7 @@ namespace UrbanEcho.ViewModels
                 //NotifyProjectCommands();
                 WeakReferenceMessenger.Default.Send(new ProjectLoadedMessage());
                 //WeakReferenceMessenger.Default.Send(new LogMessage($"Project successfully opened '{path}'", LogSource.System));
+                ProjectName = _currentProject.FileName;
             }
             else
             {

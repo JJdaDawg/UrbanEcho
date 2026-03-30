@@ -50,7 +50,8 @@ public partial class MainWindow : AppWindow, IPanelService
         var fileDialogService = new FileDialogService(this);
         var mapFeatureService = new MapFeatureService();
         var vehicleService = new VehicleService();
-        vm = new MainViewModel(this, fileDialogService, mapFeatureService, vehicleService);
+        var intersectionService = new IntersectionService();
+        vm = new MainViewModel(this, fileDialogService, mapFeatureService, vehicleService, intersectionService);
         DataContext = vm;
 
         SetupMap.Init(vm.Map.MyMap);

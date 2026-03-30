@@ -56,6 +56,14 @@ namespace UrbanEcho.Messages
     public class HideVehiclePathMessage
     { }
 
+    public class ShowIntersectionOverlayMessage
+    {
+        public RoadIntersection Intersection { get; }
+        public ShowIntersectionOverlayMessage(RoadIntersection intersection) => Intersection = intersection;
+    }
+
+    public class HideIntersectionOverlayMessage { }
+
     public class CensusLoadedMessage
     { }
 

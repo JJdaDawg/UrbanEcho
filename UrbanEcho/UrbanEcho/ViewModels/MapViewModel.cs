@@ -53,6 +53,7 @@ public partial class MapViewModel : ObservableObject
             _pendingMoveSpawner = null;
             ProjectLayers.SetRoadSelection(null, MyMap);
             ProjectLayers.SetPathOverlay(null, MyMap);
+            ProjectLayers.SetIntersectionOverlay(null, MyMap);
         });
         WeakReferenceMessenger.Default.Register<MapFeatureSelectedMessage>(this, (r, m) =>
         {
@@ -68,6 +69,11 @@ public partial class MapViewModel : ObservableObject
         WeakReferenceMessenger.Default.Register<HideVehiclePathMessage>(this, (r, m) =>
         {
             ProjectLayers.SetPathOverlay(null, MyMap);
+        });
+        WeakReferenceMessenger.Default.Register<ShowIntersectionOverlayMessage>(this, (r, m) =>
+        {
+            var features = m.Intersection.GetConnectedRoadFeatures();
+            ProjectLayers.SetIntersectionOverlay(features, MyMap);
         });
         WeakReferenceMessenger.Default.Register<DeleteSpawnerMessage>(this, (r, m) =>
         {
@@ -155,6 +161,7 @@ public partial class MapViewModel : ObservableObject
             return;
         }
         WeakReferenceMessenger.Default.Send(new MapFeatureSelectedMessage(MapFeatureType.Signal, intersection));
+        WeakReferenceMessenger.Default.Send(new ShowIntersectionOverlayMessage(intersection));
     }
 
     private void HandleVehicleClick(IFeature feature)

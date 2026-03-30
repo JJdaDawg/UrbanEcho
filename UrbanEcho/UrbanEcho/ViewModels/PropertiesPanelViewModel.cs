@@ -15,6 +15,7 @@ namespace UrbanEcho.ViewModels
     {
         private readonly IPanelService _panelService;
         private readonly IVehicleService _vehicleService;
+        private readonly IIntersectionService _intersectionService;
         private bool _isOpen = true;
 
         [ObservableProperty]
@@ -45,9 +46,10 @@ namespace UrbanEcho.ViewModels
 
         public RelayCommand ToggleCommand { get; }
 
-        public PropertiesPanelViewModel(IPanelService panelService, IVehicleService vehicleService)
+        public PropertiesPanelViewModel(IPanelService panelService, IVehicleService vehicleService, IIntersectionService intersectionService)
         {
             _panelService = panelService;
+            _intersectionService = intersectionService;
             _vehicleService = vehicleService;
             ToggleCommand = new RelayCommand(Toggle);
             EditCommand = new RelayCommand(Edit);
@@ -58,7 +60,7 @@ namespace UrbanEcho.ViewModels
                 IsEditing = false;
                 SelectedProperties = m.Type switch
                 {
-                    MapFeatureType.Signal when m.Data is IntersectionUI i => new SignalPropertiesViewModel(i),
+                    MapFeatureType.Signal when m.Data is RoadIntersection i => new SignalPropertiesViewModel(i, _intersectionService),
                     MapFeatureType.Vehicle when m.Data is VehicleReadOnly v => new VehiclePropertiesViewModel(v, _vehicleService),
                     MapFeatureType.Road when m.Data is RoadEdge edge => new RoadPropertiesViewModel(edge),
                     MapFeatureType.Spawner when m.Data is SpawnPoint sp => new SpawnerPropertiesViewModel(sp),

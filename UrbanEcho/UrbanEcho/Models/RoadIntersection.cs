@@ -1,4 +1,5 @@
-﻿using DocumentFormat.OpenXml.Drawing.Charts;
+﻿using CommunityToolkit.Mvvm.Messaging;
+using DocumentFormat.OpenXml.Drawing.Charts;
 using Mapsui;
 using Mapsui.Nts;
 using Mapsui.Projections;
@@ -9,6 +10,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Numerics;
 using UrbanEcho.Events.UI;
+using UrbanEcho.Messages;
 using UrbanEcho.Physics;
 using UrbanEcho.Reporting;
 using UrbanEcho.Sim;
@@ -949,6 +951,70 @@ namespace UrbanEcho.Models
             else
             {
                 FallBackTrafficRule.SetBlock(false);
+            }
+        }
+
+        public IReadOnlyList<IFeature> GetConnectedRoadFeatures()
+        {
+            var features = new List<IFeature>();
+            var addedGeometries = new HashSet<Geometry>();
+
+            foreach (EdgeTrafficRule etr in EdgesInto)
+            {
+                if (etr.RoadEdge.Feature is not GeometryFeature gf || gf.Geometry is null) continue;
+
+                bool hasRightOfWay = TheSignalType switch
+                {
+                    SignalType.FullSignal => !etr.TrafficRule.IsBlockingTraffic(), 
+                    SignalType.TwoWayStop => etr.TrafficRule.IsNeverBlockingTraffic(),
+                    _ => false
+                };
+
+                var clone = new GeometryFeature(gf.Geometry);
+                clone["RightOfWay"] = hasRightOfWay ? 1 : 0;
+                features.Add(clone);
+                addedGeometries.Add(gf.Geometry);
+            }
+
+            foreach (RoadEdge edge in EdgesOut)
+            {
+                if (edge.Feature is not GeometryFeature gf || gf.Geometry is null) continue;
+                if (addedGeometries.Contains(gf.Geometry)) continue;
+
+                var clone = new GeometryFeature(gf.Geometry);
+                clone["RightOfWay"] = 0;
+                features.Add(clone);
+            }
+
+            return features;
+        }
+
+        public void ChangeSignalType(SignalType newSignalType)
+        {
+            TheSignalType = newSignalType;
+
+            Feature["Intersec_1"] = newSignalType switch
+            {
+                SignalType.TwoWayStop => "Two Way Stop",
+                SignalType.AllWayStop => "All Way Stop",
+                SignalType.FullSignal => "Full Signal",
+                SignalType.Flasher => "Flasher",
+                _ => ""
+            };
+
+            pairedRoads.Clear();
+            ratioForSignal = 0;
+            firstCycleInitialized = false;
+
+            SetStaticTrafficRules();
+        }
+
+        public void ApplyStopSignAssignment(List<(EdgeTrafficRule edge, bool hasStopSign)> assignments)
+        {
+            foreach (var (edge, hasStopSign) in assignments)
+            {
+                edge.TrafficRule = hasStopSign ? TrafficRule.SetStopSignTrafficRule() : TrafficRule.SetStopSignTrafficRule();
+                if (!hasStopSign) { edge.TrafficRule.SetNeverBlock(); }
             }
         }
 

@@ -30,10 +30,10 @@ namespace UrbanEcho.ViewModels
         public FooterBarViewModel Footer { get; }
         public bool IsEditMode => EditMode.IsEditMode;
 
-        public MainViewModel(IPanelService panelService, IFileDialogService fileDialogService, IMapFeatureService mapFeatureService, IVehicleService vehicleService)
+        public MainViewModel(IPanelService panelService, IFileDialogService fileDialogService, IMapFeatureService mapFeatureService, IVehicleService vehicleService, IIntersectionService intersectionService)
         {
             Console = new ConsolePanelViewModel(panelService);
-            Properties = new PropertiesPanelViewModel(panelService, vehicleService);
+            Properties = new PropertiesPanelViewModel(panelService, vehicleService, intersectionService);
             ProjectExplorer = new ProjectExplorerPanelViewModel(panelService);
             Map = new MapViewModel(mapFeatureService);
             EditMode = new EditModeViewModel();
