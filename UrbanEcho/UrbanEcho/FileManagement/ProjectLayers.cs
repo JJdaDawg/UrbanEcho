@@ -13,7 +13,6 @@ using Mapsui.Styles.Thematics;
 using Mapsui.Tiling.Layers;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
-
 //using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
 using OsmSharp;
@@ -578,7 +577,6 @@ namespace UrbanEcho.FileManagement
             };
         }
 
-
         public static void SetPathOverlay(IReadOnlyList<IFeature>? features, Map? map)
         {
             if (pathOverlayLayer == null) return;
@@ -608,7 +606,7 @@ namespace UrbanEcho.FileManagement
                     {
                         Line = new Pen
                         {
-                            Color = hasRightOfWay ? Color.FromArgb(220, 50, 205, 50) : Color.FromArgb(220, 220, 30, 30), 
+                            Color = hasRightOfWay ? Color.FromArgb(220, 50, 205, 50) : Color.FromArgb(220, 220, 30, 30),
                             Width = 6,
                             PenStrokeCap = PenStrokeCap.Round,
                             StrokeJoin = StrokeJoin.Round
@@ -733,9 +731,9 @@ namespace UrbanEcho.FileManagement
             return layer;
         }
 
-        public static Layer? CreateIntersectionsLayer(IProvider source, string name)
+        public static MemoryLayer? CreateIntersectionsLayer(IProvider source, string name)
         {
-            Layer? layer = null;
+            MemoryLayer? layer = null;
             try
             {
                 source.CRS = "EPSG:4326";
@@ -745,13 +743,15 @@ namespace UrbanEcho.FileManagement
                     CRS = "EPSG:3857"
                 };
 
-                layer = new Layer(name);
+                layer = new MemoryLayer(name);
 
                 layer.Opacity = 1.0f;
 
                 layer.MaxVisible = 3.5f;
 
-                layer.DataSource = projectingProvider;
+                List<IFeature> intersections = Helpers.Helper.GetFeatures(projectingProvider);
+
+                layer.Features = intersections;
 
                 IntersectionStyles intersectionsStyle = new IntersectionStyles();
 

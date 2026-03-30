@@ -14,6 +14,7 @@ using UrbanEcho.Messages;
 using UrbanEcho.Physics;
 using UrbanEcho.Reporting;
 using UrbanEcho.Sim;
+using UrbanEcho.ViewModels;
 
 namespace UrbanEcho.Models
 {
@@ -965,7 +966,7 @@ namespace UrbanEcho.Models
 
                 bool hasRightOfWay = TheSignalType switch
                 {
-                    SignalType.FullSignal => !etr.TrafficRule.IsBlockingTraffic(), 
+                    SignalType.FullSignal => !etr.TrafficRule.IsBlockingTraffic(),
                     SignalType.TwoWayStop => etr.TrafficRule.IsNeverBlockingTraffic(),
                     _ => false
                 };
@@ -1002,11 +1003,16 @@ namespace UrbanEcho.Models
                 _ => ""
             };
 
-            pairedRoads.Clear();
-            ratioForSignal = 0;
-            firstCycleInitialized = false;
+            EventQueueForUI.Instance.Add(new RefreshMapEvent(MainWindow.Instance.GetMainViewModel().Map.MyMap));
+            //pairedRoads.Clear();
+            //ratioForSignal = 0;
+            //firstCycleInitialized = false;
 
-            SetStaticTrafficRules();
+            RecalculateStaticTrafficRules();
+        }
+
+        private void RecalculateStaticTrafficRules()
+        {
         }
 
         public void ApplyStopSignAssignment(List<(EdgeTrafficRule edge, bool hasStopSign)> assignments)
