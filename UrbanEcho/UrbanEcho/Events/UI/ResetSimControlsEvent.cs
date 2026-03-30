@@ -7,7 +7,7 @@ using UrbanEcho.ViewModels;
 
 namespace UrbanEcho.Events.UI
 {
-    internal class ResetSimControlEvent : IEventForUI
+    public class ResetSimControlEvent : IEventForUI
     {
         public ResetSimControlEvent()
         {

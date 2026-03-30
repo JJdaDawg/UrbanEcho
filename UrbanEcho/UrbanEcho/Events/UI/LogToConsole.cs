@@ -15,7 +15,7 @@ namespace UrbanEcho.Events.UI
         private string message;
 
         private static string lastMessage = "";
-        private static bool repeatedMessage = false;
+        private static bool repeatedMessage;
 
         public LogToConsole(MainViewModel? mainViewModel, string message)
         {
