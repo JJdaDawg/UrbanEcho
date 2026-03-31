@@ -127,7 +127,9 @@ namespace UrbanEcho.Sim
                 // Use spawner-based spawning when spawn points exist
                 if (Vehicles.Count == 0)
                 {
-                    TrySpawnFromSpawners(true, targetCount);
+                    //TrySpawnFromSpawners(true, targetCount);
+                    TrySpawnFromSpawners(false, targetCount);
+
                     foreach (Vehicle v in Vehicles)
                     {
                         v.ResetStats();
