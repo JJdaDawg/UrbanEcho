@@ -245,12 +245,63 @@ public static class RoadGraphLoader
                 && f["AADT"] != null
                 && double.TryParse(f["AADT"].ToString(), out var aadtVal)
                 ? aadtVal
-                : 0,
+                : AssignAADTValue(f),
             RoadType = f.Fields.Contains("CARTO_CLAS")
                 ? RoadTypeExtensions.ParseCartoClass(f["CARTO_CLAS"]?.ToString())
                 : RoadType.Unknown,
             TruckAllowance = truckAllowed
         };
+    }
+
+    private static double AssignAADTValue(Mapsui.IFeature f)
+    {
+        double aadtValue = 100;
+
+        RoadType type = RoadType.Unknown;
+
+        if (f.Fields.Contains("CARTO_CLAS"))
+        {
+            type = RoadTypeExtensions.ParseCartoClass(f["CARTO_CLAS"]?.ToString());
+
+            if (type == RoadType.Freeway)
+            {
+                aadtValue = 600;
+            }
+            if (type == RoadType.Arterial)
+            {
+                aadtValue = 500;
+            }
+            if (type == RoadType.Expressway)
+            {
+                aadtValue = 600;
+            }
+            if (type == RoadType.Collector)
+            {
+                aadtValue = 300;
+            }
+            if (type == RoadType.LocalStreet)
+            {
+                aadtValue = 100;
+            }
+            if (type == RoadType.Ramp)
+            {
+                aadtValue = 300;
+            }
+            if (type == RoadType.Roundabout)
+            {
+                aadtValue = 300;
+            }
+            if (type == RoadType.AlleywayLane)
+            {
+                aadtValue = 100;
+            }
+            if (type == RoadType.Private)
+            {
+                aadtValue = 100;
+            }
+        }
+
+        return aadtValue;
     }
 
     private static RoadGraph RemoveOrphanComponents(RoadGraph graph)
