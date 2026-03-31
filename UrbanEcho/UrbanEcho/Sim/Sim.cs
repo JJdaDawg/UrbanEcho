@@ -127,7 +127,7 @@ namespace UrbanEcho.Sim
                 // Use spawner-based spawning when spawn points exist
                 if (Vehicles.Count == 0)
                 {
-                    TrySpawnFromSpawners(true);
+                    TrySpawnFromSpawners(true, targetCount);
                     foreach (Vehicle v in Vehicles)
                     {
                         v.ResetStats();
@@ -144,10 +144,7 @@ namespace UrbanEcho.Sim
                 // Fallback to census / random spawning
                 if (Vehicles.Count == 0)
                 {
-                    // Spawn to the observation-window target, over-requesting by 25 %
-                    // to compensate for nodes with no valid outgoing edges.
-                    int burstTarget = (int)(targetCount * 1.25);
-                    TrySpawnVehicle(burstTarget, false);
+                    TrySpawnVehicle(targetCount, false);
                     foreach (Vehicle v in Vehicles)
                     {
                         v.ResetStats();
@@ -321,88 +318,88 @@ namespace UrbanEcho.Sim
             int vehiclesAddedThisSpawn = 0;
             for (int i = 0; i < numberToSpawn; i++)
             {
-                int spawnNodeId;
-                if (SimManager.Instance.CensusSpawn != null && SimManager.Instance.CensusSpawn.IsLoaded)
-                {
-                    spawnNodeId = SimManager.Instance.CensusSpawn.PickWeightedSpawnNode();
-                }
-                else if (SimManager.Instance.nodes != null && SimManager.Instance.nodes.Count > 0)
-                {
-                    spawnNodeId = SimManager.Instance.nodes[spawnRng.Next(SimManager.Instance.nodes.Count)];
-                }
-                else
-                {
-                    continue;
-                }
+                const int maxRetries = 3;
+                bool spawned = false;
 
-                var outgoing = SimManager.Instance.RoadGraph.GetOutgoingEdges(spawnNodeId);
-                if (outgoing.Count == 0)
-                    continue;
-
-                double randomValue = Random.Shared.NextDouble();
-                double truckRatio = 0.1f;
-                bool isTruck = randomValue <= truckRatio;
-
-                var validEdges = isTruck
-                    ? outgoing.Where(e => !e.IsClosed && e.Metadata.TruckAllowance).ToList()
-                    : outgoing.Where(e => !e.IsClosed).ToList();
-
-                // Truck landed on a no-truck node: redirect to eligible pool instead of wasting the slot.
-                if (isTruck && validEdges.Count == 0)
+                for (int attempt = 0; attempt <= maxRetries && !spawned; attempt++)
                 {
-                    var eligible = SimManager.Instance.TruckEligibleNodes;
-                    if (eligible.Count > 0)
+                    int spawnNodeId;
+                    if (SimManager.Instance.CensusSpawn != null && SimManager.Instance.CensusSpawn.IsLoaded)
                     {
-                        spawnNodeId = eligible[spawnRng.Next(eligible.Count)];
-                        outgoing = SimManager.Instance.RoadGraph.GetOutgoingEdges(spawnNodeId);
-                        validEdges = outgoing.Where(e => !e.IsClosed && e.Metadata.TruckAllowance).ToList();
+                        spawnNodeId = SimManager.Instance.CensusSpawn.PickWeightedSpawnNode();
                     }
-                }
-
-                if (validEdges.Count == 0)
-                    continue;
-
-                var edge = validEdges[spawnRng.Next(validEdges.Count)];
-
-                if (!SimManager.Instance.RoadGraph.Nodes.TryGetValue(edge.From, out RoadNode? fromNode) || fromNode == null)
-                    continue;
-
-                int vehicleId = Vehicles.Count;
-                MPoint mPoint = new MPoint(fromNode.X, fromNode.Y);
-                PointFeature pf = new PointFeature(mPoint);
-                pf["VehicleNumber"] = vehicleId;
-                pf["VehicleType"] = "Car" + spawnRng.Next(0, VehicleStyles.NumberOFCarColors);
-                pf["Hidden"] = "true";
-                pf["Angle"] = 0.0f;
-
-                string type = "RegularCar";
-                if (!isTruck)
-                {
-                    pf["VehicleType"] = "Car" + spawnRng.Next(0, VehicleStyles.NumberOFCarColors);
-                }
-                else
-                {
-                    pf["VehicleType"] = "Truck" + spawnRng.Next(0, VehicleStyles.NumberOFTruckColors);
-                    type = "TransportTruck";
-                }
-
-                Vehicle vehicle = new Vehicle(pf, edge, type, vehicleId % Helper.NumberOfVehicleGroups, SimManager.Instance.RoadGraph);
-
-                if (vehicle.IsCreated)
-                {
-                    vehiclesAddedThisSpawn++;
-                    Vehicles.Add(vehicle);
-                    lock (SimManager.Instance.LockChangeVehicleFeatureList)
+                    else if (SimManager.Instance.nodes != null && SimManager.Instance.nodes.Count > 0)
                     {
-                        ProjectLayers.VehicleFeatures.Add(pf);
+                        spawnNodeId = SimManager.Instance.nodes[spawnRng.Next(SimManager.Instance.nodes.Count)];
                     }
-                    //if (i == 0)
-                    //{
-                    //    EventQueueForUI.Instance.Add(new LogToConsole(mainViewModel,
-                    //        $"[Spawn {Clock.FormatTimeOfDay(simTime)}] Vehicle #{vehicleId} spawned at node {spawnNodeId} — total: {Vehicles.Count} - trying to spawn {numberToSpawn}"));
-                    //}
+                    else
+                    {
+                        break;
+                    }
 
-                    vehicle.Update();//Call once so path is loaded
+                    var outgoing = SimManager.Instance.RoadGraph.GetOutgoingEdges(spawnNodeId);
+                    if (outgoing.Count == 0)
+                        continue;
+
+                    double randomValue = Random.Shared.NextDouble();
+                    double truckRatio = 0.1f;
+                    bool isTruck = randomValue <= truckRatio;
+
+                    var validEdges = isTruck
+                        ? outgoing.Where(e => !e.IsClosed && e.Metadata.TruckAllowance).ToList()
+                        : outgoing.Where(e => !e.IsClosed).ToList();
+
+                    // Truck landed on a no-truck node: redirect to eligible pool instead of wasting the slot.
+                    if (isTruck && validEdges.Count == 0)
+                    {
+                        var eligible = SimManager.Instance.TruckEligibleNodes;
+                        if (eligible.Count > 0)
+                        {
+                            spawnNodeId = eligible[spawnRng.Next(eligible.Count)];
+                            outgoing = SimManager.Instance.RoadGraph.GetOutgoingEdges(spawnNodeId);
+                            validEdges = outgoing.Where(e => !e.IsClosed && e.Metadata.TruckAllowance).ToList();
+                        }
+                    }
+
+                    if (validEdges.Count == 0)
+                        continue;
+
+                    var edge = validEdges[spawnRng.Next(validEdges.Count)];
+
+                    if (!SimManager.Instance.RoadGraph.Nodes.TryGetValue(edge.From, out RoadNode? fromNode) || fromNode == null)
+                        continue;
+
+                    int vehicleId = Vehicles.Count;
+                    MPoint mPoint = new MPoint(fromNode.X, fromNode.Y);
+                    PointFeature pf = new PointFeature(mPoint);
+                    pf["VehicleNumber"] = vehicleId;
+                    pf["Hidden"] = "true";
+                    pf["Angle"] = 0.0f;
+
+                    string type = "RegularCar";
+                    if (!isTruck)
+                    {
+                        pf["VehicleType"] = "Car" + spawnRng.Next(0, VehicleStyles.NumberOFCarColors);
+                    }
+                    else
+                    {
+                        pf["VehicleType"] = "Truck" + spawnRng.Next(0, VehicleStyles.NumberOFTruckColors);
+                        type = "TransportTruck";
+                    }
+
+                    Vehicle vehicle = new Vehicle(pf, edge, type, vehicleId % Helper.NumberOfVehicleGroups, SimManager.Instance.RoadGraph);
+
+                    if (vehicle.IsCreated)
+                    {
+                        vehiclesAddedThisSpawn++;
+                        Vehicles.Add(vehicle);
+                        lock (SimManager.Instance.LockChangeVehicleFeatureList)
+                        {
+                            ProjectLayers.VehicleFeatures.Add(pf);
+                        }
+                        vehicle.Update();
+                        spawned = true;
+                    }
                 }
             }
             if (numberToSpawn > 1)
@@ -414,28 +411,41 @@ namespace UrbanEcho.Sim
         /// <summary>
         /// Iterates over all spawn points and spawns vehicles from each one
         /// according to its configured VehiclesPerMinute rate.
-        /// Low-rate gates (&lt;60 VPM) trickle one vehicle at a time to avoid
-        /// pile-ups. High-rate gates (≥60 VPM) distribute spawns across the
-        /// gate node and nearby graph nodes so traffic enters from multiple
-        /// approach roads instead of all stacking at one point.
+        /// When <paramref name="targetCount"/> is supplied the total initial
+        /// burst is capped at that value and distributed proportionally across
+        /// spawners by their VPM rate so the sim never overshoots its target.
         /// </summary>
-        private void TrySpawnFromSpawners(bool initialBurst)
+        private void TrySpawnFromSpawners(bool initialBurst, int targetCount = int.MaxValue)
         {
             if (SimManager.Instance.RoadGraph == null || !World.Created)
                 return;
 
+            // Pre-compute total VPM so we can proportion the target across spawners.
+            int totalVpm = 0;
+            if (initialBurst)
+            {
+                foreach (SpawnPoint s in SimManager.Instance.SpawnPoints)
+                    totalVpm += s.VehiclesPerMinute;
+            }
+
             foreach (SpawnPoint sp in SimManager.Instance.SpawnPoints)
             {
-                if (Vehicles.Count >= maxVehicles)
+                if (Vehicles.Count >= maxVehicles || Vehicles.Count >= targetCount)
                     return;
 
                 int toSpawn;
                 if (initialBurst)
                 {
-                    if (sp.VehiclesPerMinute < 60)
-                        toSpawn = 1; // low rate: trickle, no burst
+                    // Give each spawner a share of the target proportional to its VPM.
+                    if (totalVpm > 0)
+                        toSpawn = Math.Max(1, (int)Math.Round((double)sp.VehiclesPerMinute / totalVpm * targetCount));
                     else
-                        toSpawn = Math.Min(sp.VehiclesPerMinute, 20);
+                        toSpawn = 1;
+
+                    // Never exceed remaining room toward the target.
+                    toSpawn = Math.Min(toSpawn, targetCount - Vehicles.Count);
+                    if (toSpawn <= 0)
+                        continue;
                 }
                 else
                 {
@@ -472,7 +482,7 @@ namespace UrbanEcho.Sim
                     var spawnNodes = GetNearbySpawnNodes(sp.NearestNodeId);
                     for (int i = 0; i < toSpawn; i++)
                     {
-                        if (Vehicles.Count >= maxVehicles) return;
+                        if (Vehicles.Count >= maxVehicles || Vehicles.Count >= targetCount) return;
                         int nodeId = spawnNodes[i % spawnNodes.Count];
                         if (SpawnVehicleAtNode(nodeId))
                             sp.LastSpawnTime = simTime;
@@ -483,7 +493,7 @@ namespace UrbanEcho.Sim
                     // Low rate: single spawn at the gate node
                     for (int i = 0; i < toSpawn; i++)
                     {
-                        if (Vehicles.Count >= maxVehicles) return;
+                        if (Vehicles.Count >= maxVehicles || Vehicles.Count >= targetCount) return;
                         if (SpawnVehicleAtNode(sp.NearestNodeId))
                             sp.LastSpawnTime = simTime;
                     }
@@ -538,6 +548,8 @@ namespace UrbanEcho.Sim
 
         /// <summary>
         /// Creates a single vehicle at the given graph node and adds it to the simulation.
+        /// If the requested node has no usable edges, up to 3 random fallback
+        /// nodes are tried so the spawn slot is not silently lost.
         /// Returns true if the vehicle was successfully created.
         /// </summary>
         public bool SpawnVehicleAtNode(int nodeId)
@@ -545,66 +557,73 @@ namespace UrbanEcho.Sim
             if (SimManager.Instance.RoadGraph == null || !World.Created)
                 return false;
 
-            var outgoing = SimManager.Instance.RoadGraph.GetOutgoingEdges(nodeId);
-            if (outgoing.Count == 0)
+            const int maxAttempts = 4;
+            int attemptNode = nodeId;
+
+            for (int attempt = 0; attempt < maxAttempts; attempt++)
             {
-                System.Diagnostics.Debug.WriteLine($"[Sim] SpawnVehicleAtNode failed: node {nodeId} has no outgoing edges");
-                return false;
-            }
-
-            bool isTruck = Random.Shared.NextDouble() <= 0.1;
-
-            var validEdges = isTruck
-                ? outgoing.Where(e => !e.IsClosed && e.Metadata.TruckAllowance).ToList()
-                : outgoing.Where(e => !e.IsClosed).ToList();
-
-            // Spawn point has a fixed node; if no truck roads exist here, demote to car
-            // so we never silently drop a spawn from a gate.
-            if (isTruck && validEdges.Count == 0)
-            {
-                isTruck = false;
-                validEdges = outgoing.Where(e => !e.IsClosed).ToList();
-            }
-
-            if (validEdges.Count == 0)
-            {
-                System.Diagnostics.Debug.WriteLine($"[Sim] SpawnVehicleAtNode failed: node {nodeId} has no valid edges for vehicle type");
-                return false;
-            }
-
-            var edge = validEdges[spawnRng.Next(validEdges.Count)];
-
-            if (!SimManager.Instance.RoadGraph.Nodes.TryGetValue(edge.From, out RoadNode? fromNode) || fromNode == null)
-                return false;
-
-            int vehicleId = Vehicles.Count;
-            MPoint mPoint = new MPoint(fromNode.X, fromNode.Y);
-            PointFeature pf = new PointFeature(mPoint);
-            pf["VehicleNumber"] = vehicleId;
-            pf["Hidden"] = "true";
-            pf["Angle"] = 0.0f;
-            string type = "RegularCar";
-            if (!isTruck)
-            {
-                pf["VehicleType"] = "Car" + spawnRng.Next(0, VehicleStyles.NumberOFCarColors);
-            }
-            else
-            {
-                pf["VehicleType"] = "Truck" + spawnRng.Next(0, VehicleStyles.NumberOFTruckColors);
-                type = "TransportTruck";
-            }
-
-            Vehicle vehicle = new Vehicle(pf, edge, type, vehicleId % Helper.NumberOfVehicleGroups, SimManager.Instance.RoadGraph);
-
-            if (vehicle.IsCreated)
-            {
-                Vehicles.Add(vehicle);
-                lock (SimManager.Instance.LockChangeVehicleFeatureList)
+                if (attempt > 0)
                 {
-                    ProjectLayers.VehicleFeatures.Add(pf);
+                    var fallbackNodes = SimManager.Instance.nodes;
+                    if (fallbackNodes == null || fallbackNodes.Count == 0)
+                        return false;
+                    attemptNode = fallbackNodes[spawnRng.Next(fallbackNodes.Count)];
                 }
-                vehicle.Update();
-                return true;
+
+                var outgoing = SimManager.Instance.RoadGraph.GetOutgoingEdges(attemptNode);
+                if (outgoing.Count == 0)
+                    continue;
+
+                bool isTruck = Random.Shared.NextDouble() <= 0.1;
+
+                var validEdges = isTruck
+                    ? outgoing.Where(e => !e.IsClosed && e.Metadata.TruckAllowance).ToList()
+                    : outgoing.Where(e => !e.IsClosed).ToList();
+
+                // Demote to car if no truck roads exist here so we don't lose the slot.
+                if (isTruck && validEdges.Count == 0)
+                {
+                    isTruck = false;
+                    validEdges = outgoing.Where(e => !e.IsClosed).ToList();
+                }
+
+                if (validEdges.Count == 0)
+                    continue;
+
+                var edge = validEdges[spawnRng.Next(validEdges.Count)];
+
+                if (!SimManager.Instance.RoadGraph.Nodes.TryGetValue(edge.From, out RoadNode? fromNode) || fromNode == null)
+                    continue;
+
+                int vehicleId = Vehicles.Count;
+                MPoint mPoint = new MPoint(fromNode.X, fromNode.Y);
+                PointFeature pf = new PointFeature(mPoint);
+                pf["VehicleNumber"] = vehicleId;
+                pf["Hidden"] = "true";
+                pf["Angle"] = 0.0f;
+                string type = "RegularCar";
+                if (!isTruck)
+                {
+                    pf["VehicleType"] = "Car" + spawnRng.Next(0, VehicleStyles.NumberOFCarColors);
+                }
+                else
+                {
+                    pf["VehicleType"] = "Truck" + spawnRng.Next(0, VehicleStyles.NumberOFTruckColors);
+                    type = "TransportTruck";
+                }
+
+                Vehicle vehicle = new Vehicle(pf, edge, type, vehicleId % Helper.NumberOfVehicleGroups, SimManager.Instance.RoadGraph);
+
+                if (vehicle.IsCreated)
+                {
+                    Vehicles.Add(vehicle);
+                    lock (SimManager.Instance.LockChangeVehicleFeatureList)
+                    {
+                        ProjectLayers.VehicleFeatures.Add(pf);
+                    }
+                    vehicle.Update();
+                    return true;
+                }
             }
             return false;
         }

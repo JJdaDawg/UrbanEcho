@@ -536,6 +536,12 @@ namespace UrbanEcho.Sim
             {
                 currentSim.Dispose();
             }
+
+            // Reset spawn point timers so they fire correctly on the next sim run.
+            foreach (SpawnPoint sp in SpawnPoints)
+            {
+                sp.LastSpawnTime = 0;
+            }
         }
 
         public void Clear()
