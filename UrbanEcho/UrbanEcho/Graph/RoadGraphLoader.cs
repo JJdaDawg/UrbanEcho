@@ -29,9 +29,9 @@ public static class RoadGraphLoader
             return null;
         }
 
-        var factory = firstGeometryFeature.Geometry.Factory;
-
-        var precisionModel = factory.PrecisionModel;
+        //var factory = firstGeometryFeature.Geometry.Factory;
+        //Use a precision model of 0.01 accuracy anything within that value will be marked as same point.
+        PrecisionModel precisionModel = new PrecisionModel(100);// factory.PrecisionModel;
 
         NormalizeFeatures(featureList, precisionModel);
 
