@@ -522,7 +522,7 @@ namespace UrbanEcho.Models
                     }
                 }
 
-                ratioForSignal = Math.Clamp(computeRatioForSignal, 0.2f, 0.8f);
+                ratioForSignal = Math.Clamp(computeRatioForSignal, 0.3f, 0.7f);
             }
         }
 

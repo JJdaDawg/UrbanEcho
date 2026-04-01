@@ -230,8 +230,15 @@ namespace UrbanEcho.Sim
 
                 EventQueueForUI.Instance.Add(new ZoomEvent(map));
 
-                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Generating Report"));
-                ReportTask report = new ReportTask(SimManager.Instance.RoadIntersections, SimManager.Instance.RoadGraph);
+                if (SimManager.Instance.GetSimTime() > 30)
+                {
+                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Generating Report"));
+                    ReportTask report = new ReportTask(SimManager.Instance.RoadIntersections, SimManager.Instance.RoadGraph);
+                }
+                else
+                {
+                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Report was not generated since simulation ran less than 30 seconds"));
+                }
             }
 
             EventQueueForUI.Instance.Add(new RefreshMapEvent(MainWindow.Instance.GetMap()));

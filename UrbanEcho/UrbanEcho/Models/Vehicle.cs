@@ -137,7 +137,7 @@ namespace UrbanEcho.Models
             }
             set
             {
-                kmh = value;
+                kmh = Math.Clamp(value, 0.0f, 120.0f);
             }
         }
 
@@ -381,7 +381,8 @@ namespace UrbanEcho.Models
                 }
 
                 CollisionChecks(currentFloatAngle);
-
+                thisVehicleIsInAIntersection = false;
+                intersectionOccupied = false;
                 if (IsWaiting)
                 {
                     ChecksWhileWaiting();
@@ -413,6 +414,14 @@ namespace UrbanEcho.Models
 
         public void ResetBodyTransform()
         {
+            stoppedElapsedTime = 0;
+            startedStoppedTimer = false;
+            vehicleInFrontCount = 0;//Reset this so resetVehicle to new position isn't called twice
+            insideAnotherVehicle = false;//Reset this so resetVehicle to new position isn't called twice
+            anotherVehicleAhead = false;//Reset this so resetVehicle to new position isn't called twice
+            overlapTest.ResetInsideAnotherVehicleCount();
+            VehicleInFront = false;
+
             B2Api.b2Body_SetLinearVelocity(Body.BodyId, Vector2.Zero);
             B2Api.b2Body_SetAngularVelocity(Body.BodyId, 0);
             float getAngle = GetTargetAngle();
@@ -682,6 +691,10 @@ namespace UrbanEcho.Models
                 if (vehicleInFrontCount > 0)
                 {
                     VehicleInFront = true;
+                    if (state != VehicleStates.Stopped)
+                    {
+                        vehicleInFrontStartTime = SimManager.Instance.GetSimTime();
+                    }
                     vehicleInFrontElapsedTime = SimManager.Instance.GetSimTime() - vehicleInFrontStartTime;
 
                     if (vehicleInFrontElapsedTime > vehicleInFrontThresholdWaitTime)
@@ -875,6 +888,13 @@ namespace UrbanEcho.Models
             if (float.IsNaN(Kmh))
             {
                 Kmh = 0;
+            }
+            else
+            {
+                if (Kmh > 0.1f)
+                {
+                    startedStoppedTimer = false;
+                }
             }
         }
 
@@ -1232,8 +1252,6 @@ namespace UrbanEcho.Models
             {
                 stats.ElaspedTime = SimManager.Instance.GetSimTime() - currentEdgeStartTime;
 
-                lastUpdateSimTime = SimManager.Instance.GetSimTime();
-
                 //Should always be a positive
                 if (timeDelta > 0)
                 {
@@ -1245,6 +1263,8 @@ namespace UrbanEcho.Models
                     allSpeedValues += Kmh * timeDelta;
                 }
             }
+
+            lastUpdateSimTime = SimManager.Instance.GetSimTime();
         }
 
         public void ResetStats()

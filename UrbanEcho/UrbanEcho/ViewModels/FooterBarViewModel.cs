@@ -1,4 +1,6 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using Avalonia.Media;
+using Avalonia.Media.Immutable;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using System;
@@ -20,6 +22,7 @@ namespace UrbanEcho.ViewModels
         [ObservableProperty] private string projectText = "No Project Loaded";
         [ObservableProperty] private string simTimeText = "--:--";
         [ObservableProperty] private string vehicleCountText = "Vehicles: 0";
+        [ObservableProperty] private IBrush theBackgroundColor = Brushes.Black;
 
         public FooterBarViewModel()
         {
@@ -31,6 +34,8 @@ namespace UrbanEcho.ViewModels
             ProjectText = projectText;
             SimTimeText = simTimeText;
             VehicleCountText = $"Vehicles: {vehicleCount}";
+            TheBackgroundColor = SimManager.Instance.RunSimulation ? Brushes.IndianRed : Brushes.Black;
+            //FooterBorder.Background = vm.Simulation.IsRunning ? Brushes.IndianRed : Brushes.Black;
         }
     }
 }

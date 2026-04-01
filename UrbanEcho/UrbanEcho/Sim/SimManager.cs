@@ -221,7 +221,7 @@ namespace UrbanEcho.Sim
                         if (!currentSim.IsDisposed())
                         {
                             ResetSim();//Dispose so that all vehicles are cleared
-                            currentSim.CreateReport();//Clear all the stats
+                            currentSim.CreateReport();//Create the report
                         }
 
                         currentSim = new Sim();//Get a new instance for current sim
@@ -254,7 +254,7 @@ namespace UrbanEcho.Sim
                     Thread.Sleep(timeToSleep);
                 }
 
-                if (FooterNeedsUpdate() && TaskUpdates % 30 == 0)
+                if (TaskUpdates % 30 == 0)
                 {
                     UpdateFooter();
                 }
@@ -266,17 +266,15 @@ namespace UrbanEcho.Sim
             currentSim.RefreshTrafficRuleReferences();
         }
 
-        public bool FooterNeedsUpdate()
-        {
-            bool returnValue = (projectNameChanged || lastSimulationReadyValue != simulationReady || RunSimulation);
-            return returnValue;
-        }
-
         public void UpdateFooter()
         {
             lastSimulationReadyValue = simulationReady;
             projectNameChanged = false;
             string readyText = (simulationReady) ? "Ready" : "Not Ready - check that all required layers are added";
+            if (RunSimulation)
+            {
+                readyText = "Running Simulation";
+            }
             string projectText = Path.GetFileNameWithoutExtension(ProjectLayers.GetProject()?.PathForThisFile ?? "");
             if (string.IsNullOrEmpty(projectText))
             {
@@ -297,10 +295,8 @@ namespace UrbanEcho.Sim
         {
             projectNameChanged = true;
             simulationReady = false;
-            if (FooterNeedsUpdate())
-            {
-                UpdateFooter();
-            }
+
+            UpdateFooter();
         }
 
         public float GetSimTime()
