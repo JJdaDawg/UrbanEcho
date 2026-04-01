@@ -20,24 +20,29 @@
 
         <!-- Road Settings -->
         <Expander Header="Road Settings" IsExpanded="True">
-            <StackPanel Margin="0" Spacing="6">
+            <StackPanel Margin="0" Spacing="8">
 
-                <TextBlock Text="Road Status" />
-                <ToggleSwitch OnContent="Open" OffContent="Closed"
-                              IsChecked="{Binding IsRoadOpen}"
-                              IsEnabled="{Binding IsEditing}" />
+                <StackPanel Spacing="0">
+					<TextBlock Text="Road Status" />
+                    <ToggleSwitch OnContent="Open" OffContent="Closed"
+                                  IsChecked="{Binding IsRoadOpen}"
+                                  IsEnabled="{Binding IsEditing}"/>
+                </StackPanel>
 
-                <TextBlock Text="Speed Limit" />
-                <NumericUpDown Value="{Binding SpeedLimit}"
-                               Minimum="0"
-                               Maximum="130"
-                               IsEnabled="{Binding IsEditing}" />
+                <StackPanel Spacing="2">
+					<TextBlock Text="Speed Limit" />
+                    <NumericUpDown Value="{Binding SpeedLimit}"
+                                   Minimum="0"
+                                   Maximum="130"
+                                   IsEnabled="{Binding IsEditing}" />
+                </StackPanel>
 
-                <TextBlock Text="Truck Allowance" />
-                <ToggleSwitch OnContent="Allowed" OffContent="Not Allowed"
-                              IsChecked="{Binding TruckAllowance}"
-                              IsEnabled="{Binding IsEditing}" />               
-
+                <StackPanel Spacing="0">
+					<TextBlock Text="Truck Allowance" />
+                    <ToggleSwitch OnContent="Allowed" OffContent="Not Allowed"
+                                  IsChecked="{Binding TruckAllowance}"
+                                  IsEnabled="{Binding IsEditing}" />
+                </StackPanel>
             </StackPanel>
         </Expander>
 

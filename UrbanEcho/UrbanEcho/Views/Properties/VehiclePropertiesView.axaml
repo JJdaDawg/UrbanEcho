@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:UrbanEcho.ViewModels.Properties"
-             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="500"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="1000"
              x:Class="UrbanEcho.VehiclePropertiesView"
              x:DataType="vm:VehiclePropertiesViewModel">
 
@@ -16,81 +16,74 @@
     <StackPanel Spacing="0">
 
         <!-- INFO -->
-        <TextBlock Text="INFO" Opacity="0.4" FontWeight="SemiBold"
-                   Margin="14,12,14,6" />
-        <StackPanel Margin="14,0,14,12" Spacing="8">
-            <StackPanel Spacing="2">
-                <TextBlock Text="ID" Opacity="0.5" />
-                <TextBlock Text="{Binding Id}" Opacity="0.85" />
+        <Expander Header="Vehicle Info" IsExpanded="True">
+			<StackPanel Spacing="8">
+				<StackPanel Spacing="2">
+                    <TextBlock Text="ID" Opacity="0.5" />
+                    <TextBlock Text="{Binding Id}" Opacity="0.85" />
+                </StackPanel>
+                <StackPanel Spacing="2">
+                    <TextBlock Text="Type" Opacity="0.5" />
+                    <TextBlock Text="{Binding VehicleType}" Opacity="0.85" />
+                </StackPanel>
+                <StackPanel Spacing="2">
+                    <TextBlock Text="State" Opacity="0.5" />
+                    <TextBlock Text="{Binding State}" Opacity="0.85" />
+                </StackPanel>
+                <StackPanel Spacing="2">
+                    <TextBlock Text="Speed" Opacity="0.5" />
+                    <TextBlock Text="{Binding Kmh, StringFormat='{}{0:F1} km/h'}" Opacity="0.85" />
+                </StackPanel>
+                <StackPanel Spacing="2">
+                    <TextBlock Text="Speed Limit" Opacity="0.5" />
+                    <TextBlock Text="{Binding SpeedLimit, StringFormat='{}{0} km/h'}" Opacity="0.85" />
+                </StackPanel>
+                <StackPanel Spacing="2">
+                    <TextBlock Text="Road Name" Opacity="0.5" />
+                    <TextBlock Text="{Binding RoadName}" Opacity="0.85" />
+                </StackPanel>
+                <StackPanel Spacing="2">
+                    <TextBlock Text="Waiting" Opacity="0.5" />
+                    <TextBlock Text="{Binding IsWaiting}" Opacity="0.85" />
+                </StackPanel>
+                <StackPanel Spacing="2">
+                    <TextBlock Text="At Intersection" Opacity="0.5" />
+                    <TextBlock Text="{Binding WaitingOnIntersection}" Opacity="0.85" />
+                </StackPanel>
+                <StackPanel Spacing="2">
+                    <TextBlock Text="Vehicle In Front" Opacity="0.5" />
+                    <TextBlock Text="{Binding VehicleInFront}" Opacity="0.85" />
+                </StackPanel>
+                <StackPanel Spacing="2" IsVisible="{Binding VehicleInFront}">
+                    <TextBlock Text="Distance to Front" Opacity="0.5" />
+                    <TextBlock Text="{Binding MetersFromCarInFront, StringFormat='{}{0:F1}m'}" Opacity="0.85" />
+                </StackPanel>
             </StackPanel>
-            <StackPanel Spacing="2">
-                <TextBlock Text="Type" Opacity="0.5" />
-                <TextBlock Text="{Binding VehicleType}" Opacity="0.85" />
-            </StackPanel>
-            <StackPanel Spacing="2">
-                <TextBlock Text="State" Opacity="0.5" />
-                <TextBlock Text="{Binding State}" Opacity="0.85" />
-            </StackPanel>
-            <StackPanel Spacing="2">
-                <TextBlock Text="Speed" Opacity="0.5" />
-                <TextBlock Text="{Binding Kmh, StringFormat='{}{0:F1} km/h'}" Opacity="0.85" />
-            </StackPanel>
-            <StackPanel Spacing="2">
-                <TextBlock Text="Speed Limit" Opacity="0.5" />
-                <TextBlock Text="{Binding SpeedLimit, StringFormat='{}{0} km/h'}" Opacity="0.85" />
-            </StackPanel>
-            <StackPanel Spacing="2">
-                <TextBlock Text="Road Name" Opacity="0.5" />
-                <TextBlock Text="{Binding RoadName}" Opacity="0.85" />
-            </StackPanel>
-            <StackPanel Spacing="2">
-                <TextBlock Text="Waiting" Opacity="0.5" />
-                <TextBlock Text="{Binding IsWaiting}" Opacity="0.85" />
-            </StackPanel>
-            <StackPanel Spacing="2">
-                <TextBlock Text="At Intersection" Opacity="0.5" />
-                <TextBlock Text="{Binding WaitingOnIntersection}" Opacity="0.85" />
-            </StackPanel>
-            <StackPanel Spacing="2">
-                <TextBlock Text="Vehicle In Front" Opacity="0.5" />
-                <TextBlock Text="{Binding VehicleInFront}" Opacity="0.85" />
-            </StackPanel>
-            <StackPanel Spacing="2" IsVisible="{Binding VehicleInFront}">
-                <TextBlock Text="Distance to Front" Opacity="0.5" />
-                <TextBlock Text="{Binding MetersFromCarInFront, StringFormat='{}{0:F1}m'}" Opacity="0.85" />
-            </StackPanel>
-        </StackPanel>
-
-        <Separator Margin="0,0,0,0" Opacity="0.15" />
+        </Expander>
 
         <!-- ACTIONS -->
-        <TextBlock Text="ACTIONS" Opacity="0.4" FontWeight="SemiBold"
-                   Margin="14,10,14,8" />
-        <StackPanel Orientation="Horizontal" Margin="14,0,14,12" Spacing="6">
-            <Button Content="Path"  Height="26" Padding="10,0"
+        <Expander Header="Vehicle Actions" IsExpanded="True">
+			<StackPanel Spacing="8" Orientation="Horizontal">
+				<Button Content="Path"  Height="26" Padding="10,0"
                     Command="{Binding PathCommand}"
                     Classes.active="{Binding IsShowingPath}" />
-            <Button Content="Trend" Height="26" Padding="10,0" Command="{Binding TrendCommand}" />
-            <Button Content="Track"
-                    Height="26" Padding="10,0"
-                    Command="{Binding TrackCommand}"
-                    Classes.active="{Binding IsTracking}" />
-        </StackPanel>
-
-        <Separator Margin="0,0,0,0" Opacity="0.15" IsVisible="{Binding IsEditing}" />
+                <Button Content="Trend" Height="26" Padding="10,0" Command="{Binding TrendCommand}" />
+                <Button Content="Track"
+                        Height="26" Padding="10,0"
+                        Command="{Binding TrackCommand}"
+                        Classes.active="{Binding IsTracking}" />
+            </StackPanel>
+        </Expander>
 
         <!-- EDIT -->
-        <StackPanel IsVisible="{Binding IsEditing}">
-            <TextBlock Text="EDIT" Opacity="0.4" FontWeight="SemiBold"
-                       Margin="14,10,14,8" />
-            <StackPanel Orientation="Horizontal" Margin="14,0,14,12" Spacing="6">
+        <Expander Header="Edit" IsExpanded="True" IsVisible="{Binding IsEditing}">
+			<StackPanel Orientation="Horizontal" Spacing="8">
                 <Button Content="Destination" Height="26" Padding="10,0" 
                         Command="{Binding DestinationCommand}"
                         Classes.active="{Binding IsPickingDestination}" />
                 <Button Content="{Binding StartStopLabel}" Height="26" Padding="10,0" Command="{Binding StartStopCommand}" />
                 <Button Content="Re-spawn"    Height="26" Padding="10,0" Command="{Binding RespawnCommand}" />
             </StackPanel>
-        </StackPanel>
-
+        </Expander>
     </StackPanel>
 </UserControl>
