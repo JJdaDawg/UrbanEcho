@@ -96,6 +96,14 @@ namespace UrbanEcho.Sim
         /// <summary>Node IDs that have at least one open, truck-allowed outgoing edge. Used as fallback spawn pool for trucks.</summary>
         public List<int> TruckEligibleNodes { get; private set; } = new List<int>();
 
+        /// <summary>
+        /// AADT-weighted spawn pool restricted to highway-class roads
+        /// (Freeway, Expressway, Arterial, Collector).  Nodes adjacent to
+        /// higher-AADT edges appear more often.  Used as a fallback spawn
+        /// source between census-weighted and pure-random.
+        /// </summary>
+        public List<int> AadtHighwaySpawnNodes { get; private set; } = new List<int>();
+
         private bool intersectionBodiesCreated = false;
 
         public Dictionary<int, double> NodePenalties = new Dictionary<int, double>();
@@ -474,6 +482,55 @@ namespace UrbanEcho.Sim
                 .Where(nid => RoadGraph.GetOutgoingEdges(nid)
                     .Any(e => !e.IsClosed && e.Metadata.TruckAllowance))
                 .ToList();
+
+            // Build the AADT-weighted highway-preferred spawn pool.
+            AadtHighwaySpawnNodes = BuildAadtHighwaySpawnNodes(RoadGraph);
+        }
+
+        private static readonly HashSet<RoadType> HighwayRoadTypes = new HashSet<RoadType>
+        {
+            RoadType.Freeway,
+            RoadType.Expressway,
+            RoadType.Arterial
+
+        };
+
+        /// <summary>
+        /// Builds a weighted list of node IDs from highway-class roads
+        /// (Freeway, Expressway, Arterial) where nodes adjacent
+        /// to higher-AADT edges appear proportionally more often.
+        /// </summary>
+        private static List<int> BuildAadtHighwaySpawnNodes(RoadGraph graph)
+        {
+            // For each node, find the max AADT across its outgoing highway-class edges.
+            var nodeTraffic = new Dictionary<int, double>();
+            foreach (var edge in graph.Edges)
+            {
+                if (edge.IsClosed || !HighwayRoadTypes.Contains(edge.Metadata.RoadType))
+                    continue;
+
+                double vol = edge.Metadata.TrafficVolume;
+                if (!nodeTraffic.TryGetValue(edge.From, out double existing) || vol > existing)
+                    nodeTraffic[edge.From] = vol;
+            }
+
+            if (nodeTraffic.Count == 0)
+                return new List<int>();
+
+            double maxVol = nodeTraffic.Values.Max();
+            if (maxVol <= 0) maxVol = 1;
+
+            var weighted = new List<int>();
+            foreach (var kvp in nodeTraffic)
+            {
+                // 1–10 weight buckets so high-AADT nodes are picked more often
+                double normalized = kvp.Value / maxVol;
+                int weight = Math.Max(1, (int)(normalized * 10));
+                for (int w = 0; w < weight; w++)
+                    weighted.Add(kvp.Key);
+            }
+
+            return weighted;
         }
 
         /// <summary>
@@ -566,6 +623,7 @@ namespace UrbanEcho.Sim
             pathfinder = null;
             nodes = null;
             TruckEligibleNodes = new List<int>();
+            AadtHighwaySpawnNodes = new List<int>();
             intersectionBodiesCreated = false;
             NodePenalties = new Dictionary<int, double>();
         }

@@ -337,6 +337,11 @@ namespace UrbanEcho.Sim
                     {
                         spawnNodeId = SimManager.Instance.CensusSpawn.PickWeightedSpawnNode();
                     }
+                    else if (SimManager.Instance.AadtHighwaySpawnNodes.Count > 0)
+                    {
+                        spawnNodeId = SimManager.Instance.AadtHighwaySpawnNodes[
+                            spawnRng.Next(SimManager.Instance.AadtHighwaySpawnNodes.Count)];
+                    }
                     else if (SimManager.Instance.nodes != null && SimManager.Instance.nodes.Count > 0)
                     {
                         spawnNodeId = SimManager.Instance.nodes[spawnRng.Next(SimManager.Instance.nodes.Count)];
