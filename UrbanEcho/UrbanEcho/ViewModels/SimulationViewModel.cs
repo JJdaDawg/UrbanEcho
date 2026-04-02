@@ -151,6 +151,5 @@ namespace UrbanEcho.ViewModels
             SpeedUpCommand.NotifyCanExecuteChanged();
             SpeedDownCommand.NotifyCanExecuteChanged();
         }
-
-            }
-        }
+    }
+}
