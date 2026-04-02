@@ -72,13 +72,10 @@ namespace UrbanEcho.ViewModels.Properties
 
         // ACTION Commands
         public RelayCommand PathCommand { get; }
-
-        public RelayCommand TrendCommand { get; } = new RelayCommand(() => { /* todo */ });
         public RelayCommand TrackCommand { get; }
 
         // EDIT Commands
         public RelayCommand DestinationCommand { get; }
-
         public RelayCommand StartStopCommand { get; }
         public RelayCommand RespawnCommand { get; }
 
