@@ -40,7 +40,6 @@ public partial class RoadPropertiesViewModel : ObservableObject, IPropertiesView
         WeakReferenceMessenger.Default.Register<EditModeChangedMessage>(this, (r, m) =>
         {
             IsEditMode = m.IsEditMode;
-            if (!IsEditMode) { ShowLaneEditor = false; }
         });
     }
 
@@ -64,11 +63,6 @@ public partial class RoadPropertiesViewModel : ObservableObject, IPropertiesView
     {
         if (!IsEditing) return;
         EventQueueForSim.Instance.Add(new SetTruckAllowanceEvent(_edge, value));
-    }
-
-    private void EditLanes()
-    {
-        ShowLaneEditor = !ShowLaneEditor;
     }
 
     public void UpdatePropertyView()

@@ -21,6 +21,7 @@ public partial class ProjectExplorerPanelViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsVehicleLayerActive))]
     [NotifyPropertyChangedFor(nameof(IsRoadLayerActive))]
     [NotifyPropertyChangedFor(nameof(IsSpawnerLayerActive))]
+    [NotifyPropertyChangedFor(nameof(IsSpawnerLayerAndCensusActive))]
     private SelectionLayer _activeLayer = SelectionLayer.None;
 
     [ObservableProperty] private bool _hasProject;
@@ -33,6 +34,7 @@ public partial class ProjectExplorerPanelViewModel : ObservableObject
     public bool IsVehicleLayerActive => ActiveLayer == SelectionLayer.Vehicle;
     public bool IsRoadLayerActive => ActiveLayer == SelectionLayer.Road;
     public bool IsSpawnerLayerActive => ActiveLayer == SelectionLayer.Spawner;
+    public bool IsSpawnerLayerAndCensusActive => ActiveLayer == SelectionLayer.Spawner && IsCensusLoaded == true;
 
     public RelayCommand ToggleCommand { get; }
     public RelayCommand SelectIntersectionLayerCommand { get; }

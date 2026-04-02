@@ -25,68 +25,74 @@
             <Separator Grid.Row="1" Margin="0" />
 
             <!-- Content -->
-            <Grid Grid.Row="2">
-                <TextBlock Text="No project loaded"
+            <ScrollViewer Grid.Row="2" Margin="10 10 0 10">
+                <Panel>
+					<TextBlock Text="No project loaded"
                            Opacity="0.5"
                            IsVisible="{Binding !HasProject}"
                            HorizontalAlignment="Center"
                            VerticalAlignment="Center"/>
-                <StackPanel IsVisible="{Binding HasProject}" Margin="10,10,0,0" Spacing="6">
-                    <TextBlock Text="SELECT LAYER" Opacity="0.5" />
-                    <StackPanel Orientation="Horizontal" Spacing="4">
-                        <ToggleButton Content="Intersections"
-                                      IsChecked="{Binding IsIntersectionLayerActive}"
-                                      Command="{Binding SelectIntersectionLayerCommand}" />
-                        <ToggleButton Content="Vehicles"
-                                      IsChecked="{Binding IsVehicleLayerActive}"
-                                      Command="{Binding SelectVehicleLayerCommand}" />
-                        <ToggleButton Content="Roads"
-                                      IsChecked="{Binding IsRoadLayerActive}"
-                                      Command="{Binding SelectRoadLayerCommand}" />
-                        <ToggleButton Content="Spawners"
-                                      IsChecked="{Binding IsSpawnerLayerActive}"
-                                      Command="{Binding SelectSpawnerLayerCommand}" />
-                    </StackPanel>
+                    <StackPanel IsVisible="{Binding HasProject}" Spacing="6">
+                        <TextBlock Text="SELECT LAYER" Opacity="0.5" />
+                        <StackPanel Orientation="Vertical" Spacing="4" Margin="0 0 8 0">
+                            <ToggleButton Content="Intersections"
+                                          IsChecked="{Binding IsIntersectionLayerActive}"
+                                          Command="{Binding SelectIntersectionLayerCommand}"
+                                          HorizontalAlignment="Stretch"/>
+                            <ToggleButton Content="Vehicles"
+                                          IsChecked="{Binding IsVehicleLayerActive}"
+                                          Command="{Binding SelectVehicleLayerCommand}"
+                                          HorizontalAlignment="Stretch"/>
+                            <ToggleButton Content="Roads"
+                                          IsChecked="{Binding IsRoadLayerActive}"
+                                          Command="{Binding SelectRoadLayerCommand}"
+                                          HorizontalAlignment="Stretch"/>
+                            <ToggleButton Content="Spawners"
+                                          IsChecked="{Binding IsSpawnerLayerActive}"
+                                          Command="{Binding SelectSpawnerLayerCommand}"
+                                          HorizontalAlignment="Stretch"/>
+                        </StackPanel>
 
-                    <!-- Preset gate tools — only shown when Spawner layer is active -->
-                    <StackPanel IsVisible="{Binding IsSpawnerLayerActive}" Spacing="4" Margin="0,6,8,0">
-                        <TextBlock Text="PRESET GATES" Opacity="0.5" />
-                        <Button Content="Place gates at network boundary"
-                                Command="{Binding AutoPlaceGatesFromExtentCommand}"
-                                HorizontalAlignment="Stretch"
-                                ToolTip.Tip="Places up to 6 spawners at road nodes along the convex hull of the loaded road network" />
-                        <Button Content="Place gates at residential areas (OSM)"
-                                Command="{Binding AutoPlaceGatesFromResidentialCommand}"
-                                HorizontalAlignment="Stretch"
-                                ToolTip.Tip="Reads landuse=residential polygons from the loaded OSM file and places spawners at their road-network entry points" />
-                    </StackPanel>
+                        <!-- Preset gate tools — only shown when Spawner layer is active -->
+                        <StackPanel IsVisible="{Binding IsSpawnerLayerActive}" Spacing="4" Margin="0,6,8,0">
+                            <TextBlock Text="PRESET GATES" Opacity="0.5" />
+                            <Button Content="Place gates at network boundary"
+                                    Command="{Binding AutoPlaceGatesFromExtentCommand}"
+                                    HorizontalAlignment="Stretch"
+                                    ToolTip.Tip="Places up to 6 spawners at road nodes along the convex hull of the loaded road network" />
+                            <Button Content="Place gates at residential areas (OSM)"
+                                    Command="{Binding AutoPlaceGatesFromResidentialCommand}"
+                                    HorizontalAlignment="Stretch"
+                                    ToolTip.Tip="Reads landuse=residential polygons from the loaded OSM file and places spawners at their road-network entry points" />
+                        </StackPanel>
 
-                    <!-- Spawn mode — only shown when census data is loaded -->
-                    <StackPanel IsVisible="{Binding IsCensusLoaded}" Spacing="4" Margin="0,6,8,0">
-                        <TextBlock Text="SPAWN MODE" Opacity="0.5" />
-                        <ToggleButton Content="Use Census Spawning"
-                                      IsChecked="{Binding UseCensusSpawning}"
+                        <!-- Spawn mode — only shown when census data is loaded -->
+                        <StackPanel IsVisible="{Binding IsSpawnerLayerAndCensusActive}" Spacing="4" Margin="0,6,8,0">
+                            <TextBlock Text="SPAWN MODE" Opacity="0.5" />
+                            <ToggleButton Content="Use Census Spawning"
+                                          IsChecked="{Binding UseCensusSpawning}"
+                                          HorizontalAlignment="Stretch"
+                                          ToolTip.Tip="Spawn vehicles at census-weighted origin nodes instead of gates" />
+                        </StackPanel>
+
+                        <!-- Routing mode — always shown when a project is loaded -->
+                        <StackPanel Spacing="4" Margin="0,6,8,0" IsVisible="{Binding IsSpawnerLayerAndCensusActive}">
+                            <TextBlock Text="ROUTING MODE" Opacity="0.5" />
+                            <ComboBox SelectedIndex="{Binding RoutingModeIndex}"
                                       HorizontalAlignment="Stretch"
-                                      ToolTip.Tip="Spawn vehicles at census-weighted origin nodes instead of gates" />
+                                      ToolTip.Tip="Controls how vehicles pick their next destination">
+                                <ComboBoxItem Content="AADT weighted"
+                                              IsEnabled="{Binding HasRealAadt}"
+                                              ToolTip.Tip="Requires AADT traffic count data (not available for OSM networks)" />
+                                <ComboBoxItem Content="Random" />
+                                <ComboBoxItem Content="Census (employment)"
+                                              IsEnabled="{Binding IsCensusLoaded}"
+                                              ToolTip.Tip="Requires census data to be loaded" />
+                            </ComboBox>
+                        </StackPanel>
                     </StackPanel>
-
-                    <!-- Routing mode — always shown when a project is loaded -->
-                    <StackPanel Spacing="4" Margin="0,6,8,0">
-                        <TextBlock Text="ROUTING MODE" Opacity="0.5" />
-                        <ComboBox SelectedIndex="{Binding RoutingModeIndex}"
-                                  HorizontalAlignment="Stretch"
-                                  ToolTip.Tip="Controls how vehicles pick their next destination">
-                            <ComboBoxItem Content="AADT weighted"
-                                          IsEnabled="{Binding HasRealAadt}"
-                                          ToolTip.Tip="Requires AADT traffic count data (not available for OSM networks)" />
-                            <ComboBoxItem Content="Random" />
-                            <ComboBoxItem Content="Census (employment)"
-                                          IsEnabled="{Binding IsCensusLoaded}"
-                                          ToolTip.Tip="Requires census data to be loaded" />
-                        </ComboBox>
-                    </StackPanel>
-                </StackPanel>
-            </Grid>
+                </Panel>
+            </ScrollViewer>
         </Grid>
     </Border>
 </UserControl>
