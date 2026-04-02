@@ -76,24 +76,24 @@
 							<icon:SymbolIcon Symbol="Previous"/>
                         </MenuItem.Icon>
                     </MenuItem>
-										<Separator />
-										<MenuItem Header="Use Real Time Data" Command="{Binding Simulation.RealTimeCommand}">
-												<MenuItem.Icon>
-							<icon:SymbolIcon Symbol="LocationLive"/>
-												</MenuItem.Icon>
-										</MenuItem>
-										<Separator />
-										<MenuItem Header="{Binding Simulation.ObservationPeriodLabel, StringFormat='Period: {0}'}">
-												<MenuItem.Icon>
-														<icon:SymbolIcon Symbol="Clock"/>
-												</MenuItem.Icon>
-												<MenuItem Header="AM Peak (07:00–09:00)"  Command="{Binding Simulation.SetPeriodAmPeakCommand}"/>
-												<MenuItem Header="Midday (11:00–13:00)"   Command="{Binding Simulation.SetPeriodMiddayCommand}"/>
-												<MenuItem Header="PM Peak (16:00–18:00)"  Command="{Binding Simulation.SetPeriodPmPeakCommand}"/>
-												<MenuItem Header="Evening (19:00–22:00)"  Command="{Binding Simulation.SetPeriodEveningCommand}"/>
-												<MenuItem Header="Off-Peak (22:00–05:00)" Command="{Binding Simulation.SetPeriodOffPeakCommand}"/>
-										</MenuItem>
-								</MenuItem>
+					<Separator />
+					<MenuItem Header="Use Real Time Data" Command="{Binding Simulation.RealTimeCommand}">
+						<MenuItem.Icon>
+		                    <icon:SymbolIcon Symbol="LocationLive"/>
+						</MenuItem.Icon>
+					</MenuItem>
+					<Separator />
+					<MenuItem Header="{Binding Simulation.ObservationPeriodLabel, StringFormat='Period: {0}'}">
+						<MenuItem.Icon>
+								<icon:SymbolIcon Symbol="Clock"/>
+						</MenuItem.Icon>
+						<MenuItem Header="AM Peak (07:00–09:00)"  Command="{Binding Simulation.SetPeriodAmPeakCommand}"/>
+						<MenuItem Header="Midday (11:00–13:00)"   Command="{Binding Simulation.SetPeriodMiddayCommand}"/>
+						<MenuItem Header="PM Peak (16:00–18:00)"  Command="{Binding Simulation.SetPeriodPmPeakCommand}"/>
+						<MenuItem Header="Evening (19:00–22:00)"  Command="{Binding Simulation.SetPeriodEveningCommand}"/>
+						<MenuItem Header="Off-Peak (22:00–05:00)" Command="{Binding Simulation.SetPeriodOffPeakCommand}"/>
+					</MenuItem>
+			    </MenuItem>
 
                 <MenuItem Header="View">
                     <MenuItem Header="Traffic Volume"
