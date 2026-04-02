@@ -24,13 +24,8 @@ public partial class RoadPropertiesViewModel : ObservableObject, IPropertiesView
     [ObservableProperty] private int _speedLimit;
     [ObservableProperty] private bool _truckAllowance;
 
-    [ObservableProperty] private bool _showLaneEditor;
-
     [ObservableProperty]
     private bool _isEditing;
-
-    public RelayCommand SpawnVehicleCommand { get; }
-    public RelayCommand EditLanesCommand { get; }
 
     public RoadPropertiesViewModel(RoadEdge edge)
     {
@@ -47,9 +42,6 @@ public partial class RoadPropertiesViewModel : ObservableObject, IPropertiesView
             IsEditMode = m.IsEditMode;
             if (!IsEditMode) { ShowLaneEditor = false; }
         });
-
-        SpawnVehicleCommand = new RelayCommand(SpawnVehicle);
-        EditLanesCommand = new RelayCommand(EditLanes);
     }
 
     partial void OnIsRoadOpenChanged(bool value)
@@ -73,9 +65,6 @@ public partial class RoadPropertiesViewModel : ObservableObject, IPropertiesView
         if (!IsEditing) return;
         EventQueueForSim.Instance.Add(new SetTruckAllowanceEvent(_edge, value));
     }
-
-    private void SpawnVehicle()
-    { }
 
     private void EditLanes()
     {
