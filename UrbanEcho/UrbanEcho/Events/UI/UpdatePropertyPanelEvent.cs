@@ -9,6 +9,9 @@ using UrbanEcho.ViewModels;
 
 namespace UrbanEcho.Events.UI
 {
+    /// <summary>
+    /// Updates the property panel with the current values
+    /// </summary>
     internal class UpdatePropertyPanelEvent : IEventForUI
     {
         public UpdatePropertyPanelEvent()

@@ -7,6 +7,9 @@ using UrbanEcho.ViewModels;
 
 namespace UrbanEcho.Events.UI
 {
+    /// <summary>
+    /// Resets the controls shown on the UI for simulation back to default values
+    /// </summary>
     public class ResetSimControlEvent : IEventForUI
     {
         public ResetSimControlEvent()

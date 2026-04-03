@@ -10,6 +10,9 @@ using UrbanEcho.ViewModels;
 
 namespace UrbanEcho.Events.UI
 {
+    /// <summary>
+    /// Clears the map so that no layers are loaded.
+    /// </summary>
     internal class ClearLayersEvent : IEventForUI
     {
         private Map map;

@@ -42,7 +42,7 @@ namespace UrbanEcho.Models
         private float ratioForSignal = 0;//Ratio for how long first paired roads allow traffic
 
         //Seconds on is trafficLightCycleTime * ratio
-        private float trafficLightCycleTime = 60.0f;//Time for a traffic light cycle
+        private float trafficLightCycleTime = 100.0f;//Time for a traffic light cycle
 
         private float offsetTime = 0;//Add a random offset so everything doesn't seem like its running on same time
         private bool wasFirstPartOfCycle = true;

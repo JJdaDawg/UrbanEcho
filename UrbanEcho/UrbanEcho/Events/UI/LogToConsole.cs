@@ -9,6 +9,9 @@ using UrbanEcho.Models;
 
 namespace UrbanEcho.Events.UI
 {
+    /// <summary>
+    /// Logs a message to the console
+    /// </summary>
     internal class LogToConsole : IEventForUI
     {
         private MainViewModel? mainViewModel;

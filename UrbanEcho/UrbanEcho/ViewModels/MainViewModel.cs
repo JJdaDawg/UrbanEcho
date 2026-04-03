@@ -11,7 +11,6 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using UrbanEcho.Events.UI;
 using UrbanEcho.Models;
 using UrbanEcho.Services;
 

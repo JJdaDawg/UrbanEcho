@@ -8,6 +8,9 @@ using UrbanEcho.FileManagement;
 
 namespace UrbanEcho.Events.Sim
 {
+    /// <summary>
+    /// Saves project as a new name using <see cref="ProjectFile.SaveAs"/>.
+    /// </summary>
     internal class SaveAsProjectEvent : IEventForSim
     {
         private ProjectFile projectFile;

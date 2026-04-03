@@ -9,6 +9,9 @@ using UrbanEcho.FileManagement;
 
 namespace UrbanEcho.Events.Sim
 {
+    /// <summary>
+    /// Closes current project and starts new project <see cref="ProjectLayers.NewProject()"/>
+    /// </summary>
     public class NewProjectEvent : IEventForSim
     {
         private Map map;

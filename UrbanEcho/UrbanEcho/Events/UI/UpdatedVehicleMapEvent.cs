@@ -11,6 +11,9 @@ using UrbanEcho.FileManagement;
 
 namespace UrbanEcho.Events.UI
 {
+    /// <summary>
+    /// Sets a flag indicating that data for the vehicle layer has changed so Mapsui redraws the layer
+    /// </summary>
     internal class UpdatedVehicleMapEvent : IEventForUI
     {
         private List<IFeature> VehicleList = new List<IFeature>();
@@ -23,11 +26,6 @@ namespace UrbanEcho.Events.UI
         public void Run()
         {
             ProjectLayers.SetVehicleLayerDataChanged(VehicleList);
-        }
-
-        public string Message()
-        {
-            return "";
         }
     }
 }

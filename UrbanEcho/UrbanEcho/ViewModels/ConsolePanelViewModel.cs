@@ -3,9 +3,9 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using System;
 using System.Collections.ObjectModel;
-using UrbanEcho.Events.UI;
 using UrbanEcho.Messages;
 using UrbanEcho.Models;
+using UrbanEcho.Services;
 
 namespace UrbanEcho.ViewModels
 {

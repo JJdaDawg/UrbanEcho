@@ -8,6 +8,9 @@ using UrbanEcho.FileManagement;
 
 namespace UrbanEcho.Events.UI
 {
+    /// <summary>
+    /// Sets that the project was loaded with the project file on the UI
+    /// </summary>
     public class SetProjectEvent : IEventForUI
     {
         private ProjectFile? projectFile;

@@ -7,6 +7,10 @@ using UrbanEcho.Sim;
 
 namespace UrbanEcho.Events.Sim
 {
+    /// <summary>
+    /// Opens a roadEdge <see cref="RoadEdge"/> and allows
+    /// vehicles to use it as a path.
+    /// </summary>
     public class OpenRoadEvent : IEventForSim
     {
         private RoadEdge roadEdge;

@@ -283,6 +283,10 @@ namespace UrbanEcho.Sim
             {
                 readyText = "Running Simulation";
             }
+            if (Paused)
+            {
+                readyText = "Simulation Paused";
+            }
             string projectText = Path.GetFileNameWithoutExtension(ProjectLayers.GetProject()?.PathForThisFile ?? "");
             if (string.IsNullOrEmpty(projectText))
             {
@@ -292,10 +296,10 @@ namespace UrbanEcho.Sim
             {
                 projectText = projectText + " Project";
             }
-            string simTimeText = RunSimulation
+            string simTimeText = (RunSimulation || Paused)
                 ? $"{SimClock.FormatObservationWindow(ObservationStartHour, ObservationEndHour)} | {GetSimTimeOfDay()}"
                 : "--:--";
-            int vehicleCount = RunSimulation ? GetActiveVehicleCount() : 0;
+            int vehicleCount = (RunSimulation || Paused) ? GetActiveVehicleCount() : 0;
             EventQueueForUI.Instance.Add(new UpdateFooterEvent(readyText, projectText, simTimeText, vehicleCount));
         }
 
@@ -329,7 +333,7 @@ namespace UrbanEcho.Sim
 
         public string GetSimTimeOfDay()
         {
-            return RunSimulation ? currentSim.GetSimTimeOfDay() : "--:--";
+            return (RunSimulation || Paused) ? currentSim.GetSimTimeOfDay() : "--:--";
         }
 
         public List<VehicleReadOnly> GetVehicles()
@@ -492,7 +496,6 @@ namespace UrbanEcho.Sim
             RoadType.Freeway,
             RoadType.Expressway,
             RoadType.Arterial
-
         };
 
         /// <summary>

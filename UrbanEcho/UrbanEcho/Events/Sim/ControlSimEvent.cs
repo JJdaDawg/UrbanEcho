@@ -12,6 +12,9 @@ using static UrbanEcho.FileManagement.FileTypes;
 
 namespace UrbanEcho.Events.Sim
 {
+    /// <summary>
+    /// Controls simulation managed by SimManager <see cref="SimManager"/>
+    /// </summary>
     public class ControlSimEvent : IEventForSim
     {
         private SimControlType simControlType;

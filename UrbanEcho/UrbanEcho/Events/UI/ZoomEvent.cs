@@ -13,6 +13,9 @@ using UrbanEcho.FileManagement;
 
 namespace UrbanEcho.Events.UI
 {
+    /// <summary>
+    /// Zooms the map to the extents of the road layer
+    /// </summary>
     internal class ZoomEvent : IEventForUI
     {
         private Map map;
@@ -40,11 +43,6 @@ namespace UrbanEcho.Events.UI
                     Thread.Sleep(100);//Wait until background and roads layer is not busy
                 }
             }
-        }
-
-        public string Message()
-        {
-            return "";
         }
     }
 }

@@ -7,6 +7,10 @@ using UrbanEcho.Sim;
 
 namespace UrbanEcho.Events.Sim
 {
+    /// <summary>
+    /// Closes a roadEdge <see cref="RoadEdge"/> and does not allow
+    /// vehicles to use it as a path.
+    /// </summary>
     public class CloseRoadEvent : IEventForSim
     {
         private RoadEdge roadEdge;

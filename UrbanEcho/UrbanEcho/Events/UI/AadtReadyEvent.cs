@@ -3,6 +3,9 @@ using UrbanEcho.Messages;
 
 namespace UrbanEcho.Events.UI
 {
+    /// <summary>
+    /// Sets if the road network has AADT values ready.
+    /// </summary>
     public class AadtReadyEvent : IEventForUI
     {
         private readonly bool _hasRealAadt;

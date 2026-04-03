@@ -8,6 +8,9 @@ using UrbanEcho.FileManagement;
 
 namespace UrbanEcho.Events.UI
 {
+    /// <summary>
+    /// Refreshes data of the map and repaints it
+    /// </summary>
     internal class RefreshMapEvent : IEventForUI
     {
         private Map map;

@@ -7,6 +7,9 @@ using UrbanEcho.Sim;
 
 namespace UrbanEcho.Events.Sim
 {
+    /// <summary>
+    /// Changes the truck allowance status.
+    /// </summary>
     public class SetTruckAllowanceEvent : IEventForSim
     {
         private RoadEdge roadEdge;

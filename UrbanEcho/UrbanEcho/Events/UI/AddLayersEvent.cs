@@ -10,6 +10,9 @@ using UrbanEcho.ViewModels;
 
 namespace UrbanEcho.Events.UI
 {
+    /// <summary>
+    /// Adds all the layers to the map.
+    /// </summary>
     internal class AddLayersEvent : IEventForUI
     {
         private Map map;

@@ -8,6 +8,9 @@ using UrbanEcho.Events.UI;
 
 namespace UrbanEcho.Events.Sim
 {
+    /// <summary>
+    /// The queue used for events that run on the simulation thread managed by SimManager <see cref="SimManager"/>
+    /// </summary>
     public sealed class EventQueueForSim
     {
         private static EventQueueForSim? instance;

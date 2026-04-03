@@ -7,6 +7,9 @@ using UrbanEcho.Sim;
 
 namespace UrbanEcho.Events.Sim
 {
+    /// <summary>
+    /// Force stop event for stopping a vehicle
+    /// </summary>
     public class ForceStopEvent : IEventForSim
     {
         private bool stopCommand;

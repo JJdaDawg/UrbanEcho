@@ -34,8 +34,18 @@ namespace UrbanEcho.ViewModels
             ProjectText = projectText;
             SimTimeText = simTimeText;
             VehicleCountText = $"Vehicles: {vehicleCount}";
-            TheBackgroundColor = SimManager.Instance.RunSimulation ? Brushes.IndianRed : Brushes.Black;
-            //FooterBorder.Background = vm.Simulation.IsRunning ? Brushes.IndianRed : Brushes.Black;
+            if (SimManager.Instance.RunSimulation)
+            {
+                TheBackgroundColor = Brushes.IndianRed;
+            }
+            else if (SimManager.Instance.Paused)
+            {
+                TheBackgroundColor = Brushes.DarkOrange;
+            }
+            else
+            {
+                TheBackgroundColor = Brushes.Black;
+            }
         }
     }
 }

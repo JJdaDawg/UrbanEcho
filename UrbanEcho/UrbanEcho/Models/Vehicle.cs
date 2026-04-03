@@ -251,6 +251,9 @@ namespace UrbanEcho.Models
         private OverlapTestIntersectionOccupied overlapTestIntersectionOccupied;
         private OverlapTestVehicleInAnyIntersection overlapTestVehicleInAnyIntersection;
 
+        private TurnDirection turnDirection = TurnDirection.Straight;
+        private bool didExtraWaitForTurningVehicles = false;
+
         public Vehicle(PointFeature feature, RoadEdge currentRoadEdge, string carType, int updateGroup, RoadGraph roadGraph)
         {
             rayCasterVehicle = new RayCasterVehicle(this);
@@ -390,6 +393,7 @@ namespace UrbanEcho.Models
                 else
                 {
                     WaitingOnIntersection = false;
+                    didExtraWaitForTurningVehicles = false;
                 }
 
                 UpdateSpeedAndState();
@@ -746,31 +750,45 @@ namespace UrbanEcho.Models
                         if (intersectionLastAt is not null)
                         {
                             RoadIntersection intersection = intersectionLastAt;
-
-                            Vector2[] vertices = intersection.Body.GetShapeVertices();
-                            b2Rot zeroRotation = b2Rot.FromAngle(0);
-                            b2ShapeProxy b2ShapeProxy = B2Api.b2MakeOffsetProxy(vertices, vertices.Length, 0.0f, intersection.Center, zeroRotation);
-
-                            intersectionOccupied = overlapTestIntersectionOccupied.DoOverlapTest(b2ShapeProxy, Body.ShapeId);
-
-                            if (!(intersectionOccupied))
+                            bool doExtraWaitForTurningVehicles = false;
+                            if (intersection.TheSignalType == RoadIntersection.SignalType.FullSignal && didExtraWaitForTurningVehicles == false)
                             {
-                                WaitingOnIntersection = false;
-                                IsWaiting = false;
+                                if (turnDirection == TurnDirection.Straight)//Wait bit longer so other vehicles can turn
+                                {
+                                    whenToStopWaiting = SimManager.Instance.GetSimTime() + 10;
+                                    doExtraWaitForTurningVehicles = true;
+                                    didExtraWaitForTurningVehicles = true;
+                                }
                             }
-
-                            //Check if this car is in any intersection if it is then we can set isWaiting to false
-
-                            Vector2[] vehicleVertices = Body.GetShapeVertices();
-
-                            b2ShapeProxy b2VehicleShapeProxy = B2Api.b2MakeOffsetProxy(vehicleVertices, vehicleVertices.Length, 0.0f, Pos, currentAngle);
-
-                            thisVehicleIsInAIntersection = overlapTestVehicleInAnyIntersection.DoOverlapTest(b2ShapeProxy, Body.ShapeId);
-
-                            if (thisVehicleIsInAIntersection == true || stoppedElapsedTime > 30)//or if vehicle has waited a long time then other side of intersection may be blocked and try moving forward
+                            if (!doExtraWaitForTurningVehicles)
                             {
-                                WaitingOnIntersection = false;
-                                IsWaiting = false;
+                                Vector2[] vertices = intersection.Body.GetShapeVertices();
+                                b2Rot zeroRotation = b2Rot.FromAngle(0);
+                                b2ShapeProxy b2ShapeProxy = B2Api.b2MakeOffsetProxy(vertices, vertices.Length, 0.0f, intersection.Center, zeroRotation);
+
+                                intersectionOccupied = overlapTestIntersectionOccupied.DoOverlapTest(b2ShapeProxy, Body.ShapeId);
+
+                                if (!(intersectionOccupied))
+                                {
+                                    WaitingOnIntersection = false;
+                                    IsWaiting = false;
+                                    didExtraWaitForTurningVehicles = false;
+                                }
+
+                                //Check if this car is in any intersection if it is then we can set isWaiting to false
+
+                                Vector2[] vehicleVertices = Body.GetShapeVertices();
+
+                                b2ShapeProxy b2VehicleShapeProxy = B2Api.b2MakeOffsetProxy(vehicleVertices, vehicleVertices.Length, 0.0f, Pos, currentAngle);
+
+                                thisVehicleIsInAIntersection = overlapTestVehicleInAnyIntersection.DoOverlapTest(b2ShapeProxy, Body.ShapeId);
+
+                                if (thisVehicleIsInAIntersection == true || stoppedElapsedTime > 30)//or if vehicle has waited a long time then other side of intersection may be blocked and try moving forward
+                                {
+                                    WaitingOnIntersection = false;
+                                    IsWaiting = false;
+                                    didExtraWaitForTurningVehicles = false;
+                                }
                             }
                         }
                     }
@@ -1154,6 +1172,7 @@ namespace UrbanEcho.Models
 
         public void SetLane(RoadEdge roadEdge, TurnDirection turn = TurnDirection.Straight)
         {
+            turnDirection = turn;
             bool hasSamePropertiesAsOldEdge = true;
 
             RoadName = roadEdge.Metadata.RoadName;

@@ -23,8 +23,15 @@ using NetTopologySuite.Geometries;
 
 namespace UrbanEcho.FileManagement
 {
+    /// <summary>
+    /// Contains functions for creating layers that are shown on the map
+    /// </summary>
     public static class CreateLayers
     {
+        /// <summary>
+        /// Creates a road selection layer for showing what is selected from the properties panel
+        /// </summary>
+        /// <returns>Returns the <see cref="MemoryLayer"/> </returns>
         public static MemoryLayer CreateRoadSelectionLayer()
         {
             return new MemoryLayer("Road Selection")

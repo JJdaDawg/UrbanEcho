@@ -7,6 +7,9 @@ using UrbanEcho.Sim;
 
 namespace UrbanEcho.Events.Sim
 {
+    /// <summary>
+    /// Changes the roads speed limit.
+    /// </summary>
     public class SetSpeedLimitEvent : IEventForSim
     {
         private RoadEdge roadEdge;

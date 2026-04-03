@@ -7,6 +7,9 @@ using UrbanEcho.Sim;
 
 namespace UrbanEcho.Events.Sim
 {
+    /// <summary>
+    /// Sets vehicle destination.
+    /// </summary>
     public class SetDestinationEvent : IEventForSim
     {
         private int? nearestNode;

@@ -8,6 +8,9 @@ using UrbanEcho.Events.Sim;
 
 namespace UrbanEcho.Events.UI
 {
+    /// <summary>
+    /// The queue used for events that run on the avalonia UI thread
+    /// </summary>
     public sealed class EventQueueForUI
     {
         private static EventQueueForUI? instance;

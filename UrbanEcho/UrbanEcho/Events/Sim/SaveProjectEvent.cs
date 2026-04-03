@@ -7,6 +7,9 @@ using UrbanEcho.FileManagement;
 
 namespace UrbanEcho.Events.Sim
 {
+    /// <summary>
+    /// Saves project using <see cref="ProjectFile.Save"/>.
+    /// </summary>
     internal class SaveProjectEvent : IEventForSim
     {
         private ProjectFile projectFile;

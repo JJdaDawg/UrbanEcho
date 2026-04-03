@@ -7,6 +7,9 @@ using UrbanEcho.FileManagement;
 
 namespace UrbanEcho.Events.Sim
 {
+    /// <summary>
+    /// Imports osm data <see cref="OsmData"/> based on the current viewport
+    /// </summary>
     public class ImportViewportEvent : IEventForSim
     {
         public ImportViewportEvent()

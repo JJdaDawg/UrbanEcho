@@ -9,6 +9,9 @@ using UrbanEcho.ViewModels;
 
 namespace UrbanEcho.Events.UI
 {
+    /// <summary>
+    /// Updates the footer with the current values
+    /// </summary>
     internal class UpdateFooterEvent : IEventForUI
     {
         private string readyText;

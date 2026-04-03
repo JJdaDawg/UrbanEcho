@@ -10,6 +10,9 @@ using static UrbanEcho.FileManagement.FileTypes;
 
 namespace UrbanEcho.Events.Sim
 {
+    /// <summary>
+    /// Loads a file depending on the FileType <see cref="FileType"/>
+    /// </summary>
     public class LoadFileEvent : IEventForSim
     {
         private FileType fileType;

@@ -7,6 +7,9 @@ using UrbanEcho.Sim;
 
 namespace UrbanEcho.Events.Sim
 {
+    /// <summary>
+    /// Requests for the Vehicle to respawn.
+    /// </summary>
     public class ResetPositionEvent : IEventForSim
     {
         private UrbanEcho.Models.Vehicle? vehicle;
