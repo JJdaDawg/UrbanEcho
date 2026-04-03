@@ -69,16 +69,11 @@
                 <Button Classes="ToolbarButton" ToolTip.Tip="Stop Simulation" Command="{Binding Simulation.StopCommand}" IsVisible="{Binding Simulation.IsPausedOrRunning}">
                     <icon:SymbolIcon Symbol="Stop" Foreground="IndianRed" IconVariant="Filled"/>
                 </Button>
-                <Button Classes="ToolbarButton" ToolTip.Tip="Pause Simulation" Command="{Binding Simulation.PauseCommand}" IsVisible="{Binding Simulation.IsPausedOrRunning}">
+                <Button Classes="ToolbarButton" ToolTip.Tip="Pause Simulation" Command="{Binding Simulation.PauseCommand}" IsVisible="{Binding Simulation.IsRunning}">
                     <icon:SymbolIcon Symbol="Pause" IconVariant="Filled"/>
                 </Button>
-                <Rectangle Width="1" Height="16" Fill="DimGray" Margin="5,0"/>
-                <Button Classes="ToolbarButton" ToolTip.Tip="Real Time Mode">
-                    <icon:SymbolIcon Symbol="LocationLive" IconVariant="Regular"/>
-                </Button>
-                <Rectangle Width="1" Height="16" Fill="DimGray" Margin="5,0"/>
-                <Button Classes="ToolbarButton" ToolTip.Tip="Edit Mode" Command="{Binding EditMode.ToggleEditModeCommand}">
-                    <icon:SymbolIcon Symbol="Edit" IconVariant="Regular"/>
+                <Button Classes="ToolbarButton" ToolTip.Tip="Resume Simulation" Command="{Binding Simulation.PauseCommand}" IsVisible="{Binding Simulation.IsPaused}">
+                    <icon:SymbolIcon Symbol="Play" IconVariant="Filled"/>
                 </Button>
                 <Rectangle Width="1" Height="16" Fill="DimGray" Margin="5,0" IsVisible="{Binding Simulation.IsRunning}"/>
                 <Button Classes="ToolbarButton" ToolTip.Tip="Speed Down" Command="{Binding Simulation.SpeedDownCommand}" IsVisible="{Binding Simulation.IsRunning}">

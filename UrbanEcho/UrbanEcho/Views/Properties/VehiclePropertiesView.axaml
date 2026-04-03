@@ -67,7 +67,6 @@
 				<Button Content="Path"  Height="26" Padding="10,0"
                     Command="{Binding PathCommand}"
                     Classes.active="{Binding IsShowingPath}" />
-                <Button Content="Trend" Height="26" Padding="10,0" Command="{Binding TrendCommand}" />
                 <Button Content="Track"
                         Height="26" Padding="10,0"
                         Command="{Binding TrackCommand}"

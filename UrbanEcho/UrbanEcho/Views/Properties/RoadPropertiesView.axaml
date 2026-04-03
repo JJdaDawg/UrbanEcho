@@ -46,29 +46,6 @@
             </StackPanel>
         </Expander>
 
-        <!-- Actions -->
-        <Expander Header="Actions" IsExpanded="True" IsVisible="{Binding IsEditing}">
-            <StackPanel Margin="0" Spacing="2">
-                <Button Content="Spawn Vehicle"
-                        Command="{Binding SpawnVehicleCommand}"
-                        HorizontalAlignment="Stretch" />
-            </StackPanel>
-        </Expander>
-
-        <!-- Lane Editor -->
-        <Expander Header="Lanes" IsExpanded="True" IsVisible="{Binding IsEditing}">
-            <StackPanel Margin="0" Spacing="2">
-                <Button Content="Open Lane Editor"
-                        Command="{Binding EditLanesCommand}"
-                        HorizontalAlignment="Stretch" />
-
-                <!-- Lane editor will go here -->
-                <ContentControl IsVisible="{Binding ShowLaneEditor}">
-                    <TextBlock Text="Lane editor here" Opacity="0.5" />
-                </ContentControl>
-            </StackPanel>
-        </Expander>
-
     </StackPanel>
 
 </UserControl>

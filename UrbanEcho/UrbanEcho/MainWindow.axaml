@@ -61,8 +61,7 @@
                           Background="Transparent"/>
 
             <!-- RIGHT: Project Explorer (top) and Properties (bottom) -->
-            <Grid Grid.Column="2" x:Name="RightGrid"
-                  RowDefinitions="*,4,*">
+            <Grid Grid.Column="2" x:Name="RightGrid" RowDefinitions="400,4,*">
 
                 <!-- Project Explorer -->
                 <local:ProjectExplorerPanel Grid.Row="0" DataContext="{Binding ProjectExplorer}"/>
