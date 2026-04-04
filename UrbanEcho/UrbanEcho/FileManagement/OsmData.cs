@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using UrbanEcho.Events.Sim;
 using UrbanEcho.Events.UI;
@@ -16,14 +17,20 @@ using static UrbanEcho.FileManagement.FileTypes;
 
 namespace UrbanEcho.FileManagement
 {
+    /// <summary>
+    /// Class used for loading osm data from the viewport
+    /// </summary>
     public class OsmData
     {
-        private readonly double maxResolution = 7.5;
+        private readonly double maxResolution = 7.5;//Sets how big a viewport window can be used, if zoomed too far out a warning is shown
 
         public OsmData()
         {
         }
 
+        /// <summary>
+        /// Begins the import of the osm data from the viewport
+        /// </summary>
         public void StartImport()
         {
             Viewport viewport = MainWindow.Instance.GetMap().Navigator.Viewport;
@@ -45,13 +52,23 @@ namespace UrbanEcho.FileManagement
             }
         }
 
+        /// <summary>
+        /// Downloads the osm data from the viewport using the overpass API, saves it to a file and then
+        /// creates a event so that the new road and intersection layer is loaded to the project
+        /// </summary>
         private async Task DownloadFile(double minLat, double minLon, double maxLat, double maxLon)
         {
-            try
-            {
-                HttpClient client = new HttpClient();
+            bool fileSavedNoExceptions = false;
+            int numberOfRetries = 3;
+            int numberOfTries = 0;
 
-                string query = @$"
+            while (fileSavedNoExceptions == false && numberOfTries < numberOfRetries)
+            {
+                try
+                {
+                    HttpClient client = new HttpClient();
+
+                    string query = @$"
                                   [bbox:{minLat},{minLon},{maxLat},{maxLon}]
                                   [out:xml]
                                   [timeout:90];
@@ -62,38 +79,53 @@ namespace UrbanEcho.FileManagement
 node({minLat},{minLon},{maxLat},{maxLon})[highway~""stop|traffic_signals""];
 out meta;
                             ";
-                string url = "https://overpass-api.de/api/interpreter";
-                string returnValue = string.Empty;
+                    string url = "https://overpass-api.de/api/interpreter";
+                    string returnValue = string.Empty;
 
-                StringContent content = new StringContent($"data= {Uri.EscapeDataString(query)}", Encoding.UTF8, "application/x-www-form-urlencoded");
+                    StringContent content = new StringContent($"data= {Uri.EscapeDataString(query)}", Encoding.UTF8, "application/x-www-form-urlencoded");
 
-                HttpResponseMessage response = await client.PostAsync(url, content);
-                response.EnsureSuccessStatusCode();
-                returnValue = await response.Content.ReadAsStringAsync();
+                    HttpResponseMessage response = await client.PostAsync(url, content);
+                    response.EnsureSuccessStatusCode();
+                    returnValue = await response.Content.ReadAsStringAsync();
 
-                if (returnValue != string.Empty)
-                {
-                    Guid guid = Guid.NewGuid();
-                    string fileName = $@"{guid}.osm";
-                    string directory = @$".\Downloads";
-                    string filePath = @$"{directory}\{fileName}";
-
-                    if (!Directory.Exists(directory))
+                    if (returnValue != string.Empty)
                     {
-                        Directory.CreateDirectory(directory);
-                    }
-                    File.WriteAllText(filePath, returnValue);
+                        Guid guid = Guid.NewGuid();
+                        string fileName = $@"{guid}.osm";
+                        string directory = @$".\Downloads";
+                        string filePath = @$"{directory}\{fileName}";
 
-                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Saved downloaded data to {filePath}"));
-                    LoadFileEvent loadRoads = new LoadFileEvent(FileType.RoadLayerFile, filePath, MainWindow.Instance.GetMap());
-                    EventQueueForSim.Instance.Add(loadRoads);
-                    LoadFileEvent loadIntersections = new LoadFileEvent(FileType.IntersectionLayerFile, filePath, MainWindow.Instance.GetMap());
-                    EventQueueForSim.Instance.Add(loadIntersections);
+                        if (!Directory.Exists(directory))
+                        {
+                            Directory.CreateDirectory(directory);
+                        }
+                        File.WriteAllText(filePath, returnValue);
+
+                        EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Saved downloaded data to {filePath}"));
+                        LoadFileEvent loadRoads = new LoadFileEvent(FileType.RoadLayerFile, filePath, MainWindow.Instance.GetMap());
+                        EventQueueForSim.Instance.Add(loadRoads);
+                        LoadFileEvent loadIntersections = new LoadFileEvent(FileType.IntersectionLayerFile, filePath, MainWindow.Instance.GetMap());
+                        EventQueueForSim.Instance.Add(loadIntersections);
+                        fileSavedNoExceptions = true;
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Error getting data for viewport {ex.Message}"));
+                catch (Exception ex)
+                {
+                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Tried {numberOfTries + 1} of {numberOfRetries} tries Error getting data for viewport {ex.Message}"));
+                }
+                numberOfTries++;
+                if (!fileSavedNoExceptions)
+                {
+                    if (numberOfTries < numberOfRetries)
+                    {
+                        EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Retrying in three seconds"));
+                        Thread.Sleep(3000);
+                    }
+                    else
+                    {
+                        EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Max Retries reached failed to get data"));
+                    }
+                }
             }
         }
     }

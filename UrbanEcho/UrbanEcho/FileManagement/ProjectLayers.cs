@@ -1,5 +1,4 @@
 ﻿using BruTile.MbTiles;
-using DocumentFormat.OpenXml.Bibliography;
 using FluentAvalonia.Core;
 using Mapsui;
 using Mapsui.Extensions;
@@ -619,6 +618,12 @@ namespace UrbanEcho.FileManagement
 
             intersectionOverlayLayer.DataHasChanged();
             map?.Refresh();
+        }
+
+        public static void RefreshIntersectionOverlay(IReadOnlyList<IFeature>? roadFeatures)
+        {
+            Map? map = MainWindow.Instance.GetMap();
+            SetIntersectionOverlay(roadFeatures, MainWindow.Instance.GetMap());
         }
 
         public static void AddSpawnPoint(SpawnPoint spawnPoint)

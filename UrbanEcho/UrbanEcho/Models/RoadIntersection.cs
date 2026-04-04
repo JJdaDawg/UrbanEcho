@@ -347,8 +347,8 @@ namespace UrbanEcho.Models
                             {
                                 if (roadName1.Length > 4 && roadName2.Length > 4)
                                 {
-                                    //Do just a short name compare
-                                    if (roadName1.Substring(0, 4) == roadName2.Substring(0, 4))
+                                    //Do just a short name compare, but don't do it for osm files that are other languages
+                                    if (roadName1.Substring(0, 4) == roadName2.Substring(0, 4) && !Feature.Fields.Contains("highway"))
                                     {
                                         if (!firstPairedEdges.Contains(edgeTrafficRule1))
                                         {
@@ -1051,6 +1051,7 @@ namespace UrbanEcho.Models
                 edge.TrafficRule = hasStopSign ? TrafficRule.SetStopSignTrafficRule() : TrafficRule.SetStopSignTrafficRule();
                 if (!hasStopSign) { edge.TrafficRule.SetNeverBlock(); }
             }
+            SimManager.Instance.RefreshTrafficRuleReferences();
         }
 
         public RecordedStats GetStats()

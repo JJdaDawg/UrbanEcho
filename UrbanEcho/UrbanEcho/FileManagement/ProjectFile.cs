@@ -12,6 +12,10 @@ using UrbanEcho.Sim;
 
 namespace UrbanEcho.FileManagement
 {
+    /// <summary>
+    /// Project file is a json file that lists all the paths for loading data when a project
+    /// is opened.
+    /// </summary>
     public class ProjectFile
     {
         public string FileName;
@@ -31,8 +35,12 @@ namespace UrbanEcho.FileManagement
             CensusLayerPath = "";
         }
 
+        //This class is serialized using the process described here
         //https://www.newtonsoft.com/json/help/html/serializingjson.htm
-
+        /// <summary>
+        /// Opens a project file. The project file is opened and deserialized using json text in the file
+        /// </summary>
+        /// <returns>Returns the <see cref="ProjectFile"/> </returns>
         public static ProjectFile? Open(string path)
         {
             ProjectFile? projectFile = null;
@@ -59,9 +67,13 @@ namespace UrbanEcho.FileManagement
             return projectFile;
         }
 
+        /// <summary>
+        /// Saves the project file. The project file is opened and deserialized using json text in the file
+        /// </summary>
+        /// <returns>Returns the <see cref="ProjectFile"/> </returns>
         public static void Save(ProjectFile projectFile)
         {
-            if (projectFile.PathForThisFile == "")
+            if (projectFile.PathForThisFile != "")
             {
                 try
                 {
@@ -76,11 +88,6 @@ namespace UrbanEcho.FileManagement
                 {
                     EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to load Project File {ex.ToString()}"));
                 }
-            }
-            else
-            {
-                //TODO: Add event so dialog pops up and user can pick path
-                //This may not be needed since save as is called instead in cases where it is blank path
             }
         }
 

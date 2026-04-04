@@ -33,7 +33,7 @@ namespace UrbanEcho.Models
         public bool IsDormant = false;
         private static readonly Vector2 DormantPosition = new Vector2(-999999, -999999);
 
-        private b2ShapeId intersectionShapeLastAt;
+        private b2ShapeId? intersectionShapeLastAt;
 
         private RoadIntersection? intersectionLastAt;
 
@@ -323,6 +323,8 @@ namespace UrbanEcho.Models
                 Pos = B2Api.b2Body_GetPosition(Body.BodyId);
                 if (float.IsNaN(Pos.X) || float.IsNaN(Pos.Y))
                 {
+                    intersectionLastAt = null;
+                    intersectionShapeLastAt = null;
                     vehiclePath.ResetVehicleToNewPos();
                     Pos = B2Api.b2Body_GetPosition(Body.BodyId);
                     return;
@@ -342,6 +344,8 @@ namespace UrbanEcho.Models
 
                 if (requestResetPosition != null)
                 {
+                    intersectionLastAt = null;
+                    intersectionShapeLastAt = null;
                     vehiclePath.ResetVehicleToNewPos();
                     requestResetPosition = null;
                 }
@@ -462,7 +466,7 @@ namespace UrbanEcho.Models
         private void SetIntersectionLastAt(b2ShapeId shapeId)
         {
             //If it isn't same shape again get the shapes userdata
-            if (intersectionShapeLastAt != shapeId && hasClearedIntersection == true)
+            if (intersectionShapeLastAt == null || (intersectionShapeLastAt != shapeId && hasClearedIntersection == true))
             {
                 hasClearedIntersection = false;
                 intersectionShapeLastAt = shapeId;
@@ -495,7 +499,7 @@ namespace UrbanEcho.Models
                 }
             }
 
-            if (intersectionShapeLastAt == shapeId)
+            if (intersectionShapeLastAt != null && intersectionShapeLastAt == shapeId)
             {
                 intersectionInFrontCount++;
             }
@@ -676,6 +680,8 @@ namespace UrbanEcho.Models
 
                     if (stoppedElapsedTime > stoppedThresholdWaitTime)
                     {
+                        intersectionLastAt = null;
+                        intersectionShapeLastAt = null;
                         vehiclePath.ResetVehicleToNewPos();
                         stoppedElapsedTime = 0;
                         startedStoppedTimer = false;
@@ -703,6 +709,8 @@ namespace UrbanEcho.Models
 
                     if (vehicleInFrontElapsedTime > vehicleInFrontThresholdWaitTime)
                     {
+                        intersectionLastAt = null;
+                        intersectionShapeLastAt = null;
                         vehiclePath.ResetVehicleToNewPos();
                         insideAnotherVehicle = false;//Reset this so resetVehicle to new position isn't called twice
                         anotherVehicleAhead = false;
@@ -712,6 +720,8 @@ namespace UrbanEcho.Models
                     {
                         if (vehicleInFrontElapsedTime > vehicleInFrontThresholdWaitTime * 0.25f && thisVehicleIsInAIntersection)
                         {
+                            intersectionLastAt = null;
+                            intersectionShapeLastAt = null;
                             vehiclePath.ResetVehicleToNewPos();
                             insideAnotherVehicle = false;//Reset this so resetVehicle to new position isn't called twice
                             anotherVehicleAhead = false;
@@ -727,6 +737,8 @@ namespace UrbanEcho.Models
 
                 if (insideAnotherVehicle)
                 {
+                    intersectionLastAt = null;
+                    intersectionShapeLastAt = null;
                     vehiclePath.ResetVehicleToNewPos();
                     insideAnotherVehicle = false;
                     anotherVehicleAhead = false;
@@ -977,6 +989,8 @@ namespace UrbanEcho.Models
         {
             if (!IsDormant || Body == null) return;
             IsDormant = false;
+            intersectionLastAt = null;
+            intersectionShapeLastAt = null;
             vehiclePath.ResetVehicleToNewPos();
             if (feature != null)
             {

@@ -50,6 +50,10 @@ namespace UrbanEcho.FileManagement
             };
         }
 
+        /// <summary>
+        /// Creates a path layer for showing what a vehicle's path
+        /// </summary>
+        /// <returns>Returns the <see cref="MemoryLayer"/> </returns>
         public static MemoryLayer CreatePathOverlayLayer()
         {
             return new MemoryLayer("Path Overlay")
@@ -69,6 +73,10 @@ namespace UrbanEcho.FileManagement
             };
         }
 
+        /// <summary>
+        /// Creates a intersection overlay layer for showing intersection selection
+        /// </summary>
+        /// <returns>Returns the <see cref="MemoryLayer"/> </returns>
         public static MemoryLayer CreateIntersectionOverlayLayer()
         {
             return new MemoryLayer("Intersection Overlay")
@@ -91,6 +99,11 @@ namespace UrbanEcho.FileManagement
             };
         }
 
+        /// <summary>
+        /// Creates a TileLayer created by loading a MBTiles for backgrounds
+        /// </summary>
+        /// <returns>Returns the <see cref="TileLayer?"/> </returns>
+        //Uses the BruTile library
         //https://github.com/BruTile/BruTile
         public static TileLayer? CreateMbTilesLayer(string path, string name)
         {
@@ -109,31 +122,10 @@ namespace UrbanEcho.FileManagement
             return mbTilesLayer;
         }
 
-        //not currently used (for geotiff files)
-        public static ILayer? CreateBackLayer(IProvider source, string name)
-        {
-            Layer? layer = null;
-            try
-            {
-                source.CRS = "EPSG:4326";
-
-                ProjectingProvider projectingProvider = new ProjectingProvider(source)
-                {
-                    CRS = "EPSG:3857"
-                };
-
-                layer = new Layer(name);
-                layer.DataSource = projectingProvider;
-                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Created Background Layer"));
-            }
-            catch (Exception ex)
-            {
-                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to load Background Layer {ex.ToString()}"));
-            }
-
-            return layer;
-        }
-
+        /// <summary>
+        /// Creates a intersection layer from a list of features
+        /// </summary>
+        /// <returns>Returns the <see cref="MemoryLayer"/> </returns>
         public static MemoryLayer? CreateIntersectionsLayerFromOSM(List<IFeature> features, string name)
         {
             MemoryLayer? layer = null;
@@ -166,6 +158,10 @@ namespace UrbanEcho.FileManagement
             return layer;
         }
 
+        /// <summary>
+        /// Creates a intersection layer from a provider
+        /// </summary>
+        /// <returns>Returns the <see cref="MemoryLayer"/> </returns>
         public static MemoryLayer? CreateIntersectionsLayer(IProvider source, string name)
         {
             MemoryLayer? layer = null;
@@ -207,6 +203,10 @@ namespace UrbanEcho.FileManagement
             return layer;
         }
 
+        /// <summary>
+        /// Creates a road intersections used for simulation by reading features in a intersection layer
+        /// </summary>
+        /// <returns>Returns boolean true if success </returns>
         public static bool CreateRoadIntersections(ILayer? intersectionLayer)
         {
             List<IFeature> features = new List<IFeature>();
@@ -267,6 +267,10 @@ namespace UrbanEcho.FileManagement
             return true;
         }
 
+        /// <summary>
+        /// Creates a road layer from a list of features
+        /// </summary>
+        /// <returns>Returns the <see cref="MemoryLayer"/> </returns>
         public static MemoryLayer? CreateRoadLayerFromOSM(List<IFeature> features, string name, bool doOutline)
         {
             MemoryLayer? layer = null;
@@ -288,6 +292,10 @@ namespace UrbanEcho.FileManagement
             return layer;
         }
 
+        /// <summary>
+        /// Creates a road layer from a provider source
+        /// </summary>
+        /// <returns>Returns the <see cref="MemoryLayer"/> </returns>
         public static Layer? CreateRoadLayer(IProvider source, string name, bool doOutline)
         {
             Layer? layer = null;
@@ -316,6 +324,10 @@ namespace UrbanEcho.FileManagement
             return layer;
         }
 
+        /// <summary>
+        /// Creates a road label layer from a list of features
+        /// </summary>
+        /// <returns>Returns the <see cref="MemoryLayer"/> </returns>
         public static MemoryLayer? CreateRoadLabelLayerFromOSM(List<IFeature> features, string name)
         {
             MemoryLayer? layer = null;
@@ -339,6 +351,10 @@ namespace UrbanEcho.FileManagement
             return layer;
         }
 
+        /// <summary>
+        /// Creates a road label layer from a provider source
+        /// </summary>
+        /// <returns>Returns the <see cref="MemoryLayer"/> </returns>
         public static Layer? CreateRoadLabelLayer(IProvider source, string name)
         {
             Layer? layer = null;
@@ -368,6 +384,10 @@ namespace UrbanEcho.FileManagement
             return layer;
         }
 
+        /// <summary>
+        /// Creates a vehicle layer for showing the vehicles during simulation
+        /// </summary>
+        /// <returns>Returns the <see cref="MemoryLayer"/> </returns>
         public static MemoryLayer? CreateVehicleLayer(RasterizingLayer? roadLayerFirstPass, List<IFeature> VehicleFeatures)
         {
             MemoryLayer? layer = null;
@@ -516,6 +536,10 @@ namespace UrbanEcho.FileManagement
             }
         }
 
+        /// <summary>
+        /// Creates a pin layer. The pin is shown while tracking a vehicle during simulation
+        /// </summary>
+        /// <returns>Returns the <see cref="MemoryLayer"/> </returns>
         public static MemoryLayer? CreatePinLayer(List<IFeature> PinLayerFeatures)
         {
             MemoryLayer? layer = null;
@@ -546,6 +570,10 @@ namespace UrbanEcho.FileManagement
             return layer;
         }
 
+        /// <summary>
+        /// Creates a spawner layer. The spawn points are shown on this layer
+        /// </summary>
+        /// <returns>Returns the <see cref="MemoryLayer"/> </returns>
         public static MemoryLayer? CreateSpawnerLayer(List<IFeature> SpawnerFeatures)
         {
             MemoryLayer? layer = null;

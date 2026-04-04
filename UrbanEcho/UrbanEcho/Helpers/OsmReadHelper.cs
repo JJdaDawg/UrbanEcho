@@ -585,9 +585,75 @@ namespace UrbanEcho.Helpers
 
             featuresList = JoinStopIntersectionsCloseBy(featuresList);
 
+            featuresList = RemoveIntersectionsInSamePosition(featuresList);
+
             SetObjectIds(featuresList);
 
             return featuresList;
+        }
+
+        public static List<IFeature> RemoveIntersectionsInSamePosition(List<IFeature> featuresList)
+        {
+            List<IFeature> newFeatures = new List<IFeature>();
+
+            List<IFeature> toRemoveFeatures = new List<IFeature>();
+
+            double tolerance = 5.0f;
+
+            foreach (IFeature feature in featuresList)
+            {
+                List<IFeature> thisPassRemoveFeatures = new List<IFeature>();
+                bool joinTheFeature = false;
+
+                if (!toRemoveFeatures.Contains(feature))
+                {
+                    foreach (IFeature otherFeature in featuresList)
+                    {
+                        if (feature != otherFeature && !toRemoveFeatures.Contains(otherFeature))
+                        {
+                            if (feature is GeometryFeature gf1 && gf1.Geometry is Point p1 && otherFeature is GeometryFeature gf2 && gf2.Geometry is Point p2)
+                            {
+                                double distance = p1.Distance(p2);
+
+                                if (p1.Coordinate.Equals2D(p2.Coordinate, tolerance))
+                                {
+                                    joinTheFeature = true;
+
+                                    if (!thisPassRemoveFeatures.Contains(feature))
+                                    {
+                                        thisPassRemoveFeatures.Add(feature);
+                                    }
+
+                                    if (!thisPassRemoveFeatures.Contains(otherFeature))
+                                    {
+                                        thisPassRemoveFeatures.Add(otherFeature);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (joinTheFeature)
+                {
+                    foreach (IFeature addToRemoveFeature in thisPassRemoveFeatures)
+                    {
+                        if (!toRemoveFeatures.Contains(addToRemoveFeature))
+                            toRemoveFeatures.Add(addToRemoveFeature);
+                    }
+
+                    newFeatures.Add(feature);
+                }
+                else
+                {
+                    if (!toRemoveFeatures.Contains(feature))
+                    {
+                        newFeatures.Add(feature);
+                    }
+                }
+            }
+
+            return newFeatures;
         }
 
         public static List<IFeature> JoinStopIntersectionsCloseBy(List<IFeature> featuresList)
@@ -616,7 +682,6 @@ namespace UrbanEcho.Helpers
                                     if (feature is GeometryFeature gf1 && gf1.Geometry is Point p1 && otherFeature is GeometryFeature gf2 && gf2.Geometry is Point p2)
                                     {
                                         double distance = p1.Distance(p2);
-                                        EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"stop distance {distance}"));
 
                                         if (p1.Coordinate.Equals2D(p2.Coordinate, tolerance))
                                         {
@@ -845,19 +910,6 @@ namespace UrbanEcho.Helpers
             string returnValue = "stop";
 
             if (n.Tags.TryGetValue("highway", out string value))
-            {
-                returnValue = value;
-            }
-
-            return returnValue;
-        }
-
-        //not used because we have to split the line segments to be further segmented (using a incrementing integer instead)
-        public static string GetOsmId(Way way)
-        {
-            string returnValue = "0";
-
-            if (way.Tags.TryGetValue("osm_id", out string value))
             {
                 returnValue = value;
             }

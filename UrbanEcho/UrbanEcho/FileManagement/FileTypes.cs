@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace UrbanEcho.FileManagement
 {
+    /// <summary>
+    /// This class sets up the file picker patterns for the different type of data that can be loaded
+    /// </summary>
     public static class FileTypes
     {
         public enum FileType
