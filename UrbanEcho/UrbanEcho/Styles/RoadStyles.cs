@@ -55,16 +55,6 @@ namespace UrbanEcho.Styles
 
             double pavementWidth = 0;
 
-            /*
-            pavementWidth = Helpers.Helper.TryGetFeatureKVPToDouble(gf, "PAVEMENT_W", 1);
-
-            if (pavementWidth < 4)
-            {
-                int lanes = Helpers.Helper.TryGetFeatureKVPToInt(gf, "LANES", 2);
-
-                pavementWidth = lanes * Helpers.Helper.DefaultLaneWidth;
-            }*/
-            //Try with just using number of lanes instead
             int lanes = Helpers.Helper.TryGetFeatureKVPToInt(gf, "LANES", 2);
             pavementWidth = lanes * Helpers.Helper.DefaultLaneWidth * Helpers.Helper.ExtraPavementFactor;
 
@@ -76,48 +66,23 @@ namespace UrbanEcho.Styles
                 style.Outline.Width = 0;
             }
 
-            /* old (we used aadt from file before)
-            //TODO: make AADT not hardcoded
-            if (gf.Fields.Contains("AADT") && useAADT)
-            {
-                if (double.TryParse(gf["AADT"]?.ToString(), out double aadtValue))
-                {
-                    ColorBlend cb = ColorBlend.TwoColors(Color.LimeGreen, Color.Red);
-                    double minAADTValue = 0;
-                    double maxAADTValue = 50000;
+            int vehicleCount = 0;
+            int isClosed = 0;
 
-                    double normalizedValue = 0;
-                    if (maxAADTValue - minAADTValue > 0)
+            string key = Helper.TryGetFeatureKVPToString(gf, "OBJECTID", "");
+            if (!string.IsNullOrEmpty(key))
+            {
+                if (SimManager.Instance.RoadFeatures.TryGetValue(key, out IFeature? dictionaryFeature))
+                {
+                    if (dictionaryFeature != null)
                     {
-                        normalizedValue = (minAADTValue + aadtValue) / (maxAADTValue - minAADTValue);
-                    }
-                    Math.Clamp(normalizedValue, 0.0, 1.0);
+                        vehicleCount = Helper.TryGetFeatureKVPToInt(dictionaryFeature, "VehicleCount", 0);
 
-                    style.Line.Color = cb.GetColor(normalizedValue);
-                }
-                else
-                {
-                    style.Line.Color = new Color(148, 148, 148);
-                }
-            }
-            else
-            {
-                style.Line.Color = new Color(148, 148, 148);
-            }*/
+                        isClosed = Helper.TryGetFeatureKVPToInt(dictionaryFeature, "Closed", 0);
 
-            if (ProjectLayers.IsVolumeVisible)//Render the color for line on both layers (if only second layer done report doesn't show volume correct)
-            {
-                int vehicleCount = 0;
-                string key = Helper.TryGetFeatureKVPToString(gf, "OBJECTID", "");
-                if (!string.IsNullOrEmpty(key))
-                {
-                    if (SimManager.Instance.RoadFeatures.TryGetValue(key, out IFeature? dictionaryFeature))
-                    {
-                        if (dictionaryFeature != null)
+                        if (isClosed == 0)
                         {
-                            vehicleCount = Helper.TryGetFeatureKVPToInt(dictionaryFeature, "VehicleCount", 0);
-
-                            if (vehicleCount > 0)
+                            if (vehicleCount > 0 && ProjectLayers.IsVolumeVisible)
                             {
                                 ColorBlend cb = ColorBlend.TwoColors(Color.LimeGreen, Color.Red);
                                 double minValue = 0;
@@ -134,17 +99,24 @@ namespace UrbanEcho.Styles
                                 style.Line.Color = cb.GetColor(normalizedValue);
                             }
                         }
+                        else
+                        {
+                            style.Line.Color = Color.Black;
+                        }
                     }
                 }
+            }
 
-                if (vehicleCount == 0)
+            if (isClosed == 0)
+            {
+                if (!ProjectLayers.IsVolumeVisible || vehicleCount == 0)
                 {
                     style.Line.Color = new Color(148, 148, 148);
                 }
             }
             else
             {
-                style.Line.Color = new Color(148, 148, 148);
+                style.Line.Color = Color.Black;
             }
 
             if (useOutline)
@@ -152,7 +124,7 @@ namespace UrbanEcho.Styles
                 if (ProjectLayers.IsTrafficSpeedVisible)
                 {
                     double speed = 0;
-                    string key = Helper.TryGetFeatureKVPToString(gf, "OBJECTID", "");
+                    key = Helper.TryGetFeatureKVPToString(gf, "OBJECTID", "");
                     if (!string.IsNullOrEmpty(key))
                     {
                         if (SimManager.Instance.RoadFeatures.TryGetValue(key, out IFeature? dictionaryFeature))

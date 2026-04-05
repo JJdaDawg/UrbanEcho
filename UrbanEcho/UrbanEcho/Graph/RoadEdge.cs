@@ -2,6 +2,8 @@
 using Mapsui;
 using Mapsui.Projections;
 using NetTopologySuite.Geometries;
+using UrbanEcho;
+using UrbanEcho.Events.UI;
 using UrbanEcho.Helpers;
 using UrbanEcho.Reporting;
 using UrbanEcho.Sim;
@@ -27,9 +29,16 @@ public sealed class RoadEdge
     {
         IsClosed = true;
         stats.SetClosed();
+        UpdateFeatureClosedStatus(true);
+        EventQueueForUI.Instance.Add(new RefreshMapEvent(MainWindow.Instance.GetMap()));
     }
 
-    public void Open() => IsClosed = false;
+    public void Open()
+    {
+        IsClosed = false;
+        UpdateFeatureClosedStatus(false);
+        EventQueueForUI.Instance.Add(new RefreshMapEvent(MainWindow.Instance.GetMap()));
+    }
 
     private RecordedStats stats = new RecordedStats();
 
@@ -61,6 +70,28 @@ public sealed class RoadEdge
         stats.RecordVehicle(incomingStats);
         IncrementFeatureVolume();
         UpdateAverageSpeed(incomingStats.AverageSpeed);
+    }
+
+    private void UpdateFeatureClosedStatus(bool isClosed)
+    {
+        string key = Helper.TryGetFeatureKVPToString(Feature, "OBJECTID", "");
+        if (!string.IsNullOrEmpty(key))
+        {
+            if (SimManager.Instance.RoadFeatures.TryGetValue(key, out IFeature? dictionaryFeature))
+            {
+                if (dictionaryFeature != null)
+                {
+                    if (isClosed)
+                    {
+                        dictionaryFeature["Closed"] = 1;
+                    }
+                    else
+                    {
+                        dictionaryFeature["Closed"] = 0;
+                    }
+                }
+            }
+        }
     }
 
     public void IncrementFeatureVolume()
@@ -140,6 +171,11 @@ public sealed class RoadEdge
     public void ResetStats()
     {
         stats.Reset();
+
+        if (IsClosed)
+        {
+            stats.SetClosed();
+        }
     }
 
     public double TravelTimeSeconds =>

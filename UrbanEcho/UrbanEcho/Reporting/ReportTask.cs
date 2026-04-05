@@ -40,9 +40,15 @@ namespace UrbanEcho.Reporting
             TheRoadEdgeReport.Roads = new List<RoadEdgeReportModel>();
 
             DateTime dateTime = DateTime.Now;
-
-            MemoryStream? ms = ExportMapImage(dateTime);
-
+            MemoryStream? ms = null;
+            try
+            {
+                ms = ExportMapImage(dateTime);
+            }
+            catch (Exception ex)
+            {
+                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Unable to export image for report {ex.Message}"));
+            }
             foreach (RoadIntersection roadIntersection in roadIntersections)
             {
                 if (roadIntersection.EdgesInto.Count == 0) continue;

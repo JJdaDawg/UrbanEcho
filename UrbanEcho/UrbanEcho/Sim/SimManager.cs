@@ -478,7 +478,7 @@ namespace UrbanEcho.Sim
             if (RoadGraph == null || RoadGraph.Nodes.Count < 2)
                 return;
 
-            pathfinder = new AStarPathfinder(RoadGraph);
+            //pathfinder = new AStarPathfinder(RoadGraph);
             nodes = RoadGraph.Nodes.Keys.ToList();
 
             // Build the truck-eligible spawn pool once so we never waste a spawn slot.
@@ -570,6 +570,7 @@ namespace UrbanEcho.Sim
                     newFeature["FromToSpeed"] = 0.0;
                     newFeature["ToFromSpeed"] = 0.0;
                     newFeature["Speed"] = 0.0;
+                    newFeature["Closed"] = 0;
                     SimManager.Instance.RoadFeatures.TryAdd(key, newFeature);
                 }
             }

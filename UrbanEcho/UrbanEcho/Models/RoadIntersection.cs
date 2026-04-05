@@ -119,32 +119,47 @@ namespace UrbanEcho.Models
             {
                 returnValue.offsetTime = 5.0f + (float)Random.Shared.NextDouble() * 10.0f;
 
-                List<(Vector2 pos, float width)> connectionsForBody = returnValue.setConnections(graph, 15.0f);
-                if (connectionsForBody.Count == 0)
+                string intersectionType = Helpers.Helper.TryGetFeatureKVPToString(returnValue.Feature, "Intersec_1", "");
+                List<(Vector2 pos, float width)> connectionsForBody;
+                if (intersectionType == "Full Signal")
                 {
-                    //Try again with higher threshold for connecting roads (don't use higher at first or some roads get linked when they shouldn't)
-                    connectionsForBody = returnValue.setConnections(graph, 20.0f);
+                    connectionsForBody = returnValue.setConnections(graph, 40.0f);
+                    if (connectionsForBody.Count == 0)
+                    {
+                        //Try again with higher threshold for connecting roads (don't use higher at first or some roads get linked when they shouldn't)
+                        connectionsForBody = returnValue.setConnections(graph, 50.0f);
+                    }
+                }
+                else
+                {
+                    connectionsForBody = returnValue.setConnections(graph, 15.0f);
+                    if (connectionsForBody.Count == 0)
+                    {
+                        //Try again with higher threshold for connecting roads (don't use higher at first or some roads get linked when they shouldn't)
+                        connectionsForBody = returnValue.setConnections(graph, 20.0f);
+                    }
                 }
 
                 if (returnValue.isCenterSet && graph is not null)
                 {
-                    if (feature.Fields.Contains("highway"))//adjust center for osm files
+                    //Adjust center for all intersections
+                    //if (feature.Fields.Contains("highway"))//adjust center for osm files
+                    //{
+                    if (returnValue.roadEndPoints.Count > 1)
                     {
-                        if (returnValue.roadEndPoints.Count > 1)
+                        returnValue.Center = AdjustCenter(returnValue);
+                        if (feature is GeometryFeature gf && gf.Geometry is Point p)
                         {
-                            returnValue.Center = AdjustCenter(returnValue);
-                            if (feature is GeometryFeature gf && gf.Geometry is Point p)
-                            {
-                                p.X = (double)(World.Offset.X + returnValue.Center.X);
-                                p.Y = (double)(World.Offset.Y + returnValue.Center.Y);
-                            }
+                            p.X = (double)(World.Offset.X + returnValue.Center.X);
+                            p.Y = (double)(World.Offset.Y + returnValue.Center.Y);
                         }
                     }
+                    // }
 
                     returnValue.Body = new IntersectionBody(returnValue, connectionsForBody, false);
 
                     returnValue.isBodySet = true;
-                    returnValue.FallBackTrafficRule = TrafficRule.SetDefaultTrafficRule();
+                    returnValue.FallBackTrafficRule = TrafficRule.SetFallBackTrafficRule();
 
                     string currentName = Helpers.Helper.TryGetFeatureKVPToString(returnValue.Feature, "Intersecti", "");
 
@@ -155,7 +170,6 @@ namespace UrbanEcho.Models
 
                     if (returnValue.Feature.Fields.Contains("highway"))
                     {
-                        string intersectionType = Helpers.Helper.TryGetFeatureKVPToString(returnValue.Feature, "Intersec_1", "");
                         if (intersectionType == "All Way Stop")
                         {
                             SetStopTypeOSM(returnValue);
@@ -286,7 +300,7 @@ namespace UrbanEcho.Models
             }
             else
             {
-                FallBackTrafficRule = TrafficRule.SetDefaultTrafficRule();
+                FallBackTrafficRule = TrafficRule.SetFallBackTrafficRule();
 
                 foreach (EdgeTrafficRule edgeTrafficRule in EdgesInto)
                 {
@@ -297,17 +311,24 @@ namespace UrbanEcho.Models
 
         private void SetStaticTrafficRulesFullSignal()
         {
-            FallBackTrafficRule = TrafficRule.SetDefaultTrafficRule();
+            FallBackTrafficRule = TrafficRule.SetFallBackTrafficRule();
 
             foreach (EdgeTrafficRule edgeTrafficRule in EdgesInto)
             {
                 edgeTrafficRule.TrafficRule = TrafficRule.SetDefaultTrafficRule();
             }
-            //If there are only two edges in set then set the two as a pair
-            if (EdgesInto.Count <= 2)
+            //If there are only one edges in set then set the one as a pair and the other as a pair
+            if (EdgesInto.Count == 2)
             {
-                PairedTrafficRule pairedTrafficRule = new PairedTrafficRule(EdgesInto);
-                pairedRoads.Add(pairedTrafficRule);
+                List<EdgeTrafficRule> firstList = new List<EdgeTrafficRule>();
+                firstList.Add(EdgesInto[0]);
+                PairedTrafficRule firstPairedTrafficRule = new PairedTrafficRule(firstList);
+                pairedRoads.Add(firstPairedTrafficRule);
+
+                List<EdgeTrafficRule> secondList = new List<EdgeTrafficRule>();
+                secondList.Add(EdgesInto[1]);
+                PairedTrafficRule secondPairedTrafficRule = new PairedTrafficRule(secondList);
+                pairedRoads.Add(secondPairedTrafficRule);
             }
             if (EdgesInto.Count > 2)
             {
@@ -348,7 +369,7 @@ namespace UrbanEcho.Models
                                 if (roadName1.Length > 4 && roadName2.Length > 4)
                                 {
                                     //Do just a short name compare, but don't do it for osm files that are other languages
-                                    if (roadName1.Substring(0, 4) == roadName2.Substring(0, 4) && !Feature.Fields.Contains("highway"))
+                                    if (roadName1.Substring(0, 4) == roadName2.Substring(0, 4) && !roadName1.Contains("Avenida"))
                                     {
                                         if (!firstPairedEdges.Contains(edgeTrafficRule1))
                                         {
@@ -528,7 +549,7 @@ namespace UrbanEcho.Models
 
         private void SetStaticTrafficRulesStopSign()
         {
-            FallBackTrafficRule = TrafficRule.SetStopSignTrafficRule();
+            FallBackTrafficRule = TrafficRule.SetFallBackTrafficRule();
             foreach (EdgeTrafficRule edgeTrafficRule in EdgesInto)
             {
                 edgeTrafficRule.TrafficRule = TrafficRule.SetStopSignTrafficRule();
@@ -536,11 +557,6 @@ namespace UrbanEcho.Models
 
             if (TheSignalType == SignalType.TwoWayStop)
             {
-                if (EdgesInto.Count == 0)
-                {
-                    FallBackTrafficRule.SetNeverBlock();
-                }
-
                 if (EdgesInto.Count > 1)
                 {
                     if (!Feature.Fields.Contains("highway")) //Only use this method if it was not a osm file)
@@ -786,7 +802,7 @@ namespace UrbanEcho.Models
                     if (roadFeature is GeometryFeature gf)
                         if (gf.Geometry is LineString lineString)
                         {
-                            if (lineString.Length < 10.0f)
+                            if (lineString.Length < 30.0f)
                             {
                                 continue;//Do not include very short roads that may start and end within the intersection
                             }
@@ -965,24 +981,6 @@ namespace UrbanEcho.Models
                         EdgesInto[i].TrafficRule.SetBlock(false);
                     }
                 }
-            }
-
-            if (FallBackTrafficRule.IsNeverBlockingTraffic() == false)
-            {
-                int every2Seconds = (int)((offsetTime + SimManager.Instance.GetSimTime()) * 0.5f);
-                int fallBackBlocking = (every2Seconds) % 2;
-                if (fallBackBlocking == 0)
-                {
-                    FallBackTrafficRule.SetBlock(true);
-                }
-                else
-                {
-                    FallBackTrafficRule.SetBlock(false);
-                }
-            }
-            else
-            {
-                FallBackTrafficRule.SetBlock(false);
             }
         }
 
