@@ -55,6 +55,12 @@ namespace UrbanEcho.Graph
             //Calculate better since some roads (Fischer Hallman on ramp) it was ignoring U Turn
             //This will help calculate turn direction better also
 
+            if (Helpers.Helper.TryGetFeatureKVPToInt(incoming.Feature, "OBJECTID", 0) == 56042
+                && Helpers.Helper.TryGetFeatureKVPToInt(outgoing.Feature, "OBJECTID", 0) == 55062)
+            {
+                bool breakhere = true;
+            }
+
             double aX = a.X;
             double aY = a.Y;
 
@@ -80,17 +86,17 @@ namespace UrbanEcho.Graph
 
             if (outgoing.Feature is GeometryFeature gf2 && gf2.Geometry is LineString ls2)
             {
-                if (ls2.Coordinates.Length > 0)
+                if (ls2.Coordinates.Length > 1)
                 {
                     if (outgoing.IsFromStartOfLineString)
                     {
-                        cX = ls2.Coordinates[0].CoordinateValue.X;
-                        cY = ls2.Coordinates[0].CoordinateValue.Y;
+                        cX = ls2.Coordinates[1].CoordinateValue.X;
+                        cY = ls2.Coordinates[1].CoordinateValue.Y;
                     }
                     else
                     {
-                        cX = ls2.Coordinates[ls2.Coordinates.Length - 1].CoordinateValue.X;
-                        cY = ls2.Coordinates[ls2.Coordinates.Length - 1].CoordinateValue.Y;
+                        cX = ls2.Coordinates[ls2.Coordinates.Length - 2].CoordinateValue.X;
+                        cY = ls2.Coordinates[ls2.Coordinates.Length - 2].CoordinateValue.Y;
                     }
                 }
             }
