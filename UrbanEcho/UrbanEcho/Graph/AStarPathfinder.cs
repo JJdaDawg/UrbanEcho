@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Mapsui.Nts;
+using NetTopologySuite.Geometries;
+using System;
 using System.Collections.Generic;
 
 namespace UrbanEcho.Graph
@@ -50,8 +52,51 @@ namespace UrbanEcho.Graph
                 !_graph.Nodes.TryGetValue(outgoing.To, out var c))
                 return 0;
 
-            double abX = b.X - a.X, abY = b.Y - a.Y;
-            double bcX = c.X - b.X, bcY = c.Y - b.Y;
+            //Calculate better since some roads (Fischer Hallman on ramp) it was ignoring U Turn
+            //This will help calculate turn direction better also
+
+            double aX = a.X;
+            double aY = a.Y;
+
+            if (incoming.Feature is GeometryFeature gf1 && gf1.Geometry is LineString ls1)
+            {
+                if (ls1.Coordinates.Length > 1)
+                {
+                    if (incoming.IsFromStartOfLineString)
+                    {
+                        aX = ls1.Coordinates[ls1.Coordinates.Length - 2].CoordinateValue.X;
+                        aY = ls1.Coordinates[ls1.Coordinates.Length - 2].CoordinateValue.Y;
+                    }
+                    else
+                    {
+                        aX = ls1.Coordinates[1].CoordinateValue.X;
+                        aY = ls1.Coordinates[1].CoordinateValue.Y;
+                    }
+                }
+            }
+
+            double cX = c.X;
+            double cY = c.Y;
+
+            if (outgoing.Feature is GeometryFeature gf2 && gf2.Geometry is LineString ls2)
+            {
+                if (ls2.Coordinates.Length > 0)
+                {
+                    if (outgoing.IsFromStartOfLineString)
+                    {
+                        cX = ls2.Coordinates[0].CoordinateValue.X;
+                        cY = ls2.Coordinates[0].CoordinateValue.Y;
+                    }
+                    else
+                    {
+                        cX = ls2.Coordinates[ls2.Coordinates.Length - 1].CoordinateValue.X;
+                        cY = ls2.Coordinates[ls2.Coordinates.Length - 1].CoordinateValue.Y;
+                    }
+                }
+            }
+
+            double abX = b.X - aX, abY = b.Y - aY;
+            double bcX = cX - b.X, bcY = cY - b.Y;
 
             double cross = abX * bcY - abY * bcX;
             double dot = abX * bcX + abY * bcY;

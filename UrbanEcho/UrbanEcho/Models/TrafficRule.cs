@@ -13,15 +13,21 @@ namespace UrbanEcho.Models
         private bool isStopSign;
         private bool neverBlock;
 
-        private TrafficRule(bool blockTraffic, bool isStopSign)
+        private TrafficRule(bool blockTraffic, bool isStopSign, bool neverBlock = false)
         {
             this.blockTraffic = blockTraffic;
             this.isStopSign = isStopSign;
+            this.neverBlock = neverBlock;
         }
 
         public static TrafficRule SetDefaultTrafficRule()
         {
             return new TrafficRule(false, false);
+        }
+
+        public static TrafficRule SetFallBackTrafficRule()
+        {
+            return new TrafficRule(false, false, true);
         }
 
         public static TrafficRule SetStopSignTrafficRule()

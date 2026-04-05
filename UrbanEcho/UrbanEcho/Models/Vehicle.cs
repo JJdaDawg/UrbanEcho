@@ -795,7 +795,7 @@ namespace UrbanEcho.Models
 
                                 thisVehicleIsInAIntersection = overlapTestVehicleInAnyIntersection.DoOverlapTest(b2ShapeProxy, Body.ShapeId);
 
-                                if (thisVehicleIsInAIntersection == true || stoppedElapsedTime > 30)//or if vehicle has waited a long time then other side of intersection may be blocked and try moving forward
+                                if (thisVehicleIsInAIntersection == true || stoppedElapsedTime > 100)//or if vehicle has waited a long time then other side of intersection may be blocked and try moving forward
                                 {
                                     WaitingOnIntersection = false;
                                     IsWaiting = false;

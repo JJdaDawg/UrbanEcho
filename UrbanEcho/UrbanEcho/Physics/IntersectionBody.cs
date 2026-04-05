@@ -56,6 +56,16 @@ namespace UrbanEcho.Physics
             shapeDef.filter.categoryBits = (ulong)ShapeCategories.Intersection;
             if (connectingPoints.Count > 4 || connectingPoints.Count <= 1 || useCircle)
             {
+                /*
+                float furthestDistance = defaultSize;
+                for (int i = 0; i < connectingPoints.Count; i++)
+                {
+                    float distance = Vector2.Distance(connectingPoints[i].pos, parent.Center);
+                    if (distance > furthestDistance)
+                    {
+                        furthestDistance = distance;
+                    }
+                }*/
                 Vector2[]? Points = CircleOfPoints();
                 polygon = Helper.CreatePolygon(Points);
                 vertices = new Vector2[polygon.count];
