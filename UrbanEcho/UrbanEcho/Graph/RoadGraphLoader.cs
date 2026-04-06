@@ -68,36 +68,16 @@ public static class RoadGraphLoader
                 int endIndex = 1;
                 double length = 0;
 
-                //while (startIndex < coords.Length - 1)
-                //{
-                /*
-                if (!IsGraphNode(coords[startIndex], startIndex == 0, usage))
-                {
-                    startIndex++;
-                    continue;
-                }*/
-
-                //double length = 0;
-                //int endIndex = startIndex + 1;
-
                 while (endIndex < coords.Length)
                 {
                     length += coords[endIndex - 1]
                         .Distance(coords[endIndex]);
-                    /*
-                    if (IsGraphNode(
-                        coords[endIndex],
-                        endIndex == coords.Length - 1,
-                        usage))
-                        break;
-                    */
+
                     if (endIndex == coords.Length - 1)
                         break;
                     endIndex++;
                 }
 
-                //if (endIndex < coords.Length)
-                //{
                 int from = GetNodeId(coords[startIndex]);
                 int to = GetNodeId(coords[endIndex]);
 
@@ -120,10 +100,6 @@ public static class RoadGraphLoader
                         }
                     }
                 }
-                //}
-
-                //startIndex = endIndex;
-                //}
             }
             else
             {
@@ -133,7 +109,7 @@ public static class RoadGraphLoader
 
         var graph = new RoadGraph(nodeObjects, edges);
 
-        return graph;//RemoveOrphanComponents(graph);
+        return graph;
     }
 
     private static void NormalizeFeatures(
@@ -301,59 +277,5 @@ public static class RoadGraphLoader
         }
 
         return aadtValue;
-    }
-
-    private static RoadGraph RemoveOrphanComponents(RoadGraph graph)
-    {
-        var adjacency = graph.Edges
-            .GroupBy(e => e.From)
-            .ToDictionary(g => g.Key,
-                          g => g.Select(e => e.To).ToList());
-
-        var visited = new HashSet<int>();
-        var components = new List<List<int>>();
-
-        foreach (var node in graph.Nodes.Keys)
-        {
-            if (visited.Contains(node))
-                continue;
-
-            var stack = new Stack<int>();
-            var component = new List<int>();
-
-            stack.Push(node);
-
-            while (stack.Count > 0)
-            {
-                var n = stack.Pop();
-                if (!visited.Add(n))
-                    continue;
-
-                component.Add(n);
-
-                if (adjacency.TryGetValue(n, out var neighbors))
-                    foreach (var m in neighbors)
-                        stack.Push(m);
-            }
-
-            components.Add(component);
-        }
-
-        var largest = components
-            .OrderByDescending(c => c.Count)
-            .First();
-
-        var keep = new HashSet<int>(largest);
-
-        var newNodes = graph.Nodes
-            .Where(kvp => keep.Contains(kvp.Key))
-            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-
-        var newEdges = graph.Edges
-            .Where(e => keep.Contains(e.From)
-                     && keep.Contains(e.To))
-            .ToList();
-
-        return new RoadGraph(newNodes, newEdges);
     }
 }

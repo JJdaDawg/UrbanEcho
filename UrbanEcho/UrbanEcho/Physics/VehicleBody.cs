@@ -14,6 +14,9 @@ using static Box2dNet.Interop.B2Api;
 
 namespace UrbanEcho.Physics
 {
+    /// <summary>
+    /// Class for vehicle bodies
+    /// </summary>
     public class VehicleBody : IDisposable
     {
         public b2ShapeId ShapeId;
@@ -45,8 +48,6 @@ namespace UrbanEcho.Physics
 
             bodyCreated = true;
             b2ShapeDef shapeDef = b2DefaultShapeDef();
-            //b2Polygon polygon = Helper.CreatePolygon([new(-rect.Width / 2, -rect.Height / 2), new(-rect.Width / 2, rect.Height / 2), new(rect.Width / 2, rect.Height / 2), new(rect.Width / 2, -rect.Height / 2)]);
-
             //body center is 25% from back so vehicle pivots from back axel
             b2Polygon polygon = Helper.CreatePolygon([new(-rect.Width * 0.25f, -rect.Height / 2), new(-rect.Width * 0.25f, rect.Height / 2), new(rect.Width * 0.75f, rect.Height / 2), new(rect.Width * 0.75f, -rect.Height / 2)]);
 
@@ -61,20 +62,22 @@ namespace UrbanEcho.Physics
             shapeDef.filter.categoryBits = (ulong)ShapeCategories.Vehicle;
             intPtr = NativeHandle.Alloc(parent);
             shapeDef.userData = intPtr;
-            //shapeDef.enableSensorEvents = true;
+
             ShapeId = b2CreatePolygonShape(BodyId, in shapeDef, in polygon);
         }
 
+        /// <summary>
+        /// Returns the vertices making up the shape
+        /// </summary>
+        /// <returns>Returns a array of vertices representing the shape <see cref="Vector2"/> </returns>
         public Vector2[] GetShapeVertices()
         {
             return vertices;
         }
 
-        public bool IsDisposed()
-        {
-            return isDisposed;
-        }
-
+        /// <summary>
+        /// Disposes the vehicle body
+        /// </summary>
         public void Dispose()
         {
             try

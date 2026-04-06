@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace UrbanEcho.Models
 {
+    /// <summary>
+    /// This class provides the structure used for a floating point rectangle class
+    /// </summary>
     public struct FRect
     {
         public float X;

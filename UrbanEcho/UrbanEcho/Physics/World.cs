@@ -18,6 +18,9 @@ namespace UrbanEcho.Physics
         Intersection = 0x00000002
     }
 
+    /// <summary>
+    /// Class for box2d World
+    /// </summary>
     public static class World
     {
         public static b2WorldId WorldId;
@@ -41,6 +44,9 @@ namespace UrbanEcho.Physics
             Created = true;
         }
 
+        /// <summary>
+        /// Initializes the box2d World
+        /// </summary>
         public static void Init()
         {
             b2WorldDef worldDef = b2DefaultWorldDef();
@@ -59,6 +65,9 @@ namespace UrbanEcho.Physics
             }
         }
 
+        /// <summary>
+        /// Destroy the box2d World and sets that it is not created
+        /// </summary>
         public static void Clear()
         {
             if (World.Created)

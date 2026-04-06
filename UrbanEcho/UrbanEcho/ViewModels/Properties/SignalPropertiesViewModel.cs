@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UrbanEcho.Messages;
 using UrbanEcho.Models;
-using UrbanEcho.Models.UI;
 using UrbanEcho.Services;
 using static UrbanEcho.Models.RoadIntersection;
 
@@ -27,6 +26,7 @@ namespace UrbanEcho.ViewModels.Properties
         public string Subtitle => "";
         public string Name => _intersection.Name;
         public SignalType Type => _intersection.TheSignalType;
+
         public IEnumerable<string> ConnectingRoads => _intersection.EdgesInto
             .Select(etr => etr.RoadEdge.Metadata.RoadName)
             .Concat(_intersection.EdgesOut.Select(e => e.Metadata.RoadName))

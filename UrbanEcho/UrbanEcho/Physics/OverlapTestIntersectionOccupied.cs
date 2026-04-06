@@ -9,6 +9,9 @@ using UrbanEcho.Models;
 
 namespace UrbanEcho.Physics
 {
+    /// <summary>
+    /// Class for performing a test if intersection is occupied
+    /// </summary>
     public class OverlapTestIntersectionOccupied
     {
         private b2OverlapResultFcn overlapDelegateIntersection;
@@ -25,6 +28,9 @@ namespace UrbanEcho.Physics
             overlapDelegateIntersection = OverlapCallbackIntersection;
         }
 
+        /// <summary>
+        /// Does a overlap test to see if the vehicle is in a intersection
+        /// </summary>
         public bool DoOverlapTest(b2ShapeProxy b2ShapeProxy, b2ShapeId casterShapeId)
         {
             intersectionOccupied = false;
@@ -33,6 +39,9 @@ namespace UrbanEcho.Physics
             return intersectionOccupied;
         }
 
+        /// <summary>
+        /// Call back function that is called if overlap is detected
+        /// </summary>
         private bool OverlapCallbackIntersection(b2ShapeId shapeId, nint context)
         {
             bool keepCheckingOverlap = true;

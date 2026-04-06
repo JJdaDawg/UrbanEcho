@@ -3,7 +3,6 @@ using Mapsui;
 using System.Linq;
 using UrbanEcho.Messages;
 using UrbanEcho.Models;
-using UrbanEcho.Models.UI;
 using UrbanEcho.Sim;
 
 namespace UrbanEcho.Services

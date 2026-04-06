@@ -6,5 +6,9 @@ using System.Threading.Tasks;
 
 namespace UrbanEcho.Models
 {
-    public enum LogSource { System, Map }
+    /// <summary>
+    /// This class provides a source for logging System (any other types of errors) or Map (Map related errors)
+    /// </summary>
+    public enum LogSource
+    { System, Map }
 }

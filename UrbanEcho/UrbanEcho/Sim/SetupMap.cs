@@ -11,6 +11,9 @@ using UrbanEcho.Styles;
 
 namespace UrbanEcho.Sim
 {
+    /// <summary>
+    /// Setups the map CRS (Coordinate system) and what widgets should be shown
+    /// </summary>
     public class SetupMap
     {
         public static void Init(Map MyMap)

@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace UrbanEcho.Physics
 {
+    /// <summary>
+    /// Class for a ray used during raycasting
+    /// </summary>
     public class Ray
     {
         public Vector2 Start;

@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace UrbanEcho.Reporting
 {
+    /// <summary>
+    /// Stats that are recorded when a vehicle exits a road
+    /// </summary>
     public class Stats
     {
         public double ElaspedTime;
@@ -16,6 +19,9 @@ namespace UrbanEcho.Reporting
         {
         }
 
+        /// <summary>
+        /// Resets the stats
+        /// </summary>
         public void Reset()
         {
             ElaspedTime = 0;

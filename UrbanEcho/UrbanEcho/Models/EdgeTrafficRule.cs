@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace UrbanEcho.Models
 {
+    /// <summary>
+    /// This class provides the structure used for combining a road edge with a traffic rule
+    /// </summary>
     public class EdgeTrafficRule
     {
         public RoadEdge RoadEdge;

@@ -11,13 +11,15 @@ using UrbanEcho.Events.UI;
 using UrbanEcho.FileManagement;
 using UrbanEcho.Helpers;
 using UrbanEcho.Models;
-using UrbanEcho.Models.UI;
 using UrbanEcho.Physics;
 using UrbanEcho.Reporting;
 using UrbanEcho.Styles;
 
 namespace UrbanEcho.Sim
 {
+    /// <summary>
+    /// Class for the simulation
+    /// </summary>
     public class Sim
     {
         private List<Vehicle> Vehicles = new List<Vehicle>();
@@ -41,6 +43,9 @@ namespace UrbanEcho.Sim
         {
         }
 
+        /// <summary>
+        /// Resets all the stats for the simulation
+        /// </summary>
         public void ResetStats()
         {
             //Clear stats for a simulation
@@ -65,6 +70,10 @@ namespace UrbanEcho.Sim
             }
         }
 
+        /// <summary>
+        /// Returns a list of the readonly Vehicles
+        /// </summary>
+        /// <returns>Returns a <see cref="VehicleReadOnly"/> List </returns>
         public List<VehicleReadOnly> GetVehicles()
         {
             List<VehicleReadOnly> readOnlyVehicles = new List<VehicleReadOnly>();
@@ -75,6 +84,10 @@ namespace UrbanEcho.Sim
             return readOnlyVehicles;
         }
 
+        /// <summary>
+        /// Returns a Vehicle that matches the instance of the read only vehicle
+        /// </summary>
+        /// <returns>Returns matching <see cref="Vehicle"/> </returns>
         public Vehicle? GetVehicle(VehicleReadOnly vehicleReadOnly)
         {
             foreach (Vehicle v in Vehicles)
@@ -85,6 +98,9 @@ namespace UrbanEcho.Sim
             return null;
         }
 
+        /// <summary>
+        /// Does one physics step of the simulation
+        /// </summary>
         public void Step()
         {
             if (!didFirstRun)
@@ -176,6 +192,9 @@ namespace UrbanEcho.Sim
             updatePropertyPanel();
         }
 
+        /// <summary>
+        /// Refreshes the Vehicle traffic rules (called if intersection type changed)
+        /// </summary>
         public void RefreshTrafficRuleReferences()
         {
             foreach (Vehicle v in Vehicles)
@@ -184,6 +203,9 @@ namespace UrbanEcho.Sim
             }
         }
 
+        /// <summary>
+        /// Updates the property panel
+        /// </summary>
         private void updatePropertyPanel()
         {
             bool flasherLastValue = flasher;
@@ -204,26 +226,11 @@ namespace UrbanEcho.Sim
             }
         }
 
+        /// <summary>
+        /// Creates the report
+        /// </summary>
         public void CreateReport()
         {
-            /*This part is just for showing on console highest vehicle incoming stat
-            RoadIntersection? highestIncomingVehiclesIntersection = null;
-            int highestIncomingVehiclesCount = 0;
-            foreach (RoadIntersection roadIntersection in SimManager.Instance.RoadIntersections)
-            {
-                RecordedStats stats = roadIntersection.GetStats();
-                int incoming = stats.VehicleCount;
-                if (incoming > highestIncomingVehiclesCount)
-                {
-                    highestIncomingVehiclesCount = incoming;
-                    highestIncomingVehiclesIntersection = roadIntersection;
-                }
-            }
-            if (highestIncomingVehiclesIntersection != null)
-            {
-                //Just to test
-                EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Intersection {highestIncomingVehiclesIntersection.Name} had the most vehicles entered with {highestIncomingVehiclesCount} vehicles entered"));
-            }*/
             if (SimManager.Instance.RoadGraph != null)
             {
                 Map map = MainWindow.Instance.GetMap();
@@ -642,26 +649,45 @@ namespace UrbanEcho.Sim
             return false;
         }
 
+        /// <summary>
+        /// Gets simulation time
+        /// </summary>
+        /// <returns>Returns simulation time as <see cref="float"/> seconds </returns>
         public float GetSimTime()
         {
             return simTime;
         }
 
+        /// <summary>
+        /// Gets count of vehicles
+        /// </summary>
+        /// <returns>Returns a count of the vehicles <see cref="int"/> </returns>
         public int GetVehicleCount()
         {
             return Vehicles.Count;
         }
 
+        /// <summary>
+        /// Gets simulation time of day
+        /// </summary>
+        /// <returns>Returns a string representing simulation time of day <see cref="string"/> </returns>
         public string GetSimTimeOfDay()
         {
             return Clock.FormatTimeOfDay(simTime);
         }
 
+        /// <summary>
+        /// Gets if simulation was disposed
+        /// </summary>
+        /// <returns>Returns a bool true or false if disposed </returns>
         public bool IsDisposed()
         {
             return isDisposed;
         }
 
+        /// <summary>
+        /// Disposes the simulation
+        /// </summary>
         public void Dispose()
         {
             if (isDisposed == false)

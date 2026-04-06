@@ -27,7 +27,10 @@ namespace UrbanEcho.Models
         SlowDownForTurn = 4
     }
 
-    public class Vehicle : IBodyParent
+    /// <summary>
+    /// Class for vehicles
+    /// </summary>
+    public class Vehicle
     {
         public bool IsForceStopped = false;
         public bool IsDormant = false;
@@ -310,6 +313,9 @@ namespace UrbanEcho.Models
             }
         }
 
+        /// <summary>
+        /// Updates the vehicle, called each simulation step
+        /// </summary>
         public void Update()
         {
             Vector2 LastPos = Pos;
@@ -420,6 +426,10 @@ namespace UrbanEcho.Models
             }
         }
 
+        /// <summary>
+        /// Resets the vehicle to a new position, used when vehicle gets stuck or it
+        /// gets a new path that doesn't start at current location
+        /// </summary>
         public void ResetBodyTransform()
         {
             stoppedElapsedTime = 0;
@@ -447,6 +457,10 @@ namespace UrbanEcho.Models
             B2Api.b2Body_SetTransform(Body.BodyId, initialPosition, rot);
         }
 
+        /// <summary>
+        /// Refreshes the traffic rules
+        /// Used to update the traffic rule reference when a intersection type is changed
+        /// </summary>
         public void RefreshTrafficRuleReferences()
         {
             if (currentRoadEdge != null && intersectionLastAt != null)
@@ -463,6 +477,9 @@ namespace UrbanEcho.Models
             }
         }
 
+        /// <summary>
+        /// Sets what intersection the vehicle was last at
+        /// </summary>
         private void SetIntersectionLastAt(b2ShapeId shapeId)
         {
             //If it isn't same shape again get the shapes userdata
@@ -505,11 +522,18 @@ namespace UrbanEcho.Models
             }
         }
 
+        /// <summary>
+        /// Sets the vehicle to a new destination
+        /// </summary>
         public void RequestSetDestination(int goalNodeId)
         {
             requestDestination = new RequestDestination(goalNodeId);
         }
 
+        /// <summary>
+        /// Gets what road edge the vehicle is at
+        /// </summary>
+        /// <returns>Returns the <see cref="RoadEdge"/> </returns>
         public RoadEdge GetRoadEdge()
         {
             return currentRoadEdge;
@@ -534,6 +558,10 @@ namespace UrbanEcho.Models
             vehiclePath.RerouteAroundEdge(closedEdge);
         }
 
+        /// <summary>
+        /// Gets if the vehicle raycasted to should count as a ray hit
+        /// </summary>
+        /// <returns>Returns true of false if the other vehicle should count (not a bridge or overpass) <see cref="bool"/> </returns>
         public bool IsCollidedVehicleSameEdgeOrIntersection(Vehicle otherVehicle)
         {
             RoadEdge otherVehicleEdge = otherVehicle.currentRoadEdge;
@@ -580,11 +608,17 @@ namespace UrbanEcho.Models
             return false;
         }
 
+        /// <summary>
+        /// Resets the count that tracks if a vehicle is infront of this vehicle
+        /// </summary>
         private void ResetVehicleInFrontCount()
         {
             vehicleInFrontCount = 0;
         }
 
+        /// <summary>
+        /// Performs collision checks for this vehicle
+        /// </summary>
         private void CollisionChecks(float currentFloatAngle)
         {
             if (SimManager.Instance.GetGroupToUpdate() == updateGroup)
@@ -747,6 +781,9 @@ namespace UrbanEcho.Models
             }
         }
 
+        /// <summary>
+        /// Performs collision checks that only happen while a vehicle is waiting
+        /// </summary>
         private void ChecksWhileWaiting()
         {
             if (currentTrafficRule.IsBlockingTraffic())
@@ -812,6 +849,9 @@ namespace UrbanEcho.Models
             }
         }
 
+        /// <summary>
+        /// Updates this vehicles speed and state
+        /// </summary>
         private void UpdateSpeedAndState()
         {
             if (WaitingOnIntersection == true)
@@ -928,11 +968,17 @@ namespace UrbanEcho.Models
             }
         }
 
+        /// <summary>
+        /// Sets using a shorter ray distance during turns
+        /// </summary>
         public void SetUsingShorterRayForTurn(bool value)
         {
             usingShorterRayForTurn = value;
         }
 
+        /// <summary>
+        /// Gets a position to look ahead, used for doing a overlap check when trying to move to a new position
+        /// </summary>
         private (Vector2 pos, b2Rot angle, bool valid) GetLookAheadPosAndAngle(float lookAheadValue)
         {
             Vector2 pos = new Vector2(Pos.X + currentAngle.c * lookAheadValue, Pos.Y + currentAngle.s * lookAheadValue);
@@ -956,6 +1002,9 @@ namespace UrbanEcho.Models
             return (pos, angle, valid);
         }
 
+        /// <summary>
+        /// Force stops a vehicle
+        /// </summary>
         public void SetForceStop(bool stopCommand)
         {
             IsForceStopped = stopCommand;
@@ -964,6 +1013,7 @@ namespace UrbanEcho.Models
         /// <summary>
         /// Teleports the vehicle off-screen, hides it, and zeroes velocity.
         /// The Box2D body stays alive — no creation/destruction needed.
+        /// (Unused)
         /// </summary>
         public void GoDormant()
         {
@@ -998,11 +1048,17 @@ namespace UrbanEcho.Models
             }
         }
 
+        /// <summary>
+        /// Request to move to a new position
+        /// </summary>
         public void RequestResetVehicleToNewPos()
         {
             requestResetPosition = new RequestResetPosition();
         }
 
+        /// <summary>
+        /// Steps to next part of a line string
+        /// </summary>
         public void StepThroughLineString(bool isNewRoad)
         {
             if (currentRoadEdge.Feature is GeometryFeature g)
@@ -1053,6 +1109,9 @@ namespace UrbanEcho.Models
             }
         }
 
+        /// <summary>
+        /// Gets a random offset from the road so vehicle doesn't start on the road
+        /// </summary>
         private Vector2 GetRandomOffsetFromRoad()
         {
             Vector2 returnValue = startPos;
@@ -1079,6 +1138,10 @@ namespace UrbanEcho.Models
             return returnValue;
         }
 
+        /// <summary>
+        /// Gets the target angle for the vehicle
+        /// </summary>
+        ///<returns>Returns the angle as a <see cref="float"/>  </returns>
         private float GetTargetAngle()
         {
             float targetAngle = 0;
@@ -1111,12 +1174,16 @@ namespace UrbanEcho.Models
 
             return targetAngle;
 
-            //https://stackoverflow.com/questions/51905268/how-to-find-closest-point-on-line
-            //https://stackoverflow.com/questions/22668659/calculate-on-which-side-of-a-line-a-point-is
-            //https://stackoverflow.com/questions/1560492/how-to-tell-whether-a-point-is-to-the-right-or-left-side-of-a-line/1560510#1560510
-
+            /// <summary>
+            /// Finds nearest point on a line given a line and another point
+            /// </summary>
+            ///<returns>Returns the point as a <see cref="Vector2"/>  </returns>
             Vector2 findNearestPointOnLine(Vector2 origin, Vector2 end, Vector2 point)
             {
+                //https://stackoverflow.com/questions/51905268/how-to-find-closest-point-on-line
+                //https://stackoverflow.com/questions/22668659/calculate-on-which-side-of-a-line-a-point-is
+                //https://stackoverflow.com/questions/1560492/how-to-tell-whether-a-point-is-to-the-right-or-left-side-of-a-line/1560510#1560510
+
                 //Get heading
                 Vector2 heading = (end - origin);
                 float magnitudeMax = heading.Length();
@@ -1130,6 +1197,9 @@ namespace UrbanEcho.Models
             }
         }
 
+        /// <summary>
+        /// Updates what the current end position for the current part of the line string the vehicle is following
+        /// </summary>
         private void UpdateEndPos()
         {
             if (currentRoadEdge.Feature is GeometryFeature gf)
@@ -1155,6 +1225,9 @@ namespace UrbanEcho.Models
             }
         }
 
+        /// <summary>
+        /// Sets the vehicle's rotation
+        /// </summary>
         private void SetAngle(float currentAngle)
         {
             float targetAngle = GetTargetAngle();
@@ -1184,6 +1257,9 @@ namespace UrbanEcho.Models
             }
         }
 
+        /// <summary>
+        /// Sets what lane the vehicle should use
+        /// </summary>
         public void SetLane(RoadEdge roadEdge, TurnDirection turn = TurnDirection.Straight)
         {
             turnDirection = turn;
@@ -1262,21 +1338,33 @@ namespace UrbanEcho.Models
             };
         }
 
+        /// <summary>
+        /// Sets what line string the vehicle was previously at
+        /// </summary>
         public void UpdatePrevIndexLineString(int value)
         {
             prevIndexLineString = value;
         }
 
+        /// <summary>
+        /// Sets what line string the vehicleis currently at
+        /// </summary>
         public void UpdateIndexLineString(int value)
         {
             indexLineString = value;
         }
 
+        /// <summary>
+        /// Updates the speed limit the vehicle should use
+        /// </summary>
         public void UpdateSpeedLimit(float value)
         {
             SpeedLimit = value;
         }
 
+        /// <summary>
+        /// Updates the vehicle stats
+        /// </summary>
         private void UpdateStats()
         {
             double timeDelta = SimManager.Instance.GetSimTime() - lastUpdateSimTime;
@@ -1300,11 +1388,17 @@ namespace UrbanEcho.Models
             lastUpdateSimTime = SimManager.Instance.GetSimTime();
         }
 
+        /// <summary>
+        /// Resets the vehicle stats
+        /// </summary>
         public void ResetStats()
         {
             stats.Reset();
         }
 
+        /// <summary>
+        /// Updates the stats when entering a new road
+        /// </summary>
         public void UpdateStatsOnNewRoad()
         {
             if (currentRoadEdge != null && currentEdgeStartTime > 0)
@@ -1321,6 +1415,9 @@ namespace UrbanEcho.Models
             stats.Reset();
         }
 
+        /// <summary>
+        /// Pin position to use when tracking vehicle
+        /// </summary>
         public Vector2 GetPinPos()
         {
             return new Vector2(Pos.X + currentAngle.c * settings.GetLength() / 2, Pos.Y + currentAngle.s * settings.GetLength() / 2);
