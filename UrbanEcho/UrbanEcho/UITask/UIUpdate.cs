@@ -9,6 +9,10 @@ using UrbanEcho.Events.UI;
 
 namespace UrbanEcho.UI
 {
+    /// <summary>
+    /// Static Class used for updating the UI based on what is in the UI event queue
+    /// on the UI Thread
+    /// </summary>
     public static class UIUpdate
     {
         public static CancellationTokenSource Cts = new CancellationTokenSource();
@@ -16,6 +20,9 @@ namespace UrbanEcho.UI
 
         public static int SleepTime = 16;//update every 16ms
 
+        /// <summary>
+        /// Runs the UI update Task and sleeps for 16ms after each update
+        /// </summary>
         public static void Run()
         {
             while (Cts.IsCancellationRequested == false)

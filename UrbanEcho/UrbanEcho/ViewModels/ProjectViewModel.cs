@@ -11,6 +11,9 @@ using UrbanEcho.Services;
 
 namespace UrbanEcho.ViewModels
 {
+    /// <summary>
+    /// ProjectViewModel Class handles UI for interacting with opening,closing,saving,creating projectfiles
+    /// </summary>
     public partial class ProjectViewModel : ObservableObject
     {
         private readonly IFileDialogService _fileDialogService;
@@ -24,6 +27,10 @@ namespace UrbanEcho.ViewModels
             _fileDialogService = fileDialogService;
         }
 
+        /// <summary>
+        /// Opens a project
+        /// </summary>
+        /// <returns>Returns a <see cref="Task"/> </returns>
         [RelayCommand]
         private async Task OpenProject()
         {
@@ -37,6 +44,9 @@ namespace UrbanEcho.ViewModels
             }
         }
 
+        /// <summary>
+        /// Sets the project currently opened
+        /// </summary>
         public void SetProject(ProjectFile? projectFile)
         {
             _currentProject = projectFile;
@@ -44,9 +54,9 @@ namespace UrbanEcho.ViewModels
             if (_currentProject is not null)
             {
                 HasProject = true;
-                //NotifyProjectCommands();
+
                 WeakReferenceMessenger.Default.Send(new ProjectLoadedMessage());
-                //WeakReferenceMessenger.Default.Send(new LogMessage($"Project successfully opened '{path}'", LogSource.System));
+
                 ProjectName = _currentProject.FileName;
             }
             else
@@ -58,6 +68,10 @@ namespace UrbanEcho.ViewModels
             NotifyProjectCommands();
         }
 
+        /// <summary>
+        /// Save As Project
+        /// </summary>
+        /// <returns>Returns a <see cref="Task"/> </returns>
         [RelayCommand(CanExecute = nameof(CanSave))]
         private async Task SaveAsProject()
         {
@@ -68,9 +82,11 @@ namespace UrbanEcho.ViewModels
 
             SaveAsProjectEvent saveAsProjectEvent = new SaveAsProjectEvent(_currentProject, path);
             EventQueueForSim.Instance.Add(saveAsProjectEvent);
-
-            //WeakReferenceMessenger.Default.Send(new LogMessage($"Project successfully saved '{path}'", LogSource.System));
         }
+
+        /// <summary>
+        /// Saves a project
+        /// </summary>
 
         [RelayCommand(CanExecute = nameof(CanSave))]
         private void SaveProject()
@@ -85,39 +101,29 @@ namespace UrbanEcho.ViewModels
             {
                 Task saveAs = SaveAsProject();
             }
-
-            //WeakReferenceMessenger.Default.Send(new LogMessage("Project successfully saved", LogSource.System));
         }
+
+        /// <summary>
+        /// Creates a project
+        /// </summary>
 
         [RelayCommand]
         private void CreateProject()
         {
-            //var path = await _fileDialogService.CreateProject();
-            //if (path is null) return;
-
-            //_currentProject = new ProjectFile();
-            //ProjectFile.SaveAs(_currentProject, path);
             if (MainWindow.Instance.GetMap() != null)
             {
                 NewProjectEvent newProjectEvent = new NewProjectEvent(MainWindow.Instance.GetMap());
                 EventQueueForSim.Instance.Add(newProjectEvent);
-                //HasProject = true;
-                //NotifyProjectCommands();
-                //WeakReferenceMessenger.Default.Send(new ProjectLoadedMessage());
-                //WeakReferenceMessenger.Default.Send(new LogMessage($"Project successfully created '{path}'", LogSource.System));
             }
-            //_currentProject = ProjectLayers.GetProject();
         }
+
+        /// <summary>
+        /// Closes a project
+        /// </summary>
 
         [RelayCommand(CanExecute = nameof(CanClose))]
         private void CloseProject()
         {
-            // TODO: Check to see if user wants to save changes before nulling the project
-            //_currentProject = null;
-            //HasProject = false;
-            //NotifyProjectCommands();
-            //WeakReferenceMessenger.Default.Send(new ProjectClosedMessage());
-            //WeakReferenceMessenger.Default.Send(new LogMessage("Project successfully closed", LogSource.System));
             if (MainWindow.Instance.GetMap() != null)
             {
                 NewProjectEvent newProjectEvent = new NewProjectEvent(MainWindow.Instance.GetMap());
@@ -125,13 +131,20 @@ namespace UrbanEcho.ViewModels
             }
         }
 
+        /// <summary>
+        /// Imports Data
+        /// </summary>
+
         [RelayCommand(CanExecute = nameof(CanImportData))]
         private void ImportData()
         {
-            // TODO: Implement importing of data
-            //WeakReferenceMessenger.Default.Send(new LogMessage("Data imported successfully", LogSource.System));
+            //This function not used
         }
 
+        /// <summary>
+        /// Starts a event that loads the open street map background
+        /// </summary>
+        /// <returns>Returns a <see cref="Task"/> </returns>
         [RelayCommand(CanExecute = nameof(CanImportData))]
         private void ImportOSMBackground()
         {
@@ -139,11 +152,11 @@ namespace UrbanEcho.ViewModels
 
             LoadFileEvent loadBackgroundEvent = new LoadFileEvent(UrbanEcho.FileManagement.FileTypes.FileType.BackgroundFile, "osm", map);
             EventQueueForSim.Instance.Add(loadBackgroundEvent);
-
-            //ProjectLayers.LoadBackgroundFile(path);
-            //WeakReferenceMessenger.Default.Send(new LogMessage($"Background loaded '{path}'", LogSource.System));
         }
 
+        /// <summary>
+        /// Starts a import viewport event, used for importing open street map data within a viewport
+        /// </summary>
         [RelayCommand(CanExecute = nameof(CanImportData))]
         private void ImportViewport()
         {
@@ -151,6 +164,10 @@ namespace UrbanEcho.ViewModels
             EventQueueForSim.Instance.Add(importViewportEvent);
         }
 
+        /// <summary>
+        /// Imports a mbtiles background file
+        /// </summary>
+        /// <returns>Returns a <see cref="Task"/> </returns>
         [RelayCommand(CanExecute = nameof(CanImportData))]
         private async Task ImportBackground()
         {
@@ -163,18 +180,18 @@ namespace UrbanEcho.ViewModels
                 LoadFileEvent loadBackgroundEvent = new LoadFileEvent(UrbanEcho.FileManagement.FileTypes.FileType.BackgroundFile, path, map);
                 EventQueueForSim.Instance.Add(loadBackgroundEvent);
             }
-
-            //ProjectLayers.LoadBackgroundFile(path);
-            //WeakReferenceMessenger.Default.Send(new LogMessage($"Background loaded '{path}'", LogSource.System));
         }
 
+        /// <summary>
+        /// Imports road data
+        /// </summary>
+        /// <returns>Returns a <see cref="Task"/> </returns>
         [RelayCommand(CanExecute = nameof(CanImportData))]
         private async Task ImportRoads()
         {
             var path = await _fileDialogService.OpenShapeFileAsync("Import Roads", FileTypes.VectorFile);
             if (path is null) return;
-            //ProjectLayers.LoadRoadFile(path);
-            //WeakReferenceMessenger.Default.Send(new LogMessage($"Roads loaded '{path}'", LogSource.System));
+
             Map? map = MainWindow.Instance.GetMap();
             if (map != null)
             {
@@ -183,13 +200,16 @@ namespace UrbanEcho.ViewModels
             }
         }
 
+        /// <summary>
+        /// Imports intersection data
+        /// </summary>
+        /// <returns>Returns a <see cref="Task"/> </returns>
         [RelayCommand(CanExecute = nameof(CanImportData))]
         private async Task ImportIntersections()
         {
             var path = await _fileDialogService.OpenShapeFileAsync("Import Intersections", FileTypes.VectorFile);
             if (path is null) return;
-            //ProjectLayers.LoadIntersectionsFile(path);
-            //WeakReferenceMessenger.Default.Send(new LogMessage($"Intersections loaded '{path}'", LogSource.System));
+
             Map? map = MainWindow.Instance.GetMap();
             if (map != null)
             {
@@ -198,6 +218,10 @@ namespace UrbanEcho.ViewModels
             }
         }
 
+        /// <summary>
+        /// Imports census data
+        /// </summary>
+        /// <returns>Returns a <see cref="Task"/> </returns>
         [RelayCommand(CanExecute = nameof(CanImportData))]
         private async Task ImportCensus()
         {
@@ -211,12 +235,24 @@ namespace UrbanEcho.ViewModels
             }
         }
 
+        /// <summary>
+        ///Can save if project is not null
+        /// </summary>
         private bool CanSave() => _currentProject is not null;
 
+        /// <summary>
+        ///Can close if project is not null
+        /// </summary>
         private bool CanClose() => _currentProject is not null;
 
+        /// <summary>
+        ///Can import data if project is not null
+        /// </summary>
         private bool CanImportData() => _currentProject is not null;
 
+        /// <summary>
+        ///Notifies UI elements ability to execute commands has changed
+        /// </summary>
         private void NotifyProjectCommands()
         {
             SaveAsProjectCommand.NotifyCanExecuteChanged();

@@ -15,6 +15,9 @@ using static Mapsui.Rendering.Skia.Functions.ClippingFunctions;
 
 namespace UrbanEcho.Styles
 {
+    /// <summary>
+    /// Pin Styles used for displaying a pin when tracking a vehicle
+    /// </summary>
     public class PinStyles
     {
         private Dictionary<string, IStyle> Styles = new Dictionary<string, IStyle>();
@@ -43,6 +46,10 @@ namespace UrbanEcho.Styles
             }
         }
 
+        /// <summary>
+        /// Creates a Image style using the filename given
+        /// </summary>
+        /// <returns>Returns a <see cref="ImageStyle"/> </returns>
         private ImageStyle CreateImageStyle(string projectName, string fileName)
         {
             string sourceString = $"embedded://{projectName}.Resources.Images.TrafficIcons.{fileName}";
@@ -61,6 +68,11 @@ namespace UrbanEcho.Styles
             return style;
         }
 
+        /// <summary>
+        /// Creates a theme style type of style that can be shown differently depending
+        /// on features displayed
+        /// </summary>
+        /// <returns>Returns a <see cref="ThemeStyle"/> </returns>
         //https://github.com/Mapsui/Mapsui/blob/main/Samples/Mapsui.Samples.Common/Maps/Styles/ThemeStyleSample.cs
         public ThemeStyle CreateThemeStyle()
         {

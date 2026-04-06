@@ -23,7 +23,7 @@ namespace UrbanEcho.Helpers
     /// </summary>
     public static class Helper
     {
-        public const float DefaultLaneWidth = 3.75f;//in meters
+        public const float DefaultLaneWidth = 3.9f;//in meters
         public const int NumberOfVehicleGroups = 1; //spread out the updates so we can have better fps
         public const float ExtraPavementFactor = 1.25f; //Sets how the width of roads is shown
 

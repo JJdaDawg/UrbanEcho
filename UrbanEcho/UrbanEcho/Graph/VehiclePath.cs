@@ -153,7 +153,7 @@ namespace UrbanEcho.Graph
         /// <summary>
         /// Resets the vehicle to a new position
         /// </summary>
-        public void ResetVehicleToNewPos(bool useCurrentPos = false)
+        public void ResetVehicleToNewPos()
         {
             int goalNode;
             int startNode;
@@ -163,31 +163,25 @@ namespace UrbanEcho.Graph
                 EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Tried to set path when graph was null"));
                 return;
             }
-            if (!useCurrentPos)
-            {
-                bool useCensus = SimManager.Instance.SpawnMode == SpawnMode.Census
-                    && SimManager.Instance.CensusSpawn?.IsLoaded == true;
 
-                if (SimManager.Instance.SpawnPoints.Count > 0 && !useCensus)
-                {
-                    // Gates mode: respawn back to this vehicle's original spawn node
-                    startNode = originNodeId;
-                }
-                else if (SimManager.Instance.CensusSpawn != null && SimManager.Instance.CensusSpawn.IsLoaded)
-                {
-                    // Return to the node this vehicle originally spawned from.
-                    startNode = originNodeId;
-                }
-                else
-                {
-                    startNode = TrafficVolumeLoader.PickWeightedDestination(graph, -1);
-                }
-                parent.SetUsingShorterRayForTurn(false);
+            bool useCensus = SimManager.Instance.SpawnMode == SpawnMode.Census
+                && SimManager.Instance.CensusSpawn?.IsLoaded == true;
+
+            if (SimManager.Instance.SpawnPoints.Count > 0 && !useCensus)
+            {
+                // Gates mode: respawn back to this vehicle's original spawn node
+                startNode = originNodeId;
+            }
+            else if (SimManager.Instance.CensusSpawn != null && SimManager.Instance.CensusSpawn.IsLoaded)
+            {
+                // Return to the node this vehicle originally spawned from.
+                startNode = originNodeId;
             }
             else
             {
-                startNode = currentRoadEdge.To;//TODO: .From before need to confirm if correct now
+                startNode = TrafficVolumeLoader.PickWeightedDestination(graph, -1);
             }
+            parent.SetUsingShorterRayForTurn(false);
 
             goalNode = TrafficVolumeLoader.PickWeightedDestination(graph, startNode); //  we don't use goal node here but it is needed to call pick weighted destination which also sets the path for the vehicle
 

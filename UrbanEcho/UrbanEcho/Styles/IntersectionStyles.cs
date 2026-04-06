@@ -15,6 +15,9 @@ using static Mapsui.Rendering.Skia.Functions.ClippingFunctions;
 
 namespace UrbanEcho.Styles
 {
+    /// <summary>
+    /// Intersection Styles for displaying intersections
+    /// </summary>
     public class IntersectionStyles
     {
         private Dictionary<string, IStyle> Styles = new Dictionary<string, IStyle>();
@@ -32,8 +35,6 @@ namespace UrbanEcho.Styles
                 {
                     Styles.Add("TrafficLight", CreateImageStyle(projectName, "TrafficLight.png"));
                     Styles.Add("StopSign", CreateImageStyle(projectName, "StopSign.png"));
-                    //Styles.Add("Flasher", CreateImageStyle(projectName, "Flasher.png"));
-                    //Styles.Add("Pedestrian", CreateImageStyle(projectName, "Pedestrian.png"));
                 }
                 catch (Exception ex)
                 {
@@ -46,6 +47,9 @@ namespace UrbanEcho.Styles
             }
         }
 
+        /// <summary>
+        /// Creates a Image style using the filename given
+        /// </summary>
         private ImageStyle CreateImageStyle(string projectName, string fileName)
         {
             string sourceString = $"embedded://{projectName}.Resources.Images.TrafficIcons.{fileName}";
@@ -58,11 +62,14 @@ namespace UrbanEcho.Styles
                     Source = sourceString,
                 };
 
-            //style.SymbolScale = 1.25f; commented out use default symbol scale
-
             return style;
         }
 
+        /// <summary>
+        /// Creates a theme style type of style that can be shown differently depending
+        /// on features displayed
+        /// </summary>
+        /// <returns>Returns a <see cref="ThemeStyle"/> </returns>
         //https://github.com/Mapsui/Mapsui/blob/main/Samples/Mapsui.Samples.Common/Maps/Styles/ThemeStyleSample.cs
         public ThemeStyle CreateThemeStyle()
         {
@@ -75,8 +82,6 @@ namespace UrbanEcho.Styles
 
                     try
                     {
-                        //TODO: make Intersec_1 (intersection type) not hardcoded and each case can't be hardcoded
-                        //      maybe change to for loop so we can compare against a list of strings
                         switch (f["Intersec_1"]?.ToString())
                         {
                             case "Two Way Stop":
@@ -84,22 +89,10 @@ namespace UrbanEcho.Styles
 
                             case "All Way Stop":
                                 return Styles["StopSign"];
-                            /*
-                        case "Flasher":
-                            return Styles["Flasher"];
-                            */
+
                             case "Full Signal":
                                 return Styles["TrafficLight"];
-                            /*
-                        case "Intersection Pedestrian Signal":
-                            return Styles["Pedestrian"];
 
-                        case "Pedestrian Crossover":
-                            return Styles["Pedestrian"];
-
-                        case "Stop with LRT Signals":
-                            return Styles["TrafficLight"];
-                            */
                             default:
 
                                 return Styles["Default"];

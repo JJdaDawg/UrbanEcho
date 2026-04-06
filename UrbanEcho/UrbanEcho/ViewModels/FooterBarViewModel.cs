@@ -16,6 +16,9 @@ using UrbanEcho.Sim;
 
 namespace UrbanEcho.ViewModels
 {
+    /// <summary>
+    /// Class for the footer bar shown at bottom of screen
+    /// </summary>
     public partial class FooterBarViewModel : ObservableObject
     {
         [ObservableProperty] private string readyText = "Not Ready";
@@ -28,6 +31,9 @@ namespace UrbanEcho.ViewModels
         {
         }
 
+        /// <summary>
+        /// Updates the foot bar whenever called
+        /// </summary>
         public void UpdateFooterView(string readyText, string projectText, string simTimeText, int vehicleCount)
         {
             ReadyText = readyText;

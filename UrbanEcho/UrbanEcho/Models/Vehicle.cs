@@ -394,7 +394,17 @@ namespace UrbanEcho.Models
                 }
 
                 CollisionChecks(currentFloatAngle);
-                thisVehicleIsInAIntersection = false;
+
+                //Only check if in a intersection while stopped since variable is only used while stopped
+                if (state == VehicleStates.Stopped && thisVehicleIsInAIntersection == false)
+                {
+                    thisVehicleIsInAIntersection = CheckThisVehicleInAIntersection();
+                }
+                if (state != VehicleStates.Stopped)
+                {
+                    thisVehicleIsInAIntersection = false;
+                }
+
                 intersectionOccupied = false;
                 if (IsWaiting)
                 {
@@ -617,6 +627,29 @@ namespace UrbanEcho.Models
         }
 
         /// <summary>
+        /// Checks if this vehicle is in a intersection
+        /// </summary>
+        private bool CheckThisVehicleInAIntersection()
+        {
+            bool inIntersection = false;
+
+            Vector2[] vehicleVertices = Body.GetShapeVertices();
+
+            b2ShapeProxy b2VehicleShapeProxy = B2Api.b2MakeOffsetProxy(vehicleVertices, vehicleVertices.Length, 0.0f, Pos, currentAngle);
+
+            inIntersection = overlapTestVehicleInAnyIntersection.DoOverlapTest(b2VehicleShapeProxy, Body.ShapeId);
+
+            if (inIntersection == true || stoppedElapsedTime > 100)//or if vehicle has waited a long time then other side of intersection may be blocked and try moving forward
+            {
+                WaitingOnIntersection = false;
+                IsWaiting = false;
+                didExtraWaitForTurningVehicles = false;
+            }
+
+            return inIntersection;
+        }
+
+        /// <summary>
         /// Performs collision checks for this vehicle
         /// </summary>
         private void CollisionChecks(float currentFloatAngle)
@@ -830,9 +863,9 @@ namespace UrbanEcho.Models
 
                                 b2ShapeProxy b2VehicleShapeProxy = B2Api.b2MakeOffsetProxy(vehicleVertices, vehicleVertices.Length, 0.0f, Pos, currentAngle);
 
-                                thisVehicleIsInAIntersection = overlapTestVehicleInAnyIntersection.DoOverlapTest(b2ShapeProxy, Body.ShapeId);
+                                bool inIntersection = overlapTestVehicleInAnyIntersection.DoOverlapTest(b2VehicleShapeProxy, Body.ShapeId);
 
-                                if (thisVehicleIsInAIntersection == true || stoppedElapsedTime > 100)//or if vehicle has waited a long time then other side of intersection may be blocked and try moving forward
+                                if (inIntersection == true || stoppedElapsedTime > 100)//or if vehicle has waited a long time then other side of intersection may be blocked and try moving forward
                                 {
                                     WaitingOnIntersection = false;
                                     IsWaiting = false;

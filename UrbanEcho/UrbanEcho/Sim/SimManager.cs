@@ -171,7 +171,7 @@ namespace UrbanEcho.Sim
             Stopwatch totalRunTime = new Stopwatch();
             totalRunTime.Start();
 
-            //TODO: Remove this once we have UI for loading project
+            //Start with our main map for demoing
             LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/ProjectFiles/myFile.uep", MainWindow.Instance.GetMap());
             //LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/OsmFiles/osmTest.uep", MainWindow.Instance.GetMap());
 

@@ -5,8 +5,16 @@ using NetTopologySuite.Geometries;
 
 namespace UrbanEcho.Styles
 {
+    /// <summary>
+    /// Spawner Styles used for displaying a spawner
+    /// </summary>
     public class SpawnerStyles
     {
+        /// <summary>
+        /// Creates a theme style type of style that can be shown differently depending
+        /// on features displayed
+        /// </summary>
+        /// <returns>Returns a <see cref="ThemeStyle"/> </returns>
         public ThemeStyle CreateThemeStyle()
         {
             return new ThemeStyle(f =>
