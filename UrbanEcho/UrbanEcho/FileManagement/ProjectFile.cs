@@ -68,7 +68,7 @@ namespace UrbanEcho.FileManagement
         }
 
         /// <summary>
-        /// Saves the project file. The project file is opened and deserialized using json text in the file
+        /// Saves the project file. The project file is serialized using json text and saved to file
         /// </summary>
         /// <returns>Returns the <see cref="ProjectFile"/> </returns>
         public static void Save(ProjectFile projectFile)
@@ -86,11 +86,15 @@ namespace UrbanEcho.FileManagement
                 }
                 catch (Exception ex)
                 {
-                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to load Project File {ex.ToString()}"));
+                    EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Failed to save Project File {ex.ToString()}"));
                 }
             }
         }
 
+        /// <summary>
+        /// Saves the project file. The project file is serialized using json text and saved to file with a path name
+        /// </summary>
+        /// <returns>Returns the <see cref="ProjectFile"/> </returns>
         public static void SaveAs(ProjectFile projectFile, string pathToSaveAt)
         {
             projectFile.PathForThisFile = pathToSaveAt;

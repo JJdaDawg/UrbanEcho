@@ -27,11 +27,19 @@ using Node = OsmSharp.Node;
 
 namespace UrbanEcho.Helpers
 {
+    /// <summary>
+    /// This class provides functions for reading in a open street map file
+    /// </summary>
     public static class OsmReadHelper
     {
         private static List<string> AllowableRoadTypes = PopulateAllowableRoadTypes();
         private static List<string> AllowableIntersectionTypes = PopulateAllowableIntersectionTypes();
 
+        /// <summary>
+        /// Takes a osm file from path and reads it returning a list of features
+        /// List of features returned will be blank if failed
+        /// </summary>
+        /// <returns>Returns a list of road features <see cref="IFeature"/> </returns>
         public static List<IFeature> GetRoadFeatures(string path)
         {
             //part of this code from here
@@ -132,6 +140,9 @@ namespace UrbanEcho.Helpers
             return featuresList;
         }
 
+        /// <summary>
+        /// Sets the object Id values for each feature
+        /// </summary>
         public static void SetObjectIds(List<IFeature> featuresList)
         {
             int idCounter = 1;
@@ -142,6 +153,9 @@ namespace UrbanEcho.Helpers
             }
         }
 
+        /// <summary>
+        /// Sets the to and from road names for each road feature
+        /// </summary>
         public static void SetToAndFromNames(List<IFeature> featuresList)
         {
             foreach (IFeature feature in featuresList)
@@ -223,6 +237,9 @@ namespace UrbanEcho.Helpers
             }
         }
 
+        /// <summary>
+        /// A test to verify if any features in the list have duplicate nodes
+        /// </summary>
         public static void TestIfFeatureListHasDuplicateNodes(List<IFeature> featuresList, bool afterSplitting)
         {
             foreach (IFeature feature in featuresList)
@@ -253,6 +270,10 @@ namespace UrbanEcho.Helpers
             }
         }
 
+        /// <summary>
+        /// A test to check if a line string contains a point same as a given coordinate
+        /// </summary>
+        /// <returns>Returns true along with the index for the duplicated node if found</returns>
         public static bool TestIfLineStringHasIntersectPoint(LineString ls, Coordinate c, out int indexForDuplicateNode)
         {
             indexForDuplicateNode = 0;
@@ -267,6 +288,10 @@ namespace UrbanEcho.Helpers
             return false;
         }
 
+        /// <summary>
+        /// A test to check if a line string contains the same point twice
+        /// </summary>
+        /// <returns>Returns true if a duplicate point found</returns>
         public static bool TestIfLineStringHasDuplicateNodes(LineString ls, bool first)
         {
             for (int i = 0; i < ls.Coordinates.Count(); i++)
@@ -287,6 +312,10 @@ namespace UrbanEcho.Helpers
             return false;
         }
 
+        /// <summary>
+        /// Splits crossing roads into separate features
+        /// </summary>
+        /// <returns>Returns the new list of features and boolean value indicating if a split happened </returns>
         public static (List<IFeature> newFeatures, bool splitHappened) SplitCrossingRoads(List<IFeature> featuresList, List<IFeature> checkedList)
         {
             List<IFeature> newFeaturesList = new List<IFeature>();
@@ -350,6 +379,11 @@ namespace UrbanEcho.Helpers
             return (newFeaturesList, hadToSplit);
         }
 
+        /// <summary>
+        /// Checks if splitting is allowed. We do not want to split along motorway links since these are
+        /// ramps and not where intersections need to be placed
+        /// </summary>
+        /// <returns>Returns true is splitting is allowed </returns>
         public static bool IsSplittingAllowed(IFeature feature1, IFeature feature2)
         {
             bool allow = true;//allow by default
@@ -370,6 +404,10 @@ namespace UrbanEcho.Helpers
             return allow;
         }
 
+        /// <summary>
+        /// Checks if splitting is required
+        /// </summary>
+        /// <returns>Returns true is splitting is required and the c1 c2 coordinates arrays are used for creating two new line strings <see cref="Coordinate"/> </returns>
         public static bool NeedsSplitting(IFeature feature1, IFeature feature2, out Coordinate[]? c1, out Coordinate[]? c2)
         {
             c1 = null;
@@ -477,14 +515,14 @@ namespace UrbanEcho.Helpers
                                             foundIntersect = true;
                                             returnValue = true;
 
-                                            if (TestIfLineStringHasDuplicateNodes(testLs1, true))
-                                            {
-                                                bool breakhere = true;
-                                            }
-                                            if (TestIfLineStringHasDuplicateNodes(testLs2, false))
-                                            {
-                                                bool breakhere = true;
-                                            }
+                                            //if (TestIfLineStringHasDuplicateNodes(testLs1, true))
+                                            //{
+                                            //    bool breakhere = true;
+                                            //}
+                                            //if (TestIfLineStringHasDuplicateNodes(testLs2, false))
+                                            //{
+                                            //    bool breakhere = true;
+                                            //}
                                         }
                                     }
                                     if (foundIntersect)
@@ -509,6 +547,11 @@ namespace UrbanEcho.Helpers
             return returnValue;
         }
 
+        /// <summary>
+        /// Extends the line a bit in one direction (call twice to extend from both directions
+        /// </summary>
+        /// <returns>Returns the new coordinate for extended line <see cref="Coordinate"/> </returns>
+
         public static Coordinate ExtendLine(double x1, double y1, double x2, double y2, double extendAmount)
         {
             double dx = x2 - x1;
@@ -524,6 +567,11 @@ namespace UrbanEcho.Helpers
             return new Coordinate(newX, newY);
         }
 
+        /// <summary>
+        /// Takes a osm file from path and reads it returning a list of features for intersections
+        /// List of features returned will be blank if failed
+        /// </summary>
+        /// <returns>Returns a list of intersection features <see cref="IFeature"/> </returns>
         public static List<IFeature> GetIntersectionFeatures(string path)
         {
             //part of this code from here
@@ -592,6 +640,10 @@ namespace UrbanEcho.Helpers
             return featuresList;
         }
 
+        /// <summary>
+        /// Checks if any features are at same position and removes the duplicate feature
+        /// </summary>
+        /// <returns>Returns a list of features without duplicates <see cref="IFeature"/> </returns>
         public static List<IFeature> RemoveIntersectionsInSamePosition(List<IFeature> featuresList)
         {
             List<IFeature> newFeatures = new List<IFeature>();
@@ -656,6 +708,10 @@ namespace UrbanEcho.Helpers
             return newFeatures;
         }
 
+        /// <summary>
+        /// Checks if any features are close by, takes the average of the positions and updates with just the one feature
+        /// </summary>
+        /// <returns>Returns a list of features removing the nearby ones and using a average for the position <see cref="IFeature"/> </returns>
         public static List<IFeature> JoinStopIntersectionsCloseBy(List<IFeature> featuresList)
         {
             List<IFeature> newFeatures = new List<IFeature>();
@@ -745,6 +801,10 @@ namespace UrbanEcho.Helpers
             return newFeatures;
         }
 
+        /// <summary>
+        /// Checks if road type is one that we want to use
+        /// </summary>
+        /// <returns>Returns a true if the allowed road type is in the allowable list</returns>
         public static bool CheckRoadTypeAllowed(string stringToCheck)
         {
             bool returnValue = false;
@@ -761,6 +821,10 @@ namespace UrbanEcho.Helpers
             return returnValue;
         }
 
+        /// <summary>
+        /// Checks if intersection type is one that we want to use
+        /// </summary>
+        /// <returns>Returns a true if the allowed intersection type is in the allowable list</returns>
         public static bool CheckIntersectionTypeAllowed(string stringToCheck)
         {
             bool returnValue = false;
@@ -777,6 +841,10 @@ namespace UrbanEcho.Helpers
             return returnValue;
         }
 
+        /// <summary>
+        /// Populates a list with the allowed road types
+        /// </summary>
+        /// <returns>Returns a populated list with allowed road types</returns>
         private static List<string> PopulateAllowableRoadTypes()
         {
             List<string> list = new List<string>();
@@ -796,6 +864,10 @@ namespace UrbanEcho.Helpers
             return list;
         }
 
+        /// <summary>
+        /// Populates a list with the allowed intersection types
+        /// </summary>
+        /// <returns>Returns a populated list with allowed intersection types</returns>
         private static List<string> PopulateAllowableIntersectionTypes()
         {
             List<string> list = new List<string>();
@@ -805,6 +877,10 @@ namespace UrbanEcho.Helpers
             return list;
         }
 
+        /// <summary>
+        /// Copies a list of field values from a feature and updates a geometry feature
+        /// </summary>
+        /// <returns>Returns the updated geometry feature <see cref="GeometryFeature"/> </returns>
         public static GeometryFeature CopyFeatureAttributes(GeometryFeature gf, IFeature oldFeature)
         {
             gf["STREET"] = oldFeature["STREET"];
@@ -817,6 +893,10 @@ namespace UrbanEcho.Helpers
             return gf;
         }
 
+        /// <summary>
+        /// Populates field values given <see cref="Way"/>
+        /// </summary>
+        /// <returns>Returns the updated geometry feature <see cref="GeometryFeature"/> </returns>
         public static GeometryFeature CreateRoadFeature(GeometryFeature gf, Way way)
         {
             gf["STREET"] = GetName(way);
@@ -837,6 +917,10 @@ namespace UrbanEcho.Helpers
             return gf;
         }
 
+        /// <summary>
+        /// Populates field values given <see cref="Node"/>
+        /// </summary>
+        /// <returns>Returns the updated geometry feature <see cref="GeometryFeature"/> </returns>
         public static GeometryFeature CreateIntersectionFeature(GeometryFeature gf, Node node)
         {
             gf["Intersecti"] = GetName(node);
@@ -845,6 +929,11 @@ namespace UrbanEcho.Helpers
             return gf;
         }
 
+        /// <summary>
+        /// Gets the <see cref="Way"/> highway value and uses that to update with a matching shapefile
+        /// road type value
+        /// </summary>
+        /// <returns>Returns the road type as a <see cref="string"/> </returns>
         public static string GetRoadType(Way way)
         {
             string returnValue = "Local Street";
@@ -880,6 +969,11 @@ namespace UrbanEcho.Helpers
             return returnValue;
         }
 
+        /// <summary>
+        /// Gets the <see cref="Node"/> highway value and uses that to update with a matching shapefile
+        /// intersection type value
+        /// </summary>
+        /// <returns>Returns the road type as a <see cref="string"/> </returns>
         public static string GetSignalType(Node n)
         {
             string returnValue = "All Way Stop";
@@ -894,6 +988,10 @@ namespace UrbanEcho.Helpers
             return returnValue;
         }
 
+        /// <summary>
+        /// Gets the name value from <see cref="Node"/>
+        /// </summary>
+        /// <returns>Returns the name value as a <see cref="string"/> </returns>
         public static string GetName(Node n)
         {
             string returnValue = "Unnamed";
@@ -905,6 +1003,10 @@ namespace UrbanEcho.Helpers
             return returnValue;
         }
 
+        /// <summary>
+        /// Gets the highway value from <see cref="Node"/>
+        /// </summary>
+        /// <returns>Returns the highway value as a <see cref="string"/> </returns>
         public static string GetHighway(Node n)
         {
             string returnValue = "stop";
@@ -917,6 +1019,10 @@ namespace UrbanEcho.Helpers
             return returnValue;
         }
 
+        /// <summary>
+        /// Gets the highway value from <see cref="Way"/>
+        /// </summary>
+        /// <returns>Returns the highway value as a <see cref="string"/> </returns>
         public static string GetHighway(Way way)
         {
             string returnValue = "unclassified";
@@ -929,6 +1035,10 @@ namespace UrbanEcho.Helpers
             return returnValue;
         }
 
+        /// <summary>
+        /// Gets the name value from <see cref="Way"/>
+        /// </summary>
+        /// <returns>Returns the name value as a <see cref="string"/> </returns>
         public static string GetName(Way way)
         {
             string returnValue = "Unnamed";
@@ -941,6 +1051,10 @@ namespace UrbanEcho.Helpers
             return returnValue;
         }
 
+        /// <summary>
+        /// Gets the direction value from <see cref="Way"/>
+        /// </summary>
+        /// <returns>Returns the direction value as a <see cref="string"/> </returns>
         public static string GetDirection(Way way)
         {
             string returnValue = "TwoWay";
@@ -956,6 +1070,10 @@ namespace UrbanEcho.Helpers
             return returnValue;
         }
 
+        /// <summary>
+        /// Gets the speed limit value from <see cref="Way"/>
+        /// </summary>
+        /// <returns>Returns the speed limit value as a <see cref="int"/> </returns>
         public static int GetSpeedLimit(Way way)
         {
             int returnValue = 50;
@@ -971,6 +1089,10 @@ namespace UrbanEcho.Helpers
             return returnValue;
         }
 
+        /// <summary>
+        /// Gets the lane value from <see cref="Way"/>
+        /// </summary>
+        /// <returns>Returns the lane value as a <see cref="int"/> </returns>
         public static int GetLane(Way way)
         {
             int returnValue = 2;

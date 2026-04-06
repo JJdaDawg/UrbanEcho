@@ -52,15 +52,6 @@ namespace UrbanEcho.Graph
                 !_graph.Nodes.TryGetValue(outgoing.To, out var c))
                 return 0;
 
-            //Calculate better since some roads (Fischer Hallman on ramp) it was ignoring U Turn
-            //This will help calculate turn direction better also
-
-            if (Helpers.Helper.TryGetFeatureKVPToInt(incoming.Feature, "OBJECTID", 0) == 56042
-                && Helpers.Helper.TryGetFeatureKVPToInt(outgoing.Feature, "OBJECTID", 0) == 55062)
-            {
-                bool breakhere = true;
-            }
-
             double aX = a.X;
             double aY = a.Y;
 

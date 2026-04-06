@@ -420,11 +420,10 @@ namespace UrbanEcho.Sim
 
             float speedKmh = (float)(speedMs * 3.6);
             if (speedKmh < 30.0f) speedKmh = 30.0f;
-            float corrected = Helper.DoMapCorrection(speedKmh);
 
             lock (LockChangeVehicleFeatureList)
             {
-                currentSim.SetSpeedLimit(edge, corrected);
+                currentSim.SetSpeedLimit(edge, speedKmh);
             }
         }
 

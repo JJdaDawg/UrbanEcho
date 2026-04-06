@@ -18,46 +18,19 @@ using UrbanEcho.Physics;
 
 namespace UrbanEcho.Helpers
 {
-    //was internal function in clipping class
-    //https://github.com/Mapsui/Mapsui/blob/main/Mapsui.Rendering.Skia/Functions/ClippingFunctions.cs
-
+    /// <summary>
+    /// Helper class contains helper functions used throughout program.
+    /// </summary>
     public static class Helper
     {
-        //1.0f / MathF.Cos(43.4511f*(MathF.PI / 180.0f))
-        public const float MapCorrection = 1.0f;// 1.37748f; try without since the correction only applies to east to west
-
-        public const float DefaultLaneWidth = 3.75f * MapCorrection;//in meters
+        public const float DefaultLaneWidth = 3.75f;//in meters
         public const int NumberOfVehicleGroups = 1; //spread out the updates so we can have better fps
-        public const float ExtraPavementFactor = 1.25f;
-
-        public static Point MakePrecisePoint(
-        Point p,
-        PrecisionModel precision)
-        {
-            return new Point(precision.MakePrecise(p.X), precision.MakePrecise(p.Y));
-        }
+        public const float ExtraPavementFactor = 1.25f; //Sets how the width of roads is shown
 
         /// <summary>
-        /// Convert a list of Mapsui points in world coordinates to SKPoint in screen coordinates
+        /// Gets a a list of features from a <see cref="IProvider"/>
         /// </summary>
-        /// <param name="viewport">The Viewport that is used for the conversions.</param>
-        /// <param name="points">List of points in Mapsui world coordinates</param>
-        /// <returns>List of screen coordinates in SKPoint</returns>
-        public static List<SKPoint> WorldToScreen(Viewport viewport, IEnumerable<Coordinate>? points)
-        {
-            var result = new List<SKPoint>();
-            if (points == null)
-                return result;
-
-            foreach (var point in points)
-            {
-                var (screenX, screenY) = viewport.WorldToScreenXY(point.X, point.Y);
-                result.Add(new SKPoint((float)screenX, (float)screenY));
-            }
-
-            return result;
-        }
-
+        /// <returns>Returns the list of features <see cref="IFeature"/> </returns>
         private static IEnumerable<IFeature>? TryGetFeatures(IProvider source)
         {
             try
@@ -76,6 +49,10 @@ namespace UrbanEcho.Helpers
             }
         }
 
+        /// <summary>
+        /// Given a map coordinate returns a <see cref="Vector2"/> box2d world coordinate (Box2d can only use float)
+        /// </summary>
+        /// <returns>Returns the position <see cref="Vector2"/> </returns>
         public static Vector2 Convert2Box2dWorldPosition(double x, double y)
         {
             double worldPosX = x - World.Offset.X;
@@ -84,14 +61,10 @@ namespace UrbanEcho.Helpers
             return new Vector2((float)worldPosX, (float)worldPosY);
         }
 
-        public static Vector2 Convert2Box2dWorldPosition(MPoint mPoint)
-        {
-            double worldPosX = mPoint.X - World.Offset.X;
-            double worldPosY = mPoint.Y - World.Offset.Y;
-
-            return new Vector2((float)worldPosX, (float)worldPosY);
-        }
-
+        /// <summary>
+        /// Given a map coordinate as a <see cref="Point"/> returns a <see cref="Vector2"/> box2d world coordinate (Box2d can only use float)
+        /// </summary>
+        /// <returns>Returns the position <see cref="Vector2"/> </returns>
         public static Vector2 Convert2Box2dWorldPosition(Point point)
         {
             double worldPosX = point.X - World.Offset.X;
@@ -100,6 +73,10 @@ namespace UrbanEcho.Helpers
             return new Vector2((float)worldPosX, (float)worldPosY);
         }
 
+        /// <summary>
+        /// Gets a a list of features from a <see cref="IProvider"/>
+        /// </summary>
+        /// <returns>Returns the list of features <see cref="IFeature"/> </returns>
         public static List<IFeature> GetFeatures(IProvider source)
         {
             List<IFeature> featureList = new List<IFeature>();
@@ -116,6 +93,11 @@ namespace UrbanEcho.Helpers
             return featureList;
         }
 
+        /// <summary>
+        /// Tries to get the double value from a feature field <see cref="IFeature"/>
+        /// returns a default value if unable to get the value
+        /// </summary>
+        /// <returns>Returns value as a <see cref="double"/> </returns>
         public static double TryGetFeatureKVPToDouble(IFeature feature, string key, double defaultValue)
         {
             double value = defaultValue;
@@ -131,6 +113,11 @@ namespace UrbanEcho.Helpers
             return value;
         }
 
+        /// <summary>
+        /// Tries to get the floating point value from a feature field <see cref="IFeature"/>
+        /// returns a default value if unable to get the value
+        /// </summary>
+        /// <returns>Returns value as a <see cref="float"/> </returns>
         public static float TryGetFeatureKVPToFloat(IFeature feature, string key, float defaultValue)
         {
             float value = defaultValue;
@@ -146,6 +133,11 @@ namespace UrbanEcho.Helpers
             return value;
         }
 
+        /// <summary>
+        /// Tries to get the int value from a feature field <see cref="IFeature"/>
+        /// returns a default value if unable to get the value
+        /// </summary>
+        /// <returns>Returns value as a <see cref="int"/> </returns>
         public static int TryGetFeatureKVPToInt(IFeature feature, string key, int defaultValue)
         {
             int value = defaultValue;
@@ -161,6 +153,11 @@ namespace UrbanEcho.Helpers
             return value;
         }
 
+        /// <summary>
+        /// Tries to get the string value from a feature field <see cref="IFeature"/>
+        /// returns a default value if unable to get the value
+        /// </summary>
+        /// <returns>Returns value as a <see cref="string"/> </returns>
         public static string TryGetFeatureKVPToString(IFeature feature, string key, string defaultValue)
         {
             string value = defaultValue;
@@ -180,6 +177,10 @@ namespace UrbanEcho.Helpers
             return value;
         }
 
+        /// <summary>
+        /// Creates a box2d <see cref="b2Polygon"/> used for body shapes using a  <see cref="Vector2"/> array
+        /// </summary>
+        /// <returns>Returns the polygon created <see cref="b2Polygon"/> </returns>
         public static b2Polygon CreatePolygon(Vector2[] corners)
         {
             if (corners.Length is < 3 or > 8) throw new Exception($"Corner count ({corners.Length}) must be within [3,8].");
@@ -187,46 +188,47 @@ namespace UrbanEcho.Helpers
             return B2Api.b2MakePolygon(B2Api.b2ComputeHull(corners, corners.Length), 0);
         }
 
+        /// <summary>
+        /// Takes a value as radians and returns degrees
+        /// </summary>
+        /// <returns>Returns the value as degrees <see cref="float"/> </returns>
         public static float Rad2Deg(float r)
         {
             return r * (180.0f / MathF.PI);
         }
 
+        /// <summary>
+        /// Takes a value as degrees and returns radians
+        /// </summary>
+        /// <returns>Returns the value as radians <see cref="float"/> </returns>
         public static float Deg2Rad(float d)
         {
             return d * (MathF.PI / 180.0f);
         }
 
-        public static Vector2 MS2Kmh(Vector2 v)
-        {
-            return v * 3.6f;
-        }
-
+        /// <summary>
+        /// Takes a value as meters per second and converts it to kilometers per hour
+        /// </summary>
+        /// <returns>Returns the value as kilometers per hour <see cref="float"/> </returns>
         public static float MS2Kmh(float s)
         {
             return s * 3.6f;
         }
 
-        public static Vector2 Kmh2Ms(Vector2 v)
-        {
-            return v / 3.6f;
-        }
-
+        /// <summary>
+        /// Takes a value as kilometers per hour  and converts it to meters per second
+        /// </summary>
+        /// <returns>Returns the value as meters per second <see cref="float"/> </returns>
         public static float Kmh2Ms(float s)
         {
             return s / 3.6f;
         }
 
-        public static float DoMapCorrection(float value)
-        {
-            return value * MapCorrection;
-        }
-
-        public static double DoMapCorrection(double value)
-        {
-            return value * MapCorrection;
-        }
-
+        /// <summary>
+        /// Takes a <see cref="RoadType"/> value and returns a priority value, the higher value returned
+        /// the more priority the road type has.
+        /// </summary>
+        /// <returns>Returns the priority value <see cref="int"/> </returns>
         public static int GetPriority(RoadType value)
         {
             int returnValue = 0;
@@ -278,6 +280,11 @@ namespace UrbanEcho.Helpers
             return returnValue;
         }
 
+        /// <summary>
+        /// Takes a <see cref="string"/> value representing the road type and returns a priority value, the higher value returned
+        /// the more priority the road type has.
+        /// </summary>
+        /// <returns>Returns the priority value <see cref="int"/> </returns>
         public static int GetPriority(string value)
         {
             int returnValue = 0;

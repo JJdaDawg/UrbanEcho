@@ -17,6 +17,9 @@ using UrbanEcho.Sim;
 
 namespace UrbanEcho.Graph
 {
+    /// <summary>
+    /// Vehicle path class, contains everything related to the vehicle following a path
+    /// </summary>
     public class VehiclePath
     {
         private RoadGraph graph;
@@ -40,6 +43,9 @@ namespace UrbanEcho.Graph
             originNodeId = currentRoadEdge.From;
         }
 
+        /// <summary>
+        /// Advances vehicle to next road in the path
+        /// </summary>
         public void AdvanceToNextRoad()
         {
             if (graph == null)
@@ -65,6 +71,9 @@ namespace UrbanEcho.Graph
             stepThroughPath();
         }
 
+        /// <summary>
+        /// Sets a new path for the vehicle to follow
+        /// </summary>
         private void setNewPath(int currentNodeId)
         {
             pathSegmentIndex = 0;
@@ -103,11 +112,18 @@ namespace UrbanEcho.Graph
                 path.Add(newPathEdges[i].To);
         }
 
+        /// <summary>
+        /// Gets the current RoadGraph
+        /// </summary>
+        /// <returns>Returns the Road Graph the vehicle is using <see cref="RoadGraph"/> </returns>
         public RoadGraph GetRoadGraph()
         {
             return graph;
         }
 
+        /// <summary>
+        /// steps through the path (to next road edge along path)
+        /// </summary>
         private void stepThroughPath()
         {
             if (pathSteps == null || pathSegmentIndex >= pathSteps.Count)
@@ -134,6 +150,9 @@ namespace UrbanEcho.Graph
             }
         }
 
+        /// <summary>
+        /// Resets the vehicle to a new position
+        /// </summary>
         public void ResetVehicleToNewPos(bool useCurrentPos = false)
         {
             int goalNode;
@@ -194,6 +213,9 @@ namespace UrbanEcho.Graph
             parent.ResetBodyTransform();
         }
 
+        /// <summary>
+        /// Sets Initial path of the vehicle
+        /// </summary>
         public bool SetInitialPath()
         {
             bool pathWasSet = false;
@@ -213,11 +235,18 @@ namespace UrbanEcho.Graph
             return pathWasSet;
         }
 
+        /// <summary>
+        /// Gets current road edge the vehicle is on
+        /// </summary>
         public RoadEdge GetCurrentRoadEdge()
         {
             return currentRoadEdge;
         }
 
+        /// <summary>
+        /// Sets the current RoadEdge
+        /// </summary>
+        /// <returns>Returns the current road edge the vehicle has been set to <see cref="RoadEdge"/> </returns>
         private RoadEdge SetCurrentRoadEdge(RoadEdge updatedRoadEdge, TurnDirection turn = TurnDirection.Straight)
         {
             float newSpeedLimit = (float)(updatedRoadEdge.Metadata.SpeedLimit * 3.6);
@@ -225,7 +254,7 @@ namespace UrbanEcho.Graph
             {
                 newSpeedLimit = 30.0f;
             }
-            parent.UpdateSpeedLimit(Helper.DoMapCorrection(newSpeedLimit));
+            parent.UpdateSpeedLimit(newSpeedLimit);
 
             if (updatedRoadEdge.Feature is GeometryFeature g)
             {
@@ -270,6 +299,9 @@ namespace UrbanEcho.Graph
             return features;
         }
 
+        /// <summary>
+        /// Sets the destination for the vehicle
+        /// </summary>
         public void SetDestination(int goalNodeId)
         {
             if (graph == null) return;
