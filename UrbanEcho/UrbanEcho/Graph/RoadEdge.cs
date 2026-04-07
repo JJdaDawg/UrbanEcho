@@ -30,7 +30,10 @@ public sealed class RoadEdge
         IsClosed = true;
         stats.SetClosed();
         UpdateFeatureClosedStatus(true);
-        EventQueueForUI.Instance.Add(new RefreshMapEvent(MainWindow.Instance.GetMap()));
+        if (!Helper.TestMode)
+        {
+            EventQueueForUI.Instance.Add(new RefreshMapEvent(MainWindow.Instance.GetMap()));
+        }
     }
 
     public void Open()

@@ -11,6 +11,7 @@ public class Tests
     [SetUp]
     public void Setup()
     {
+        Helpers.Helper.TestMode = true;
     }
 
     // <summary>

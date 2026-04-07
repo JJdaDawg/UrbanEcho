@@ -8,6 +8,12 @@ namespace UrbanEcho.Tests;
 /// </summary>
 public class SimClockTests
 {
+    [SetUp]
+    public void Setup()
+    {
+        Helpers.Helper.TestMode = true;
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     /// <summary>
@@ -48,11 +54,11 @@ public class SimClockTests
 
     // ── IsRushHour ────────────────────────────────────────────────────────────
 
-    [TestCase(0f,     true,  "AM rush start (hour 7)")]
-    [TestCase(3600f,  true,  "AM rush peak (hour 8)")]
-    [TestCase(7200f,  false, "Post-AM rush (hour 9)")]
-    [TestCase(32400f, true,  "PM rush start (hour 16)")]
-    [TestCase(36000f, true,  "PM rush peak (hour 17)")]
+    [TestCase(0f, true, "AM rush start (hour 7)")]
+    [TestCase(3600f, true, "AM rush peak (hour 8)")]
+    [TestCase(7200f, false, "Post-AM rush (hour 9)")]
+    [TestCase(32400f, true, "PM rush start (hour 16)")]
+    [TestCase(36000f, true, "PM rush peak (hour 17)")]
     [TestCase(39600f, false, "Post-PM rush (hour 18)")]
     [TestCase(10800f, false, "Mid-morning (hour 10)")]
     public void IsRushHour_ReturnsExpectedValue(float simTime, bool expected, string description)
@@ -184,7 +190,7 @@ public class SimClockTests
 
     // ── FormatObservationWindow ───────────────────────────────────────────────
 
-    [TestCase(7, 9,  "07:00\u201309:00")]
+    [TestCase(7, 9, "07:00\u201309:00")]
     [TestCase(0, 23, "00:00\u201323:00")]
     public void FormatObservationWindow_FormatsCorrectly(int start, int end, string expected)
     {

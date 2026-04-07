@@ -2,6 +2,12 @@ namespace UrbanEcho.Tests;
 
 public class SpawnMathTests
 {
+    [SetUp]
+    public void Setup()
+    {
+        Helpers.Helper.TestMode = true;
+    }
+
     // ── Burst-share distribution ─────────────────────────────────────────────
 
     /// <summary>
@@ -12,11 +18,11 @@ public class SpawnMathTests
             ? Math.Max(1, (int)Math.Round((double)spawnerVpm / totalVpm * targetCount))
             : 1;
 
-    [TestCase(5,  10, 20, 10,  "Equal split: 5/10 * 20 = 10")]
-    [TestCase(3,  10, 10,  3,  "Proportional: 3/10 * 10 = 3")]
-    [TestCase(7,  10, 10,  7,  "Proportional: 7/10 * 10 = 7")]
-    [TestCase(1,  10, 10,  1,  "Small share: 1/10 * 10 = 1")]
-    [TestCase(10, 10, 10, 10,  "Whole share: 10/10 * 10 = 10")]
+    [TestCase(5, 10, 20, 10, "Equal split: 5/10 * 20 = 10")]
+    [TestCase(3, 10, 10, 3, "Proportional: 3/10 * 10 = 3")]
+    [TestCase(7, 10, 10, 7, "Proportional: 7/10 * 10 = 7")]
+    [TestCase(1, 10, 10, 1, "Small share: 1/10 * 10 = 1")]
+    [TestCase(10, 10, 10, 10, "Whole share: 10/10 * 10 = 10")]
     public void BurstShare_ProportionalToVpm(int vpm, int totalVpm, int target, int expected, string description)
     {
         Assert.That(BurstShare(vpm, totalVpm, target), Is.EqualTo(expected), description);
@@ -52,7 +58,6 @@ public class SpawnMathTests
         Assert.That(BurstShare(1, 3, 10), Is.EqualTo(3));
     }
 
-
     private const int MaxVehicles = 5000;
 
     /// <summary>
@@ -61,12 +66,12 @@ public class SpawnMathTests
     private static int TargetCount(int nodeCount, float demand) =>
         Math.Max(1, (int)(Math.Min(nodeCount, MaxVehicles) * demand));
 
-    [TestCase(100,   1.00f, 100,  "Full demand on small graph")]
-    [TestCase(100,   0.50f,  50,  "Half demand on small graph")]
-    [TestCase(100,   0.10f,  10,  "Low demand on small graph")]
+    [TestCase(100, 1.00f, 100, "Full demand on small graph")]
+    [TestCase(100, 0.50f, 50, "Half demand on small graph")]
+    [TestCase(100, 0.10f, 10, "Low demand on small graph")]
     [TestCase(10000, 1.00f, 5000, "Capped at MaxVehicles")]
-    [TestCase(5000,  1.00f, 5000, "Exactly at cap")]
-    [TestCase(5001,  1.00f, 5000, "One over cap is still capped")]
+    [TestCase(5000, 1.00f, 5000, "Exactly at cap")]
+    [TestCase(5001, 1.00f, 5000, "One over cap is still capped")]
     public void TargetCount_ScalesAndCapsCorrectly(int nodeCount, float demand, int expected, string description)
     {
         Assert.That(TargetCount(nodeCount, demand), Is.EqualTo(expected), description);

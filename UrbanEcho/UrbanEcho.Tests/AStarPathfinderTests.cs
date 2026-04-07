@@ -12,6 +12,12 @@ namespace UrbanEcho.Tests;
 /// </summary>
 public class AStarPathfinderTests
 {
+    [SetUp]
+    public void Setup()
+    {
+        Helpers.Helper.TestMode = true;
+    }
+
     // ── Graph-builder helpers ─────────────────────────────────────────────────
 
     private static RoadNode N(int id, double x, double y) => new RoadNode(id, x, y);
@@ -262,7 +268,7 @@ public class AStarPathfinderTests
 
     [TestCase(100.0, 10.0, 10.0)]   // 100 m at 10 m/s → 10 s
     [TestCase(500.0, 25.0, 20.0)]   // 500 m at 25 m/s → 20 s
-    [TestCase(36.0,  18.0,  2.0)]   // 36 m at 18 m/s → 2 s
+    [TestCase(36.0, 18.0, 2.0)]   // 36 m at 18 m/s → 2 s
     public void TravelTimeSeconds_ComputedFromLengthAndSpeedLimit(
         double length, double speedMs, double expectedSeconds)
     {
@@ -272,12 +278,12 @@ public class AStarPathfinderTests
 
     // ── RoutingCostMultiplier: road-type weighting ────────────────────────────
 
-    [TestCase(RoadType.Freeway,      0.9)]
-    [TestCase(RoadType.Arterial,     1.0)]
-    [TestCase(RoadType.Collector,    1.2)]
-    [TestCase(RoadType.LocalStreet,  3.0)]
+    [TestCase(RoadType.Freeway, 0.9)]
+    [TestCase(RoadType.Arterial, 1.0)]
+    [TestCase(RoadType.Collector, 1.2)]
+    [TestCase(RoadType.LocalStreet, 3.0)]
     [TestCase(RoadType.AlleywayLane, 5.0)]
-    [TestCase(RoadType.Private,      6.0)]
+    [TestCase(RoadType.Private, 6.0)]
     public void RoutingCostMultiplier_ReturnsExpectedWeight(RoadType type, double expected)
     {
         Assert.That(type.RoutingCostMultiplier(), Is.EqualTo(expected).Within(0.001));

@@ -26,6 +26,7 @@ namespace UrbanEcho.Helpers
         public const float DefaultLaneWidth = 3.9f;//in meters
         public const int NumberOfVehicleGroups = 1; //spread out the updates so we can have better fps
         public const float ExtraPavementFactor = 1.25f; //Sets how the width of roads is shown
+        public static bool TestMode = false;
 
         /// <summary>
         /// Gets a a list of features from a <see cref="IProvider"/>
