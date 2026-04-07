@@ -582,6 +582,7 @@ namespace UrbanEcho.FileManagement
                 layer = new MemoryLayer("Spawners");
                 layer.Features = SpawnerFeatures;
                 layer.Opacity = 1.0f;
+                layer.MaxVisible = 3.5f;
                 SpawnerStyles spawnerStyles = new SpawnerStyles();
                 layer.Style = spawnerStyles.CreateThemeStyle();
                 EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Created Spawner Layer"));
