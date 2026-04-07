@@ -114,17 +114,17 @@ public static class PathStepBuilder
 
         if (next.Feature is GeometryFeature gf2 && gf2.Geometry is LineString ls2)
         {
-            if (ls2.Coordinates.Length > 0)
+            if (ls2.Coordinates.Length > 1)
             {
                 if (next.IsFromStartOfLineString)
                 {
-                    cX = ls2.Coordinates[0].CoordinateValue.X;
-                    cY = ls2.Coordinates[0].CoordinateValue.Y;
+                    cX = ls2.Coordinates[1].CoordinateValue.X;
+                    cY = ls2.Coordinates[1].CoordinateValue.Y;
                 }
                 else
                 {
-                    cX = ls2.Coordinates[ls2.Coordinates.Length - 1].CoordinateValue.X;
-                    cY = ls2.Coordinates[ls2.Coordinates.Length - 1].CoordinateValue.Y;
+                    cX = ls2.Coordinates[ls2.Coordinates.Length - 2].CoordinateValue.X;
+                    cY = ls2.Coordinates[ls2.Coordinates.Length - 2].CoordinateValue.Y;
                 }
             }
         }

@@ -27,6 +27,9 @@ using Layer = Mapsui.Layers.Layer;
 
 namespace UrbanEcho;
 
+/// <summary>
+/// MainWindow class
+/// </summary>
 public partial class MainWindow : AppWindow, IPanelService
 {
     private GridLength _lastConsoleHeight = new GridLength(200);
@@ -40,6 +43,9 @@ public partial class MainWindow : AppWindow, IPanelService
 
     public static MainWindow Instance { get; private set; } = null!;
 
+    /// <summary>
+    /// Called when MainWindow Created initializes services and starts the simulation task
+    /// </summary>
     public MainWindow()
     {
         InitializeComponent();
@@ -59,16 +65,27 @@ public partial class MainWindow : AppWindow, IPanelService
         UIUpdate.UITask = Task.Factory.StartNew(new Action(UIUpdate.Run), UIUpdate.Cts.Token);
     }
 
+    /// <summary>
+    /// Gets the MainViewModel
+    /// </summary>
+    /// <returns>Returns a <see cref="MainViewModel"/> </returns>
     public MainViewModel GetMainViewModel()
     {
         return vm;
     }
 
+    /// <summary>
+    /// Returns the map attached to the MapViewModel
+    /// </summary>
+    /// <returns>Returns a <see cref="Map"/> </returns>
     public Map GetMap()
     {
         return vm.Map.MyMap;
     }
 
+    /// <summary>
+    /// Toggles if console is shown or not
+    /// </summary>
     public void ToggleConsole(bool open)
     {
         var splitterRow = LeftGrid.RowDefinitions[1];
@@ -88,6 +105,9 @@ public partial class MainWindow : AppWindow, IPanelService
         }
     }
 
+    /// <summary>
+    /// Toggles if the right panel is shown or not
+    /// </summary>
     public void ToggleRightPanel(bool open)
     {
         var splitterCol = MainContentGrid.ColumnDefinitions[1];
@@ -107,6 +127,9 @@ public partial class MainWindow : AppWindow, IPanelService
         }
     }
 
+    /// <summary>
+    /// Toggles if the property panel is shown or not
+    /// </summary>
     public void ToggleProperties(bool open)
     {
         var splitterRow = RightGrid.RowDefinitions[1];
@@ -129,6 +152,9 @@ public partial class MainWindow : AppWindow, IPanelService
         _propertiesOpen = open;
     }
 
+    /// <summary>
+    /// Toggles if the project explorer is shown or not
+    /// </summary>
     public void ToggleProjectExplorer(bool open)
     {
         var row = RightGrid.RowDefinitions[0];

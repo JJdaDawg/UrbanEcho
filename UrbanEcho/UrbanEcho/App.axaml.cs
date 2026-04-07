@@ -51,6 +51,9 @@ public partial class App : Application
     {
     }
 
+    /// <summary>
+    /// Cancels current running tasks and frees held memory before exiting
+    /// </summary>
     private void OnExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
     {
         try
@@ -65,7 +68,6 @@ public partial class App : Application
         }
         catch
         {
-            //TODO: maybe log to file, can't show error since window is closing
         }
         finally
         {

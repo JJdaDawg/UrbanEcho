@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace UrbanEcho.Models.Report
 {
+    /// <summary>
+    /// This class contains the structure for the report
+    /// </summary>
     public class Report
     {
         public int ReportId { get; set; }

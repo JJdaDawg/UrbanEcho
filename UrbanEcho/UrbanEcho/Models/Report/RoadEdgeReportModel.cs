@@ -7,6 +7,9 @@ using UrbanEcho.Reporting;
 
 namespace UrbanEcho.Models.Report
 {
+    /// <summary>
+    /// This class provides the values used in the report for each road edge
+    /// </summary>
     public class RoadEdgeReportModel
     {
         public int RoadEdgeReportModelId { get; set; }

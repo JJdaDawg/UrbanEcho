@@ -17,7 +17,11 @@ using UrbanEcho.ViewModels;
 
 namespace UrbanEcho.Models
 {
-    public class RoadIntersection : IBodyParent, IDisposable
+    /// <summary>
+    /// This class provides a road intersection. It is used where a set of roads meet
+    /// that have a traffic signal or stop sign
+    /// </summary>
+    public class RoadIntersection : IDisposable
     {
         public List<EdgeTrafficRule> EdgesInto;
         public List<RoadEdge> EdgesOut;
@@ -82,6 +86,10 @@ namespace UrbanEcho.Models
             Uncontrolled
         };
 
+        /// <summary>
+        /// Constructor for the class note it can not be called outside this class
+        /// Create is used when outside this class
+        /// </summary>
         private RoadIntersection(string name, IFeature feature, RoadGraph graph)
         {
             this.Name = name;
@@ -107,6 +115,10 @@ namespace UrbanEcho.Models
             }
         }
 
+        /// <summary>
+        /// Creates a road intersection
+        /// </summary>
+        /// <returns>Returns the <see cref="RoadIntersection"/> created or null if intersection not created </returns>
         public static RoadIntersection? Create(string name, IFeature feature, RoadGraph graph)
         {
             RoadIntersection? returnValue = new RoadIntersection(name, feature, graph);
@@ -142,9 +154,6 @@ namespace UrbanEcho.Models
 
                 if (returnValue.isCenterSet && graph is not null)
                 {
-                    //Adjust center for all intersections
-                    //if (feature.Fields.Contains("highway"))//adjust center for osm files
-                    //{
                     if (returnValue.roadEndPoints.Count > 1)
                     {
                         returnValue.Center = AdjustCenter(returnValue);
@@ -154,7 +163,6 @@ namespace UrbanEcho.Models
                             p.Y = (double)(World.Offset.Y + returnValue.Center.Y);
                         }
                     }
-                    // }
 
                     returnValue.Body = new IntersectionBody(returnValue, connectionsForBody, false);
 
@@ -197,6 +205,11 @@ namespace UrbanEcho.Models
             return returnValue;
         }
 
+        /// <summary>
+        /// Adjusts the center of the intersection
+        /// Using a average of each road point into the intersection
+        /// </summary>
+        /// <returns>Returns the <see cref="Vector2"/> for the adjusted center point </returns>
         private static Vector2 AdjustCenter(RoadIntersection r)
         {
             Vector2 pos = new Vector2(0, 0);
@@ -209,7 +222,9 @@ namespace UrbanEcho.Models
             return pos;
         }
 
-        //Set stop type if osm data was used
+        /// <summary>
+        /// Determines when a OSM file is used if the stop sign should be a all way or two way stop
+        /// </summary>
         private static void SetStopTypeOSM(RoadIntersection roadIntersection)
         {
             bool doneSettingType = false;
@@ -242,6 +257,9 @@ namespace UrbanEcho.Models
             }
         }
 
+        /// <summary>
+        /// Sets the name of the intersection used when no name was given
+        /// </summary>
         private static void SetName(RoadIntersection roadIntersection)
         {
             bool doneSettingName = false;
@@ -288,6 +306,10 @@ namespace UrbanEcho.Models
             }
         }
 
+        /// <summary>
+        /// Sets the traffic rule to use. Only set while intersection is created or if intersection type is changed
+        /// not updated each simulation step
+        /// </summary>
         private void SetStaticTrafficRules()
         {
             if (TheSignalType == SignalType.AllWayStop || TheSignalType == SignalType.TwoWayStop)
@@ -309,6 +331,11 @@ namespace UrbanEcho.Models
             }
         }
 
+        /// <summary>
+        /// Sets the full signal traffic rule to use and pairs the edges so certain edges get blocked while others are unblocked.
+        /// Only set while intersection is created or if intersection type is changed
+        /// not updated each simulation step
+        /// </summary>
         private void SetStaticTrafficRulesFullSignal()
         {
             FallBackTrafficRule = TrafficRule.SetFallBackTrafficRule();
@@ -547,6 +574,9 @@ namespace UrbanEcho.Models
             }
         }
 
+        /// <summary>
+        /// Sets the stop sign traffic rule to use when it is a two way stop what roads get blocked and what ones do not
+        /// </summary>
         private void SetStaticTrafficRulesStopSign()
         {
             FallBackTrafficRule = TrafficRule.SetFallBackTrafficRule();
@@ -737,6 +767,10 @@ namespace UrbanEcho.Models
             }
         }
 
+        /// <summary>
+        /// Sets signal type this is given the value in the feature field
+        /// </summary>
+        /// <returns>Returns the signal type <see cref="SignalType"/> </returns>
         public SignalType SetSignalType()
         {
             SignalType type = SignalType.Uncontrolled;
@@ -779,11 +813,20 @@ namespace UrbanEcho.Models
             return type;
         }
 
+        /// <summary>
+        /// Gets if the box2d body for the intersection is set
+        /// </summary>
+        /// <returns>Returns a boolean value indicating if it is set </returns>
         public bool IsBodySet()
         {
             return isBodySet;
         }
 
+        /// <summary>
+        /// Sets the connections into the intersection
+        /// </summary>
+        /// <returns>Returns a List of <see cref="Vector2"/> and width <see cref="float"/> values used for creating intersection body
+        /// </returns>
         private List<(Vector2 direction, float width)> setConnections(RoadGraph graph, float thresholdToUse)
         {
             List<(Vector2 pos, float width)> connectingPoints = new List<(Vector2 pos, float width)>();
@@ -876,6 +919,9 @@ namespace UrbanEcho.Models
             return connectingPoints;
         }
 
+        /// <summary>
+        /// Updates what incoming edges to the intersection are blocked or not
+        /// </summary>
         public void UpdateTrafficRules()
         {
             if (TheSignalType == SignalType.AllWayStop || TheSignalType == SignalType.TwoWayStop)
@@ -888,6 +934,9 @@ namespace UrbanEcho.Models
             }
         }
 
+        /// <summary>
+        /// Updates what incoming edges to the full signal intersection are blocked or not
+        /// </summary>
         private void UpdateFullSignalRule()
         {
             if (pairedRoads.Count < 2)
@@ -955,6 +1004,9 @@ namespace UrbanEcho.Models
             }
         }
 
+        /// <summary>
+        /// Updates what incoming edges to the stop sign intersection are blocked or not
+        /// </summary>
         private void UpdateStopSignRule()
         {
             if (EdgesInto.Count != 0)
@@ -984,6 +1036,11 @@ namespace UrbanEcho.Models
             }
         }
 
+        /// <summary>
+        /// Gets all roads that are connected to the intersection
+        /// and returns a list of features indicating if the road Edge is blocked or not
+        /// </summary>
+        /// <returns>Returns a list of  <see cref="IFeature"/> </returns>
         public IReadOnlyList<IFeature> GetConnectedRoadFeatures()
         {
             var features = new List<IFeature>();
@@ -1019,6 +1076,9 @@ namespace UrbanEcho.Models
             return features;
         }
 
+        /// <summary>
+        /// Changes the signal type
+        /// </summary>
         public void ChangeSignalType(SignalType newSignalType)
         {
             TheSignalType = newSignalType;
@@ -1042,6 +1102,9 @@ namespace UrbanEcho.Models
             SimManager.Instance.RefreshTrafficRuleReferences();
         }
 
+        /// <summary>
+        /// Changes the signal to a stop sign type
+        /// </summary>
         public void ApplyStopSignAssignment(List<(EdgeTrafficRule edge, bool hasStopSign)> assignments)
         {
             foreach (var (edge, hasStopSign) in assignments)
@@ -1052,21 +1115,34 @@ namespace UrbanEcho.Models
             SimManager.Instance.RefreshTrafficRuleReferences();
         }
 
+        /// <summary>
+        /// Gets the stats for this intersection
+        /// </summary>
+        /// <returns>Returns a list of  <see cref="RecordedStats"/> </returns>
         public RecordedStats GetStats()
         {
             return this.stats;
         }
 
+        /// <summary>
+        /// Updates the stats for this intersection
+        /// </summary>
         private void UpdateStats(Stats incomingStats)
         {
             stats.RecordVehicle(incomingStats);
         }
 
+        /// <summary>
+        /// Resets the stats for this intersection
+        /// </summary>
         public void ResetStats()
         {
             stats.Reset();
         }
 
+        /// <summary>
+        /// Disposes the intersection and removes the event handler
+        /// </summary>
         public void Dispose()
         {
             foreach (EdgeTrafficRule edgeTrafficRule in this.EdgesInto)

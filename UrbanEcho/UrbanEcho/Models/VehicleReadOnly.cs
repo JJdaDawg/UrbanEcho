@@ -4,10 +4,12 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
-using UrbanEcho.Models.UI;
 
 namespace UrbanEcho.Models
 {
+    /// <summary>
+    /// Read Only Class for vehicles that doesn't allow changes
+    /// </summary>
     public class VehicleReadOnly
     {
         private Vehicle v;

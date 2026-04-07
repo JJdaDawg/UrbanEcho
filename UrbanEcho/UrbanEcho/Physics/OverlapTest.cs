@@ -13,6 +13,9 @@ using UrbanEcho.Sim;
 
 namespace UrbanEcho.Physics
 {
+    /// <summary>
+    /// Class for performing a overlap test if a vehicle is touching another vehicle
+    /// </summary>
     public class OverlapTest
     {
         private b2QueryFilter queryFilter = B2Api.b2DefaultQueryFilter();
@@ -34,6 +37,9 @@ namespace UrbanEcho.Physics
             overlapDelegateVehicle = OverlapCallbackVehicle;
         }
 
+        /// <summary>
+        /// Does a overlap test to see if two vehicles are touching
+        /// </summary>
         public bool DoOverlapTest(b2ShapeProxy b2ShapeProxy, b2ShapeId casterShapeId)
         {
             this.casterShapeId = casterShapeId;
@@ -56,11 +62,17 @@ namespace UrbanEcho.Physics
             return insideAnotherVehicle;
         }
 
+        /// <summary>
+        /// Resets the vehicle count
+        /// </summary>
         public void ResetInsideAnotherVehicleCount()
         {
             insideAnotherVehicleCount = 0;
         }
 
+        /// <summary>
+        /// Call back function that is called if overlap is detected
+        /// </summary>
         private bool OverlapCallbackVehicle(b2ShapeId shapeId, nint context)
         {
             bool returnValue = true;

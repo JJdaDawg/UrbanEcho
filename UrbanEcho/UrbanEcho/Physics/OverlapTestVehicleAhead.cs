@@ -11,6 +11,9 @@ using UrbanEcho.Sim;
 
 namespace UrbanEcho.Physics
 {
+    /// <summary>
+    /// Class for performing a overlap test of a vehicle ahead
+    /// </summary>
     public class OverlapTestVehicleAhead
     {
         private b2OverlapResultFcn overlapDelegateVehicleAhead;
@@ -29,6 +32,9 @@ namespace UrbanEcho.Physics
             anotherVehicleAhead = false;
         }
 
+        /// <summary>
+        /// Does a overlap test to see if a vehicle is ahead
+        /// </summary>
         public bool DoOverlapTest(b2ShapeProxy b2ShapeProxy, b2ShapeId casterShapeId)
         {
             anotherVehicleAhead = false;
@@ -37,6 +43,9 @@ namespace UrbanEcho.Physics
             return anotherVehicleAhead;
         }
 
+        /// <summary>
+        /// Call back function that is called if overlap is detected
+        /// </summary>
         private bool OverlapCallbackVehicleAhead(b2ShapeId shapeId, nint context)
         {
             bool returnValue = true;

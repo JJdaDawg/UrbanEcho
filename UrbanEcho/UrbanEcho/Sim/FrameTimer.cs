@@ -4,6 +4,9 @@ using System.Linq;
 
 namespace UrbanEcho.Sim
 {
+    /// <summary>
+    /// Timer class used for creating a consistent frame rate
+    /// </summary>
     public class FrameTimer
     {
         private double timeToSleep = 0;
@@ -38,7 +41,9 @@ namespace UrbanEcho.Sim
             this.showingFPS = showingFPS;
         }
 
-        //Called each frame
+        /// <summary>
+        /// Update - Called each frame
+        /// </summary>
         public void Update()
         {
             frames++;
@@ -71,21 +76,33 @@ namespace UrbanEcho.Sim
             fpsTimer.Restart();
         }
 
+        /// <summary>
+        /// Gets how long the thread should sleep for
+        /// </summary>
         public int GetTimeToSleep()
         {
             return (int)timeToSleep;
         }
 
+        /// <summary>
+        /// Indicates if frame rate should be shown
+        /// </summary>
         public bool ShouldShowText()
         {
             return addText;
         }
 
+        /// <summary>
+        /// Reset showing frame rate
+        /// </summary>
         public void ResetShowText()
         {
             addText = false;
         }
 
+        /// <summary>
+        /// String to show that describes how long the thread had to sleep and the frames that ran in last second
+        /// </summary>
         public string TimeToShow()
         {
             return timeToSend;

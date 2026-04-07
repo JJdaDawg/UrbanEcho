@@ -24,6 +24,9 @@ using UrbanEcho.ViewModels;
 
 namespace UrbanEcho.Reporting
 {
+    /// <summary>
+    /// Class used for creating a report
+    /// </summary>
     public class ReportTask
     {
         public RoadEdgeReport TheRoadEdgeReport { get; set; } = new RoadEdgeReport();
@@ -33,6 +36,9 @@ namespace UrbanEcho.Reporting
         public static Task? ExportTask { get; set; }
         public static bool TaskStarted { get; set; } = false;
 
+        /// <summary>
+        /// Creates a report, exports it to a excel sheet and updates the database
+        /// </summary>
         public ReportTask(List<RoadIntersection> roadIntersections, RoadGraph roadGraph)
         {
             TheIntersectionReport.Intersections = new List<IntersectionReportModel>();
@@ -119,6 +125,9 @@ namespace UrbanEcho.Reporting
             }
         }
 
+        /// <summary>
+        /// Checks if any roads were closed during the report
+        /// </summary>
         private bool CheckAnyRoadsClosed(List<RoadEdgeReportModel> roadEdges)
         {
             bool returnValue = false;
@@ -131,6 +140,9 @@ namespace UrbanEcho.Reporting
             return returnValue;
         }
 
+        /// <summary>
+        /// Exports the report to a excel file
+        /// </summary>
         private void Export(MemoryStream? ms, DateTime dateTime)
         {
             //https://github.com/ClosedXML/ClosedXML.Report
@@ -176,6 +188,10 @@ namespace UrbanEcho.Reporting
             }
         }
 
+        /// <summary>
+        /// Gets a memory stream that represents a picture of the map for display on the report
+        /// </summary>
+        /// <returns>Returns a image as a <see cref="MemoryStream"/> </returns>
         private MemoryStream? ExportMapImage(DateTime dateTime)
         {
             MemoryStream? ms = null;

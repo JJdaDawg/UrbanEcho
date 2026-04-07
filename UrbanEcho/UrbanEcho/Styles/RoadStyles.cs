@@ -15,6 +15,9 @@ using UrbanEcho.UI;
 
 namespace UrbanEcho.Styles
 {
+    /// <summary>
+    /// Road Styles used for displaying a road
+    /// </summary>
     public class RoadStyles
     {
         private bool useOutline;
@@ -24,6 +27,10 @@ namespace UrbanEcho.Styles
             this.useOutline = useOutline;
         }
 
+        /// <summary>
+        /// Creates a Vector Style used for displaying the road
+        /// </summary>
+        /// <returns>Returns a <see cref="VectorStyle"/> </returns>
         private VectorStyle CreateVectorStyle(GeometryFeature gf)
         {
             VectorStyle style = new VectorStyle();
@@ -167,6 +174,11 @@ namespace UrbanEcho.Styles
             return style;
         }
 
+        /// <summary>
+        /// Creates a theme style type of style that can be shown differently depending
+        /// on features displayed
+        /// </summary>
+        /// <returns>Returns a <see cref="ThemeStyle"/> </returns>
         //https://github.com/Mapsui/Mapsui/blob/main/Samples/Mapsui.Samples.Common/Maps/Styles/ThemeStyleSample.cs
         public ThemeStyle CreateThemeStyle()
         {

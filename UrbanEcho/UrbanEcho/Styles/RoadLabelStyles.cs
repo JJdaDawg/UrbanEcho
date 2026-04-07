@@ -10,6 +10,9 @@ using UrbanEcho.FileManagement;
 
 namespace UrbanEcho.Styles
 {
+    /// <summary>
+    /// Road Name Styles used for displaying a road name
+    /// </summary>
     public class RoadLabelStyles
     {
         private LabelStyle CreateLabelStyle(GeometryFeature gf)
@@ -21,6 +24,11 @@ namespace UrbanEcho.Styles
             return style;
         }
 
+        /// <summary>
+        /// Creates a theme style type of style that can be shown differently depending
+        /// on features displayed
+        /// </summary>
+        /// <returns>Returns a <see cref="ThemeStyle"/> </returns>
         //https://github.com/Mapsui/Mapsui/blob/main/Samples/Mapsui.Samples.Common/Maps/Styles/ThemeStyleSample.cs
         public ThemeStyle CreateThemeStyle()
         {

@@ -12,7 +12,6 @@ using Mapsui.Styles.Thematics;
 using Mapsui.Tiling.Layers;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
-//using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
 using OsmSharp;
 using OsmSharp.Streams;
@@ -38,6 +37,9 @@ using Pen = Mapsui.Styles.Pen;
 
 namespace UrbanEcho.FileManagement
 {
+    /// <summary>
+    /// Project layers class is used for loading layers on the map
+    /// </summary>
     public static class ProjectLayers
     {
         private static ILayer? backgroundLayer;
@@ -67,8 +69,6 @@ namespace UrbanEcho.FileManagement
         private static bool roadLoaded = false;
         private static bool intersectionLoaded = false;
 
-        private static bool isZoomedToLayer = false;
-
         private static ProjectFile? currentProjectFile = new ProjectFile();
         public static bool IsVolumeVisible { get; set; } = true;
         public static bool IsTrafficSpeedVisible { get; set; } = true;
@@ -91,6 +91,10 @@ namespace UrbanEcho.FileManagement
 
         public static MemoryLayer? SpawnerLayer => spawnerLayer;
         public static List<IFeature> SpawnerFeatures = new List<IFeature>();
+
+        /// <summary>
+        /// Loads the project file so now the current project file loaded is one given
+        /// </summary>
 
         public static void LoadProject(string path)
         {
@@ -125,16 +129,27 @@ namespace UrbanEcho.FileManagement
             }
         }
 
+        /// <summary>
+        /// Gets status if the road and intersection is loaded
+        /// </summary>
+        /// <returns>Returns boolean if road and intersection is loaded</returns>
         public static bool GetIsRoadAndIntersectionLoaded()
         {
             return roadLoaded && intersectionLoaded;
         }
 
+        /// <summary>
+        /// Gets the current project file that is loaded
+        /// </summary>
+        /// <returns>Returns the <see cref="ProjectFile"/> </returns>
         public static ProjectFile? GetProject()
         {
             return currentProjectFile;
         }
 
+        /// <summary>
+        /// Loads the background file
+        /// </summary>
         public static void LoadBackgroundFile(string path)
         {
             if (currentProjectFile != null)
@@ -155,6 +170,10 @@ namespace UrbanEcho.FileManagement
             }
         }
 
+        /// <summary>
+        /// Gets the current road layer's extent
+        /// </summary>
+        /// <returns>Returns the extents <see cref="MRect"/> </returns>
         public static MRect? TryGetRoadLayerExtent()
         {
             MRect? returnValue = null;
@@ -168,6 +187,9 @@ namespace UrbanEcho.FileManagement
             return returnValue;
         }
 
+        /// <summary>
+        /// Loads the road file
+        /// </summary>
         public static void LoadRoadFile(string path)
         {
             resetLayers();
@@ -202,6 +224,9 @@ namespace UrbanEcho.FileManagement
             }
         }
 
+        /// <summary>
+        /// Loads the intersection file
+        /// </summary>
         public static void LoadIntersectionsFile(string path)
         {
             if (currentProjectFile != null)
@@ -224,6 +249,9 @@ namespace UrbanEcho.FileManagement
             }
         }
 
+        /// <summary>
+        /// Loads the census file
+        /// </summary>
         public static void LoadCensusFile(string path)
         {
             if (currentProjectFile == null || SimManager.Instance.RoadGraph == null)
@@ -257,6 +285,10 @@ namespace UrbanEcho.FileManagement
             }
         }
 
+        /// <summary>
+        /// Checks if vehicle layer is loaded
+        /// </summary>
+        /// <returns>Returns if the vehicle layer is loaded</returns>
         public static bool VehicleLayerReady()
         {
             if (vehicleLayer != null)
@@ -269,6 +301,9 @@ namespace UrbanEcho.FileManagement
             }
         }
 
+        /// <summary>
+        /// Resets all layers on the map so that no layers are loaded
+        /// </summary>
         private static void resetLayers()
         {
             backgroundRequiresLoading = true;
@@ -303,6 +338,10 @@ namespace UrbanEcho.FileManagement
             MainWindow.Instance.GetMap().Refresh();
         }
 
+        /// <summary>
+        /// Loads the background file
+        /// </summary>
+        /// <returns>Returns true if layer was loaded</returns>
         private static bool LoadBackground(ProjectFile currentProjectFile)
         {
             bool addLayer = false;
@@ -336,6 +375,9 @@ namespace UrbanEcho.FileManagement
             return addLayer;
         }
 
+        /// <summary>
+        /// Loads the road shape file
+        /// </summary>
         private static void LoadRoadShapeFile(ProjectFile currentProjectFile)
         {
             ShapeFile roadNetwork = new ShapeFile(currentProjectFile.RoadLayerPath);
@@ -367,6 +409,9 @@ namespace UrbanEcho.FileManagement
             }
         }
 
+        /// <summary>
+        /// Loads the road open street map file
+        /// </summary>
         private static void LoadRoadOsmFile(ProjectFile currentProjectFile)
         {
             EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Load Road osm File"));
@@ -404,6 +449,10 @@ namespace UrbanEcho.FileManagement
             }
         }
 
+        /// <summary>
+        /// Loads the road file
+        /// </summary>
+        /// <returns>Returns true if layer was loaded</returns>
         private static bool LoadRoad(ProjectFile currentProjectFile)
         {
             bool addLayer = false;
@@ -443,6 +492,10 @@ namespace UrbanEcho.FileManagement
             return addLayer;
         }
 
+        /// <summary>
+        /// Loads the intersection file
+        /// </summary>
+        /// <returns>Returns true if layer was loaded</returns>
         private static bool LoadIntersection(ProjectFile currentProjectFile)
         {
             bool addLayer = false;
@@ -491,6 +544,10 @@ namespace UrbanEcho.FileManagement
             return addLayer;
         }
 
+        /// <summary>
+        /// Loads the vehicle file and other overlay files used for selections
+        /// </summary>
+        /// <returns>Returns true if layer was loaded</returns>
         public static bool LoadVehicleAndMiscLayers(ProjectFile currentProjectFile)
         {
             bool addLayer = false;
@@ -532,6 +589,10 @@ namespace UrbanEcho.FileManagement
             return addLayer;
         }
 
+        /// <summary>
+        /// Loads the each layer given the paths in the project file
+        /// </summary>
+        /// <returns>Returns true any layer was loaded</returns>
         public static bool Load(ProjectFile currentProjectFile)
         {
             bool addLayer = false;
@@ -575,11 +636,18 @@ namespace UrbanEcho.FileManagement
             return addLayer;
         }
 
+        /// <summary>
+        /// Gets the intersection layer
+        /// </summary>
+        /// <returns>Returns the intersection layer that was loaded <see cref="ILayer"/> </returns>
         public static ILayer? GetIntersectionLayer()
         {
             return intersectionLayer;
         }
 
+        /// <summary>
+        /// Sets the road selection layer
+        /// </summary>
         public static void SetRoadSelection(IFeature? feature, Map? map)
         {
             if (roadSelectionLayer == null) return;
@@ -591,6 +659,9 @@ namespace UrbanEcho.FileManagement
             map?.Refresh();
         }
 
+        /// <summary>
+        /// Sets the path overlay layer
+        /// </summary>
         public static void SetPathOverlay(IReadOnlyList<IFeature>? features, Map? map)
         {
             if (pathOverlayLayer == null) return;
@@ -608,6 +679,9 @@ namespace UrbanEcho.FileManagement
             map?.Refresh();
         }
 
+        /// <summary>
+        /// Sets the intersection overlay layer
+        /// </summary>
         public static void SetIntersectionOverlay(IReadOnlyList<IFeature>? roadFeatures, Map? map)
         {
             if (intersectionOverlayLayer == null) return;
@@ -620,24 +694,36 @@ namespace UrbanEcho.FileManagement
             map?.Refresh();
         }
 
+        /// <summary>
+        /// Refreshes the intersection overlay layer
+        /// </summary>
         public static void RefreshIntersectionOverlay(IReadOnlyList<IFeature>? roadFeatures)
         {
             Map? map = MainWindow.Instance.GetMap();
             SetIntersectionOverlay(roadFeatures, MainWindow.Instance.GetMap());
         }
 
+        /// <summary>
+        /// Adds a spawn point
+        /// </summary>
         public static void AddSpawnPoint(SpawnPoint spawnPoint)
         {
             SimManager.Instance.SpawnPoints.Add(spawnPoint);
             RebuildSpawnerFeatures();
         }
 
+        /// <summary>
+        /// Removes a spawn point
+        /// </summary>
         public static void RemoveSpawnPoint(SpawnPoint spawnPoint)
         {
             SimManager.Instance.SpawnPoints.Remove(spawnPoint);
             RebuildSpawnerFeatures();
         }
 
+        /// <summary>
+        /// Moves a spawn point
+        /// </summary>
         public static void MoveSpawnPoint(SpawnPoint spawnPoint, double x, double y, int nearestNodeId)
         {
             spawnPoint.X = x;
@@ -646,6 +732,9 @@ namespace UrbanEcho.FileManagement
             RebuildSpawnerFeatures();
         }
 
+        /// <summary>
+        /// Rebuilds the spawn points
+        /// </summary>
         public static void RebuildSpawnerFeatures()
         {
             SpawnerFeatures.Clear();
@@ -667,6 +756,10 @@ namespace UrbanEcho.FileManagement
             MainWindow.Instance.GetMap()?.Refresh();
         }
 
+        /// <summary>
+        /// Finds a spawn point
+        /// </summary>
+        /// <returns>Returns the spawn point found <see cref="SpawnPoint"/> </returns>
         public static SpawnPoint? FindSpawnPointByFeature(IFeature feature)
         {
             string? id = feature["SpawnPointId"]?.ToString();
@@ -674,6 +767,10 @@ namespace UrbanEcho.FileManagement
             return SimManager.Instance.SpawnPoints.Find(sp => sp.Id == id);
         }
 
+        /// <summary>
+        /// Creates a layer for debugging
+        /// </summary>
+        /// <returns>Returns the layer that was created <see cref="MemoryLayer"/> </returns>
         public static MemoryLayer? CreateDebugLayer()
         {
             MemoryLayer? layer = null;
@@ -758,7 +855,6 @@ namespace UrbanEcho.FileManagement
                 VectorStyle orangeDotStyle = new VectorStyle { Line = new Pen { Color = Color.Pink, Width = 5 }, Outline = new Pen { Color = Color.Black, Width = 0.5 }, Fill = new Mapsui.Styles.Brush(Color.Orange) };
 
                 layer.Style = orangeDotStyle;
-                //layer.MaxVisible = 3.5f;
 
                 EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Created Graph Node Layer"));
             }
@@ -770,11 +866,9 @@ namespace UrbanEcho.FileManagement
             return layer;
         }
 
-        public static bool IsZoomedToLayer()
-        {
-            return isZoomedToLayer;
-        }
-
+        /// <summary>
+        /// Zooms to extents of the road layer, if not possible sets the default zoom limits
+        /// </summary>
         public static void ZoomToLayer(Map map)
         {
             if (map == null)
@@ -782,12 +876,10 @@ namespace UrbanEcho.FileManagement
                 return;
             }
 
-            //MRect? extent = map.Extent;
-
             MRect? extent = ProjectLayers.TryGetRoadLayerExtent();
             if (extent != null && double.IsNaN(extent.Centroid.X))
             {
-                extent = ProjectLayers.TryGetRoadLayerExtent();//Fallback to reading background extent if failed to get map extents
+                extent = ProjectLayers.TryGetRoadLayerExtent();//Try again
             }
 
             if (extent != null && !double.IsNaN(extent.Centroid.X))//Only create the image if we could get the extents
@@ -796,12 +888,10 @@ namespace UrbanEcho.FileManagement
 
                 if (map != null)
                 {
-                    // panBounds?.Multiply(5.0f);
                     //https://github.com/Mapsui/Mapsui/blob/main/Samples/Mapsui.Samples.Common/Maps/Navigation/KeepWithinExtentSample.cs
 
                     if (panBounds != null)
                     {
-                        //map.Navigator.OverridePanBounds = panBounds;
                         map.Navigator.OverrideZoomBounds = new MMinMax(0.01, 2500);
                         double centerX = extent.MinX + (extent.MaxX - extent.MinX) / 2;
                         double centerY = extent.MinY + (extent.MaxY - extent.MinY) / 2;
@@ -815,8 +905,6 @@ namespace UrbanEcho.FileManagement
                         map.Refresh();
                     }
                 }
-
-                isZoomedToLayer = true;
             }
             else
             {
@@ -824,9 +912,12 @@ namespace UrbanEcho.FileManagement
             }
         }
 
-        //Only call from UI
-        //Add a default zoom limit, otherwise there is a crash if trying if scrolling
-        //with middle mouse if never zoomed to a layer
+        /// <summary>
+        /// Sets the Default zoom limit
+        ///Only call from UI
+        ///Adds a default zoom limit, otherwise there is a crash if trying if scrolling
+        ///with middle mouse if never zoomed to a layer
+        /// </summary>
         public static void SetDefaultZoomLimit(Map myMap)
         {
             if (myMap == null)
@@ -846,7 +937,6 @@ namespace UrbanEcho.FileManagement
                 {
                     myMap.BackColor = Color.White;
 
-                    //myMap.Navigator.OverridePanBounds = panBounds;
                     myMap.Navigator.OverrideZoomBounds = new MMinMax(0.1, 2500);
 
                     myMap.Navigator.CenterOnAndZoomTo(new MPoint(extent.MinX + (extent.MaxX - extent.MinX) / 2,
@@ -855,7 +945,10 @@ namespace UrbanEcho.FileManagement
             }
         }
 
-        //Only call from UI
+        /// <summary>
+        /// Adds all the layers to the map
+        /// Only call from UI
+        /// </summary>
         public static void AddLayers(Map myMap)
         {
             myMap.Layers.Clear();
@@ -929,6 +1022,11 @@ namespace UrbanEcho.FileManagement
             }
         }
 
+        /// <summary>
+        /// Updates all the vehicles on the vehicle layer
+        /// within the extents of current viewport
+        /// Called from Sim Thread
+        /// </summary>
         public static void UpdateVehicleLayer(bool fullClone, Map? map)
         {
             if (vehicleLayer != null && map != null)
@@ -964,7 +1062,10 @@ namespace UrbanEcho.FileManagement
             }
         }
 
-        //Only call from UI
+        /// <summary>
+        /// Sets that the vehicle layer data is changed so mapsui knows to redraw it
+        /// Only call from UI
+        /// </summary>
         public static void SetVehicleLayerDataChanged(List<IFeature> copyOfVehiclesFeatures)
         {
             if (vehicleLayer != null)
@@ -975,12 +1076,18 @@ namespace UrbanEcho.FileManagement
             }
         }
 
-        //Only call from UI
+        /// <summary>
+        /// Clears the layers loaded on the map
+        /// Only call from UI
+        /// </summary>
         public static void ClearLayers(Map myMap)
         {
             myMap.Layers.Clear();
         }
 
+        /// <summary>
+        /// Resets the layers loaded on the map when new project is selected
+        /// </summary>
         public static void NewProject()
         {
             currentProjectFile = new ProjectFile();

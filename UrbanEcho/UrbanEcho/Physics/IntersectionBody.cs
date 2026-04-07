@@ -15,6 +15,9 @@ using static Box2dNet.Interop.B2Api;
 
 namespace UrbanEcho.Physics
 {
+    /// <summary>
+    /// Class for intersection bodies
+    /// </summary>
     public class IntersectionBody : IDisposable
     {
         public b2ShapeId ShapeId;
@@ -56,16 +59,6 @@ namespace UrbanEcho.Physics
             shapeDef.filter.categoryBits = (ulong)ShapeCategories.Intersection;
             if (connectingPoints.Count > 4 || connectingPoints.Count <= 1 || useCircle)
             {
-                /*
-                float furthestDistance = defaultSize;
-                for (int i = 0; i < connectingPoints.Count; i++)
-                {
-                    float distance = Vector2.Distance(connectingPoints[i].pos, parent.Center);
-                    if (distance > furthestDistance)
-                    {
-                        furthestDistance = distance;
-                    }
-                }*/
                 Vector2[]? Points = CircleOfPoints();
                 polygon = Helper.CreatePolygon(Points);
                 vertices = new Vector2[polygon.count];
@@ -88,6 +81,9 @@ namespace UrbanEcho.Physics
             }
         }
 
+        /// <summary>
+        /// Recreates the intersection body when box2d world is destroyed and recreated
+        /// </summary>
         public void RecreateBody()
         {
             BodyId = b2CreateBody(World.WorldId, bodyDef);
@@ -97,11 +93,20 @@ namespace UrbanEcho.Physics
             bodyCreated = true;
         }
 
+        /// <summary>
+        /// Returns the vertices making up the shape
+        /// </summary>
+        /// <returns>Returns a array of vertices representing the shape <see cref="Vector2"/> </returns>
         public Vector2[] GetShapeVertices()
         {
             return vertices;
         }
 
+        /// <summary>
+        /// Creates a shape using a circle of points (used intersection has more than 4 roads since polygon can be only 3 to 8 points
+        /// otherwise it is a invalid polygon
+        /// </summary>
+        /// <returns>Returns a array of vertices representing the shape <see cref="Vector2"/> </returns>
         private Vector2[] CircleOfPoints()
         {
             Vector2[] points = new Vector2[8];
@@ -116,6 +121,10 @@ namespace UrbanEcho.Physics
             return points;
         }
 
+        /// <summary>
+        /// Creates a shape using the connecting roads
+        /// </summary>
+        /// <returns>Returns a array of vertices representing the shape <see cref="Vector2"/> </returns>
         private Vector2[] PointsFromRoadConnections(List<(Vector2 pos, float width)> connectingPoints)
         {
             Vector2[] points = new Vector2[connectingPoints.Count * 2];
@@ -142,6 +151,9 @@ namespace UrbanEcho.Physics
             return points;
         }
 
+        /// <summary>
+        /// Disposes the intersection body
+        /// </summary>
         public void Dispose()
         {
             try

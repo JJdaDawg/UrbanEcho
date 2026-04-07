@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace UrbanEcho.Reporting
 {
+    /// <summary>
+    /// Class for stats that should be recorded
+    /// </summary>
     public class RecordedStats
     {
         public double AverageTimeSpent { get; private set; }
@@ -28,6 +31,9 @@ namespace UrbanEcho.Reporting
         {
         }
 
+        /// <summary>
+        /// Record stats for a vehicle
+        /// </summary>
         public void RecordVehicle(Stats incomingStats)
         {
             VehicleCount++;
@@ -42,17 +48,26 @@ namespace UrbanEcho.Reporting
             AverageWaitTime = TotalWaitTime / VehicleCount;
         }
 
+        /// <summary>
+        /// Sets if the road was closed during the simulation
+        /// </summary>
         public void SetClosed()//Flag that gets set if closed any time during simulation
         {
             Closed = 1;
         }
 
+        /// <summary>
+        /// Sets the position for these stats
+        /// </summary>
         public void SetPosition(double lat, double lon)
         {
             Lat = lat;
             Lon = lon;
         }
 
+        /// <summary>
+        /// Resets the recorded stats
+        /// </summary>
         public void Reset()
         {
             AverageTimeSpent = 0;

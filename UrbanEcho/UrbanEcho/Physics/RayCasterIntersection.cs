@@ -13,6 +13,9 @@ using UrbanEcho.Sim;
 
 namespace UrbanEcho.Physics
 {
+    /// <summary>
+    /// Class for a raycasting if a intersection is ahead
+    /// </summary>
     public class RayCasterIntersection
     {
         private b2QueryFilter queryFilter = B2Api.b2DefaultQueryFilter();
@@ -25,6 +28,10 @@ namespace UrbanEcho.Physics
             this.parent = parent;
         }
 
+        /// <summary>
+        /// Does a ray cast to check if a intersection is ahead
+        /// </summary>
+        /// <returns>Returns true if a intersection is ahead and the intersection shapeId <see cref="b2ShapeId"/>  </returns>
         public (bool hit, b2ShapeId intersectionShapeId) DoRayCast(Vector2 rayCastStartPos, float currentFloatAngle, bool usingShorterRayForTurn, float speedMultiplier, b2ShapeId casterShapeId)
         {
             bool rayHit = false;

@@ -12,7 +12,9 @@ namespace UrbanEcho.Reporting
 {
     //Parts of this tutorial used
     //https://learn.microsoft.com/en-us/ef/core/get-started/overview/first-app?tabs=netcore-cli
-
+    /// <summary>
+    /// Class that is used the report Database
+    /// </summary>
     public class ReportContext : DbContext
     {
         public DbSet<Report> Reports { get; set; }

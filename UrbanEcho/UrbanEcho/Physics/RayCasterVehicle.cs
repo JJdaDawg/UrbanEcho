@@ -14,6 +14,9 @@ using UrbanEcho.Sim;
 
 namespace UrbanEcho.Physics
 {
+    /// <summary>
+    /// Class for a raycasting if a vehicle is ahead
+    /// </summary>
     public class RayCasterVehicle
     {
         private b2QueryFilter queryFilter = B2Api.b2DefaultQueryFilter();
@@ -26,6 +29,10 @@ namespace UrbanEcho.Physics
             this.parent = parent;
         }
 
+        /// <summary>
+        /// Does a ray cast to check if a vehicle is ahead
+        /// </summary>
+        /// <returns>Returns true if a vehicle is ahead and the distance <see cref="float"/>  </returns>
         public (bool hit, float distance) DoRayCast(Vector2 rayCastStartPos, float currentFloatAngle, bool usingShorterRayForTurn, float speedMultiplier, b2ShapeId casterShapeId)
         {
             bool rayHit = false;
@@ -76,6 +83,10 @@ namespace UrbanEcho.Physics
             return (rayHit, hitDistance);
         }
 
+        /// <summary>
+        /// Checks if the vehicle detected should count as a ray cast hit
+        /// </summary>
+        /// <returns>Returns true if a vehicle is ahead and the distance <see cref="float"/>  </returns>
         private (bool hit, float distance) SetVehicleInFrontCount(b2ShapeId shapeId, float howFar, b2ShapeId casterShapeId)
         {
             bool hitCounted = false;

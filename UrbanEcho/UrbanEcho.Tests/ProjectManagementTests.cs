@@ -2,6 +2,10 @@
 
 namespace UrbanEcho.Tests;
 
+/// <summary>
+/// Unit tests for Project files. Includes tests to make sure reading
+/// the project test file is done correct
+/// </summary>
 public class Tests
 {
     [SetUp]
@@ -9,6 +13,9 @@ public class Tests
     {
     }
 
+    // <summary>
+    /// Tests if opening a project file works correctly
+    /// </summary>
     [Test]
     public void TestOpenFile()
     {
@@ -37,6 +44,9 @@ public class Tests
         }
     }
 
+    // <summary>
+    /// Tests if saving a project file works correctly
+    /// </summary>
     [Test]
     public void TestSaveFile()
     {
@@ -65,6 +75,9 @@ public class Tests
             Assert.Pass("saved file inspect to see if correct");
     }
 
+    // <summary>
+    /// Tests if save as project file works correctly
+    /// </summary>
     [Test]
     public void TestSaveAsFile()
     {

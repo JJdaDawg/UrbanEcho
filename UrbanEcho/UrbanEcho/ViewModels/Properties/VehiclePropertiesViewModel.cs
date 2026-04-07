@@ -4,7 +4,6 @@ using CommunityToolkit.Mvvm.Messaging;
 using System;
 using UrbanEcho.Messages;
 using UrbanEcho.Models;
-using UrbanEcho.Models.UI;
 using UrbanEcho.Services;
 
 namespace UrbanEcho.ViewModels.Properties
@@ -72,10 +71,12 @@ namespace UrbanEcho.ViewModels.Properties
 
         // ACTION Commands
         public RelayCommand PathCommand { get; }
+
         public RelayCommand TrackCommand { get; }
 
         // EDIT Commands
         public RelayCommand DestinationCommand { get; }
+
         public RelayCommand StartStopCommand { get; }
         public RelayCommand RespawnCommand { get; }
 

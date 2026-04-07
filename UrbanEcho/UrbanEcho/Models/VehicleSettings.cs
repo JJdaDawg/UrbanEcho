@@ -2,6 +2,9 @@
 
 namespace UrbanEcho.Models
 {
+    /// <summary>
+    /// Settings for each type of vehicle
+    /// </summary>
     public class VehicleSettings
     {
         private float length;
@@ -41,7 +44,7 @@ namespace UrbanEcho.Models
                 length = TruckLength;
                 width = 2.0f;
 
-                acceleration = 0.2f;
+                acceleration = 0.6f;
                 deceleration = 4.0f;
                 slowDownfactor = 0.5f;
                 turnSpeed = 3.0f;
@@ -90,7 +93,5 @@ namespace UrbanEcho.Models
         {
             return validType;
         }
-
-        //from google normal car 4.0m long and width 2.0m
     }
 }

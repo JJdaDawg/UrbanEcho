@@ -3,10 +3,8 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using UrbanEcho.Messages;
 using UrbanEcho.Models;
-using UrbanEcho.Models.UI;
 using UrbanEcho.Services;
 using UrbanEcho.ViewModels.Properties;
-using static UrbanEcho.Models.TrafficSignal;
 
 namespace UrbanEcho.ViewModels
 {

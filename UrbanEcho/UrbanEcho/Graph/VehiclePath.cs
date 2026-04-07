@@ -17,6 +17,9 @@ using UrbanEcho.Sim;
 
 namespace UrbanEcho.Graph
 {
+    /// <summary>
+    /// Vehicle path class, contains everything related to the vehicle following a path
+    /// </summary>
     public class VehiclePath
     {
         private RoadGraph graph;
@@ -40,6 +43,9 @@ namespace UrbanEcho.Graph
             originNodeId = currentRoadEdge.From;
         }
 
+        /// <summary>
+        /// Advances vehicle to next road in the path
+        /// </summary>
         public void AdvanceToNextRoad()
         {
             if (graph == null)
@@ -65,6 +71,9 @@ namespace UrbanEcho.Graph
             stepThroughPath();
         }
 
+        /// <summary>
+        /// Sets a new path for the vehicle to follow
+        /// </summary>
         private void setNewPath(int currentNodeId)
         {
             pathSegmentIndex = 0;
@@ -103,11 +112,18 @@ namespace UrbanEcho.Graph
                 path.Add(newPathEdges[i].To);
         }
 
+        /// <summary>
+        /// Gets the current RoadGraph
+        /// </summary>
+        /// <returns>Returns the Road Graph the vehicle is using <see cref="RoadGraph"/> </returns>
         public RoadGraph GetRoadGraph()
         {
             return graph;
         }
 
+        /// <summary>
+        /// steps through the path (to next road edge along path)
+        /// </summary>
         private void stepThroughPath()
         {
             if (pathSteps == null || pathSegmentIndex >= pathSteps.Count)
@@ -134,7 +150,10 @@ namespace UrbanEcho.Graph
             }
         }
 
-        public void ResetVehicleToNewPos(bool useCurrentPos = false)
+        /// <summary>
+        /// Resets the vehicle to a new position
+        /// </summary>
+        public void ResetVehicleToNewPos()
         {
             int goalNode;
             int startNode;
@@ -144,31 +163,25 @@ namespace UrbanEcho.Graph
                 EventQueueForUI.Instance.Add(new LogToConsole(MainWindow.Instance.GetMainViewModel(), $"Tried to set path when graph was null"));
                 return;
             }
-            if (!useCurrentPos)
-            {
-                bool useCensus = SimManager.Instance.SpawnMode == SpawnMode.Census
-                    && SimManager.Instance.CensusSpawn?.IsLoaded == true;
 
-                if (SimManager.Instance.SpawnPoints.Count > 0 && !useCensus)
-                {
-                    // Gates mode: respawn back to this vehicle's original spawn node
-                    startNode = originNodeId;
-                }
-                else if (SimManager.Instance.CensusSpawn != null && SimManager.Instance.CensusSpawn.IsLoaded)
-                {
-                    // Return to the node this vehicle originally spawned from.
-                    startNode = originNodeId;
-                }
-                else
-                {
-                    startNode = TrafficVolumeLoader.PickWeightedDestination(graph, -1);
-                }
-                parent.SetUsingShorterRayForTurn(false);
+            bool useCensus = SimManager.Instance.SpawnMode == SpawnMode.Census
+                && SimManager.Instance.CensusSpawn?.IsLoaded == true;
+
+            if (SimManager.Instance.SpawnPoints.Count > 0 && !useCensus)
+            {
+                // Gates mode: respawn back to this vehicle's original spawn node
+                startNode = originNodeId;
+            }
+            else if (SimManager.Instance.CensusSpawn != null && SimManager.Instance.CensusSpawn.IsLoaded)
+            {
+                // Return to the node this vehicle originally spawned from.
+                startNode = originNodeId;
             }
             else
             {
-                startNode = currentRoadEdge.To;//TODO: .From before need to confirm if correct now
+                startNode = TrafficVolumeLoader.PickWeightedDestination(graph, -1);
             }
+            parent.SetUsingShorterRayForTurn(false);
 
             goalNode = TrafficVolumeLoader.PickWeightedDestination(graph, startNode); //  we don't use goal node here but it is needed to call pick weighted destination which also sets the path for the vehicle
 
@@ -194,6 +207,9 @@ namespace UrbanEcho.Graph
             parent.ResetBodyTransform();
         }
 
+        /// <summary>
+        /// Sets Initial path of the vehicle
+        /// </summary>
         public bool SetInitialPath()
         {
             bool pathWasSet = false;
@@ -213,11 +229,18 @@ namespace UrbanEcho.Graph
             return pathWasSet;
         }
 
+        /// <summary>
+        /// Gets current road edge the vehicle is on
+        /// </summary>
         public RoadEdge GetCurrentRoadEdge()
         {
             return currentRoadEdge;
         }
 
+        /// <summary>
+        /// Sets the current RoadEdge
+        /// </summary>
+        /// <returns>Returns the current road edge the vehicle has been set to <see cref="RoadEdge"/> </returns>
         private RoadEdge SetCurrentRoadEdge(RoadEdge updatedRoadEdge, TurnDirection turn = TurnDirection.Straight)
         {
             float newSpeedLimit = (float)(updatedRoadEdge.Metadata.SpeedLimit * 3.6);
@@ -225,7 +248,7 @@ namespace UrbanEcho.Graph
             {
                 newSpeedLimit = 30.0f;
             }
-            parent.UpdateSpeedLimit(Helper.DoMapCorrection(newSpeedLimit));
+            parent.UpdateSpeedLimit(newSpeedLimit);
 
             if (updatedRoadEdge.Feature is GeometryFeature g)
             {
@@ -270,6 +293,9 @@ namespace UrbanEcho.Graph
             return features;
         }
 
+        /// <summary>
+        /// Sets the destination for the vehicle
+        /// </summary>
         public void SetDestination(int goalNodeId)
         {
             if (graph == null) return;

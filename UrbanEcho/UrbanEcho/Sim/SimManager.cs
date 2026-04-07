@@ -61,6 +61,9 @@ namespace UrbanEcho.Sim
         CensusOD
     }
 
+    /// <summary>
+    /// Singleton Class that manages the simulations
+    /// </summary>
     public sealed class SimManager
     {
         private static SimManager? instance;
@@ -160,12 +163,15 @@ namespace UrbanEcho.Sim
         {
         }
 
+        /// <summary>
+        /// Thread that runs during the app lifetime that is used for simulations
+        /// </summary>
         public void Run()
         {
             Stopwatch totalRunTime = new Stopwatch();
             totalRunTime.Start();
 
-            //TODO: Remove this once we have UI for loading project
+            //Start with our main map for demoing
             LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/ProjectFiles/myFile.uep", MainWindow.Instance.GetMap());
             //LoadFileEvent loadProjectEvent = new LoadFileEvent(FileType.ProjectFile, "Resources/OsmFiles/osmTest.uep", MainWindow.Instance.GetMap());
 
@@ -269,11 +275,17 @@ namespace UrbanEcho.Sim
             }
         }
 
+        /// <summary>
+        /// Refreshes any traffic rules attached to vehicles in the simulation when a intersection is changed
+        /// </summary>
         public void RefreshTrafficRuleReferences()
         {
             currentSim.RefreshTrafficRuleReferences();
         }
 
+        /// <summary>
+        /// Updates what is shown on the footer of the main display
+        /// </summary>
         public void UpdateFooter()
         {
             lastSimulationReadyValue = simulationReady;
@@ -303,6 +315,9 @@ namespace UrbanEcho.Sim
             EventQueueForUI.Instance.Add(new UpdateFooterEvent(readyText, projectText, simTimeText, vehicleCount));
         }
 
+        /// <summary>
+        /// Sets that the project name was changed
+        /// </summary>
         public void SetProjectNameChanged()
         {
             projectNameChanged = true;
@@ -311,41 +326,56 @@ namespace UrbanEcho.Sim
             UpdateFooter();
         }
 
+        /// <summary>
+        /// Gets current simulation time
+        /// </summary>
+        /// <returns>Returns a float representing number of seconds simulation has run <see cref="float"/> </returns>
         public float GetSimTime()
         {
             return currentSim.GetSimTime();
         }
 
-        public int GetVehicleCount()
-        {
-            return currentSim.GetVehicleCount();
-        }
-
+        /// <summary>
+        /// Gets the active vehicle count
+        /// </summary>
+        /// <returns>Returns a integer representing number of vehicles active <see cref="int"/> </returns>
         public int GetActiveVehicleCount()
         {
             return currentSim.GetActiveVehicleCount();
         }
 
-        public int GetTargetVehicleCount()
-        {
-            return currentSim.GetTargetVehicleCount();
-        }
-
+        /// <summary>
+        /// Gets current simulation time of day
+        /// </summary>
+        /// <returns>Returns a string representing the simulation time of day <see cref="string"/> </returns>
         public string GetSimTimeOfDay()
         {
             return (RunSimulation || Paused) ? currentSim.GetSimTimeOfDay() : "--:--";
         }
 
+        /// <summary>
+        /// Gets a list of read only vehicles
+        /// </summary>
+        /// <returns>Returns a string representing the simulation time of day <see cref="VehicleReadOnly"/> </returns>
         public List<VehicleReadOnly> GetVehicles()
         {
             return currentSim.GetVehicles();
         }
 
+        /// <summary>
+        /// Returns a vehicle that matches the VehicleReadOnly Class
+        /// </summary>
+        /// <returns>Returns the matching <see cref="Vehicle"/> </returns>
         public Vehicle? GetVehicle(VehicleReadOnly vehicleReadOnly)
         {
             return currentSim.GetVehicle(vehicleReadOnly);
         }
 
+        /// <summary>
+        /// Group to update (not used while number of groups set to 1)
+        /// Groups were used to help with fps but currently not used
+        /// </summary>
+        /// <returns>Returns the group to update <see cref="int"/> </returns>
         public int GetGroupToUpdate()
         {
             return currentSim.GroupToUpdate;
@@ -420,14 +450,16 @@ namespace UrbanEcho.Sim
 
             float speedKmh = (float)(speedMs * 3.6);
             if (speedKmh < 30.0f) speedKmh = 30.0f;
-            float corrected = Helper.DoMapCorrection(speedKmh);
 
             lock (LockChangeVehicleFeatureList)
             {
-                currentSim.SetSpeedLimit(edge, corrected);
+                currentSim.SetSpeedLimit(edge, speedKmh);
             }
         }
 
+        /// <summary>
+        /// Reads the simulation event queue and runs what is in it
+        /// </summary>
         private void readQueue()
         {
             while (!EventQueueForSim.Instance.IsEmpty())
@@ -436,12 +468,19 @@ namespace UrbanEcho.Sim
             }
         }
 
+        /// <summary>
+        /// Sets that the intersection bodies have been created
+        /// </summary>
         public void SetIntersectionBodiesCreated()
         {
             intersectionBodiesCreated = true;
             NodePenalties = BuildNodePenalties();
         }
 
+        /// <summary>
+        /// Builds the node penalties
+        /// </summary>
+        /// <returns>Returns the node penalties <see cref="Dictionary{int, double}"/> </returns>
         private Dictionary<int, double> BuildNodePenalties()
         {
             var penalties = new Dictionary<int, double>();
@@ -473,6 +512,9 @@ namespace UrbanEcho.Sim
             return penalties;
         }
 
+        /// <summary>
+        /// Initializes the graph
+        /// </summary>
         public void InitializeGraph()
         {
             if (RoadGraph == null || RoadGraph.Nodes.Count < 2)
@@ -556,6 +598,9 @@ namespace UrbanEcho.Sim
                 $"[Census] Spawn manager ready: {(CensusSpawn.IsLoaded ? "OK" : "FALLBACK MODE")}"));
         }
 
+        /// <summary>
+        /// Adds the stats to each road feature
+        /// </summary>
         public void SetRoadFeatureStats(List<IFeature> layerFeatures)
         {
             RoadFeatures = new Dictionary<string, IFeature>();
@@ -576,6 +621,9 @@ namespace UrbanEcho.Sim
             }
         }
 
+        /// <summary>
+        /// Resets stats to each road feature
+        /// </summary>
         public void ResetRoadFeatureStats()
         {
             foreach (IFeature feature in RoadFeatures.Values)
@@ -587,6 +635,9 @@ namespace UrbanEcho.Sim
             }
         }
 
+        /// <summary>
+        /// Resets the simulation
+        /// </summary>
         public void ResetSim()
         {
             if (!currentSim.IsDisposed())
@@ -601,6 +652,9 @@ namespace UrbanEcho.Sim
             }
         }
 
+        /// <summary>
+        /// Clears the simulation, used when layers are reset during opening a new project
+        /// </summary>
         public void Clear()
         {
             Paused = false;
@@ -632,6 +686,9 @@ namespace UrbanEcho.Sim
             NodePenalties = new Dictionary<int, double>();
         }
 
+        /// <summary>
+        /// Free up all the memory before the application is closed
+        /// </summary>
         public void Free()
         {
             Cts.Cancel();

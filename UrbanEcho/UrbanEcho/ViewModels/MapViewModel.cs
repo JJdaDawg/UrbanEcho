@@ -14,7 +14,6 @@ using UrbanEcho.Events.UI;
 using UrbanEcho.FileManagement;
 using UrbanEcho.Messages;
 using UrbanEcho.Models;
-using UrbanEcho.Models.UI;
 using UrbanEcho.Physics;
 using UrbanEcho.Services;
 using UrbanEcho.Sim;

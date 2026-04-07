@@ -7,6 +7,9 @@ using UrbanEcho.Reporting;
 
 namespace UrbanEcho.Models.Report
 {
+    /// <summary>
+    /// This class provides the values used in the report for each intersection
+    /// </summary>
     public class IntersectionReportModel
     {
         public int IntersectionReportModelId { get; set; }
