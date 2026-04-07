@@ -141,7 +141,7 @@ public class AStarPathfinderTests
         // Path A (0→1→3): LocalStreet multiplier = 3.0  → cost = 2 * (100/10 * 3.0) = 60
         // Path B (0→2→3): Arterial multiplier  = 1.0  → cost = 2 * (100/10 * 1.0) = 20
         var graph = Graph(
-            [N(0, 0, 0), N(1, 50, 100), N(2, 50, -100), N(3, 100, 0)],
+            [N(0, 0, 0), N(1, 50, 50), N(2, 50, -50), N(3, 100, 0)],
             [
                 Edge(0, 1, 100, 10, RoadType.LocalStreet),
                 Edge(1, 3, 100, 10, RoadType.LocalStreet),
