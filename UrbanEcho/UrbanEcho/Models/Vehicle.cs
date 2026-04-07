@@ -593,9 +593,23 @@ namespace UrbanEcho.Models
                         return true;
                     }
 
+                    IReadOnlyList<RoadEdge> otherOutGoingTo = graph.GetOutgoingEdges(otherVehicleEdge.To);
+
+                    if (otherOutGoingTo.Contains(currentRoadEdge))
+                    {
+                        return true;
+                    }
+
                     IReadOnlyList<RoadEdge> outGoingFrom = graph.GetOutgoingEdges(currentRoadEdge.From);
 
                     if (outGoingFrom.Contains(otherVehicleEdge))
+                    {
+                        return true;
+                    }
+
+                    IReadOnlyList<RoadEdge> outGoingTo = graph.GetOutgoingEdges(currentRoadEdge.To);
+
+                    if (outGoingTo.Contains(otherVehicleEdge))
                     {
                         return true;
                     }
@@ -607,14 +621,29 @@ namespace UrbanEcho.Models
                         return true;
                     }
 
+                    IReadOnlyList<RoadEdge> otherIncomingFrom = graph.GetIncomingEdges(otherVehicleEdge.From);
+
+                    if (otherIncomingFrom.Contains(currentRoadEdge))
+                    {
+                        return true;
+                    }
+
                     IReadOnlyList<RoadEdge> inGoingTo = graph.GetIncomingEdges(currentRoadEdge.To);
 
                     if (inGoingTo.Contains(otherVehicleEdge))
                     {
                         return true;
                     }
+
+                    IReadOnlyList<RoadEdge> inGoingFrom = graph.GetIncomingEdges(currentRoadEdge.From);
+
+                    if (inGoingFrom.Contains(otherVehicleEdge))
+                    {
+                        return true;
+                    }
                 }
             }
+
             return false;
         }
 
