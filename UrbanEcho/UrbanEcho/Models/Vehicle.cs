@@ -619,10 +619,10 @@ namespace UrbanEcho.Models
                         vehicleInFrontCount++;
                         hitCounted = true;
 
-                        if (IsWaiting == true)
-                        {
-                            whenToStopWaiting = SimManager.Instance.GetSimTime() + minimumStopWaiting;
-                        }
+                        //if (IsWaiting == true)
+                        //{
+                        //    whenToStopWaiting = SimManager.Instance.GetSimTime() + minimumStopWaiting;
+                        //}
                     }
 
                     anotherVehicleAhead = false;

@@ -50,7 +50,7 @@ public sealed class RoadGraph
 
     public IReadOnlyList<RoadEdge> GetIncomingEdges(int nodeId)
     {
-        return _adjacency.TryGetValue(nodeId, out var edges)
+        return _adjacencyForEdgeTo.TryGetValue(nodeId, out var edges)
             ? edges
             : Array.Empty<RoadEdge>();
     }
