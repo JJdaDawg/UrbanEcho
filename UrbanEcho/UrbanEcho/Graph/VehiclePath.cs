@@ -199,7 +199,10 @@ namespace UrbanEcho.Graph
                 setNewPath(fallbackNode);
                 pathSegmentIndex = 0;
                 if (path is not null)
+                {
+                    originNodeId = fallbackNode; // update so future respawns don't retry the dead node
                     AdvanceToNextRoad();
+                }
                 else
                     return; // Give up this cycle; vehicle will retry on the next update
             }

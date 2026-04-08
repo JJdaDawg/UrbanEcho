@@ -30,7 +30,7 @@ namespace UrbanEcho.Graph
             RoadType.Freeway      => 0.9,
             RoadType.Expressway   => 0.9,
             RoadType.Arterial     => 1.0,
-            RoadType.Collector    => 1.2,
+            RoadType.Collector    => 2,
             RoadType.Ramp         => 1.0,
             RoadType.Roundabout   => 1.1,
             RoadType.LocalStreet  => 3.0,

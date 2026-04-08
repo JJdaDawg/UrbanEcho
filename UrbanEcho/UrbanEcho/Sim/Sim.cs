@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UrbanEcho.Events.UI;
 using UrbanEcho.FileManagement;
+using UrbanEcho.Graph;
 using UrbanEcho.Helpers;
 using UrbanEcho.Models;
 using UrbanEcho.Physics;
@@ -349,13 +350,12 @@ namespace UrbanEcho.Sim
                         spawnNodeId = SimManager.Instance.AadtHighwaySpawnNodes[
                             spawnRng.Next(SimManager.Instance.AadtHighwaySpawnNodes.Count)];
                     }
-                    else if (SimManager.Instance.nodes != null && SimManager.Instance.nodes.Count > 0)
-                    {
-                        spawnNodeId = SimManager.Instance.nodes[spawnRng.Next(SimManager.Instance.nodes.Count)];
-                    }
                     else
                     {
-                        break;
+                        // No highway-class nodes (e.g. OSM-only map with only local roads) —
+                        // fall back to the AADT-weighted all-roads pool so high-volume streets
+                        // still attract more spawns than quiet side streets.
+                        spawnNodeId = TrafficVolumeLoader.PickWeightedDestination(SimManager.Instance.RoadGraph, -1);
                     }
 
                     var outgoing = SimManager.Instance.RoadGraph.GetOutgoingEdges(spawnNodeId);
