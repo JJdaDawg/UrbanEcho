@@ -8,8 +8,9 @@ namespace UrbanEcho.Graph
 {
     /// <summary>
     /// Uses AADT traffic volume data already present on road graph edges
-    /// (loaded from the main shapefile) to build weighted spawn/destination
-    /// lists and assign default volumes to unmatched edges.
+    /// (loaded from the main shapefiles addt field) to build weighted spawn/destination
+    /// lists and assign default volumes to unmatched edges. this should ideally also be used to
+    /// match addt in a graph when addt is in a separate file but for now it just processes whatever is already on the graph edges in main.
     /// </summary>
     public static class TrafficVolumeLoader
     {
@@ -76,36 +77,6 @@ namespace UrbanEcho.Graph
             LogStats(graph, matched, unmatched, minAADT, maxAADT, totalAADT);
         }
 
-        /// <summary>
-        /// Returns a list of edge indices from the graph, weighted by AADT for spawn selection.
-        /// Edges with higher traffic volume appear more frequently.
-        /// </summary>
-        public static List<int> BuildWeightedEdgeSpawnList(RoadGraph graph)
-        {
-            var weightedIndices = new List<int>();
-
-            // Find max AADT to normalize weights
-            double maxAADT = 1;
-            for (int i = 0; i < graph.Edges.Count; i++)
-            {
-                double vol = graph.Edges[i].Metadata.TrafficVolume;
-                if (vol > maxAADT)
-                    maxAADT = vol;
-            }
-
-            for (int i = 0; i < graph.Edges.Count; i++)
-            {
-                // Normalize to 1-10 weight buckets so high-traffic edges get more vehicles
-                double normalized = graph.Edges[i].Metadata.TrafficVolume / maxAADT;
-                int weight = Math.Max(1, (int)(normalized * 10));
-                for (int w = 0; w < weight; w++)
-                {
-                    weightedIndices.Add(i);
-                }
-            }
-
-            return weightedIndices;
-        }
 
         /// <summary>
         /// Picks a destination node weighted by traffic volume.
@@ -161,15 +132,13 @@ namespace UrbanEcho.Graph
         /// </summary>
         private static List<int> BuildWeightedDestinationNodes(RoadGraph graph)
         {
-            // Aggregate max AADT touching each node
+            // Aggregate max AADT touching each node.
             var nodeTraffic = new Dictionary<int, double>();
             foreach (var edge in graph.Edges)
             {
                 double vol = edge.Metadata.TrafficVolume;
                 if (!nodeTraffic.ContainsKey(edge.From) || vol > nodeTraffic[edge.From])
                     nodeTraffic[edge.From] = vol;
-                if (!nodeTraffic.ContainsKey(edge.To) || vol > nodeTraffic[edge.To])
-                    nodeTraffic[edge.To] = vol;
             }
 
             double maxVol = nodeTraffic.Values.DefaultIfEmpty(1).Max();

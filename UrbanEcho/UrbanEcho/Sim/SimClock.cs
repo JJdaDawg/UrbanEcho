@@ -69,8 +69,8 @@ namespace UrbanEcho.Sim
             return false;
         }
 
-        // Hourly demand anchors (index = hour 0–23). Interpolated by minute
-        // for smooth transitions instead of abrupt jumps on the hour.
+        // Demand profile approximates typical urban diurnal patterns.
+        // Values are estimates;
         private static readonly float[] DemandByHour =
         {
             0.10f, 0.10f, 0.10f, 0.10f, 0.10f, // 00–04  deep night

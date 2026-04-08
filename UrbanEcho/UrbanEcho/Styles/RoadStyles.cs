@@ -108,7 +108,7 @@ namespace UrbanEcho.Styles
                         }
                         else
                         {
-                            style.Line.Color = new Color(210, 30, 30);
+                            style.Line.Color = Color.Black;
                         }
                     }
                 }
@@ -123,7 +123,7 @@ namespace UrbanEcho.Styles
             }
             else
             {
-                style.Line.Color = new Color(210, 30, 30);
+                style.Line.Color = Color.Black;
                 style.Line.PenStyle = PenStyle.DashDot;
             }
 
@@ -174,7 +174,7 @@ namespace UrbanEcho.Styles
 
             if (isClosed != 0 && useOutline)
             {
-                style.Outline.Color = new Color(150, 0, 0);
+                style.Outline.Color = Color.Black;
             }
 
             return style;

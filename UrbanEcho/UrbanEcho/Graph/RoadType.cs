@@ -2,7 +2,7 @@ namespace UrbanEcho.Graph
 {
     /// <summary>
     /// Functional classification of a road segment.
-    /// Values match the CARTO_CLAS field in the Region of Waterloo road network shapefile.
+    /// Values match the CARTO_CLAS field in the kitchener road network shapefile.
     /// </summary>
     public enum RoadType
     {

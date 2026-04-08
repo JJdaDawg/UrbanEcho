@@ -9,6 +9,13 @@ namespace UrbanEcho.Graph
     /// Builds a gravity-model Origin-Destination table from census dissemination
     /// areas and provides weighted spawn/destination node selection for vehicles.
     /// </summary>
+    /// <remarks>
+    /// The O-D trip weight formula is the basic (singly-constrained) gravity model:
+    /// <c>w(i→j) = Employment(j) / distance(i, j)</c><br/>
+    /// Reference: Wilson, A.G. (1967). A statistical theory of spatial distribution models.
+    /// <em>Transportation Research</em>, 1(3), 253–269.
+    /// https://doi.org/10.1016/0041-1647(67)90035-4 need to sign in with Conestoga or an open link
+    /// </remarks>
     public sealed class CensusSpawnManager
     {
         private readonly List<CensusZone> _zones;

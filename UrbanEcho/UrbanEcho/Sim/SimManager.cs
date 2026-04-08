@@ -99,12 +99,6 @@ namespace UrbanEcho.Sim
         /// <summary>Node IDs that have at least one open, truck-allowed outgoing edge. Used as fallback spawn pool for trucks.</summary>
         public List<int> TruckEligibleNodes { get; private set; } = new List<int>();
 
-        /// <summary>
-        /// AADT-weighted spawn pool restricted to highway-class roads
-        /// (Freeway, Expressway, Arterial, Collector).  Nodes adjacent to
-        /// higher-AADT edges appear more often.  Used as a fallback spawn
-        /// source between census-weighted and pure-random.
-        /// </summary>
         public List<int> AadtHighwaySpawnNodes { get; private set; } = new List<int>();
 
         private bool intersectionBodiesCreated = false;
@@ -542,8 +536,10 @@ namespace UrbanEcho.Sim
 
         /// <summary>
         /// Builds a weighted list of node IDs from highway-class roads
-        /// (Freeway, Expressway, Arterial) where nodes adjacent
-        /// to higher-AADT edges appear proportionally more often.
+        /// (<see cref="RoadType.Freeway"/>, <see cref="RoadType.Expressway"/>, <see cref="RoadType.Arterial"/>)
+        /// where nodes adjacent to higher-AADT edges appear proportionally more often.
+        /// Nodes are bucketed into 1–10 weight slots so high-volume nodes are picked
+        /// proportionally more often at spawn time.
         /// </summary>
         private static List<int> BuildAadtHighwaySpawnNodes(RoadGraph graph)
         {

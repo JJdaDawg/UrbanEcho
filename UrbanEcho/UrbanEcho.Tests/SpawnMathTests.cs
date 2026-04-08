@@ -8,30 +8,24 @@ public class SpawnMathTests
         Helpers.Helper.TestMode = true;
     }
 
-    // ── Burst-share distribution ─────────────────────────────────────────────
-
-    /// <summary>
-    /// Mirrors the formula inside TrySpawnFromSpawners for the initial burst path.
-    /// </summary>
     private static int BurstShare(int spawnerVpm, int totalVpm, int targetCount) =>
         totalVpm > 0
             ? Math.Max(1, (int)Math.Round((double)spawnerVpm / totalVpm * targetCount))
             : 1;
 
-    [TestCase(5, 10, 20, 10, "Equal split: 5/10 * 20 = 10")]
-    [TestCase(3, 10, 10, 3, "Proportional: 3/10 * 10 = 3")]
-    [TestCase(7, 10, 10, 7, "Proportional: 7/10 * 10 = 7")]
-    [TestCase(1, 10, 10, 1, "Small share: 1/10 * 10 = 1")]
-    [TestCase(10, 10, 10, 10, "Whole share: 10/10 * 10 = 10")]
-    public void BurstShare_ProportionalToVpm(int vpm, int totalVpm, int target, int expected, string description)
+    [TestCase(5, 10, 20, 10)]
+    [TestCase(3, 10, 10, 3)]
+    [TestCase(7, 10, 10, 7)]
+    [TestCase(1, 10, 10, 1)]
+    [TestCase(10, 10, 10, 10)]
+    public void BurstShare_ProportionalToVpm(int vpm, int totalVpm, int target, int expected)
     {
-        Assert.That(BurstShare(vpm, totalVpm, target), Is.EqualTo(expected), description);
+        Assert.That(BurstShare(vpm, totalVpm, target), Is.EqualTo(expected));
     }
 
     [Test]
     public void BurstShare_ZeroVpm_ReturnsMinimumOfOne()
     {
-        // A spawner with 0 VPM still gets at least 1 vehicle
         Assert.That(BurstShare(0, 10, 20), Is.EqualTo(1));
     }
 
@@ -60,27 +54,23 @@ public class SpawnMathTests
 
     private const int MaxVehicles = 5000;
 
-    /// <summary>
-    /// Mirrors GetTargetVehicleCount in Sim.cs (minus the SimManager.Instance calls).
-    /// </summary>
     private static int TargetCount(int nodeCount, float demand) =>
         Math.Max(1, (int)(Math.Min(nodeCount, MaxVehicles) * demand));
 
-    [TestCase(100, 1.00f, 100, "Full demand on small graph")]
-    [TestCase(100, 0.50f, 50, "Half demand on small graph")]
-    [TestCase(100, 0.10f, 10, "Low demand on small graph")]
-    [TestCase(10000, 1.00f, 5000, "Capped at MaxVehicles")]
-    [TestCase(5000, 1.00f, 5000, "Exactly at cap")]
-    [TestCase(5001, 1.00f, 5000, "One over cap is still capped")]
-    public void TargetCount_ScalesAndCapsCorrectly(int nodeCount, float demand, int expected, string description)
+    [TestCase(100, 1.00f, 100)]
+    [TestCase(100, 0.50f, 50)]
+    [TestCase(100, 0.10f, 10)]
+    [TestCase(10000, 1.00f, 5000)]
+    [TestCase(5000, 1.00f, 5000)]
+    [TestCase(5001, 1.00f, 5000)]
+    public void TargetCount_ScalesAndCapsCorrectly(int nodeCount, float demand, int expected)
     {
-        Assert.That(TargetCount(nodeCount, demand), Is.EqualTo(expected), description);
+        Assert.That(TargetCount(nodeCount, demand), Is.EqualTo(expected));
     }
 
     [Test]
     public void TargetCount_NearZeroDemand_ReturnsMinimumOfOne()
     {
-        // Very small graph * very low demand must still produce at least 1 vehicle
         Assert.That(TargetCount(10, 0.05f), Is.EqualTo(1));
     }
 
@@ -94,14 +84,12 @@ public class SpawnMathTests
     [Test]
     public void TargetCount_AmRushDemandWith1000Nodes_Returns1000()
     {
-        // AM rush demand = 1.0; 1000 nodes gives 1000 vehicles
         Assert.That(TargetCount(1000, 1.0f), Is.EqualTo(1000));
     }
 
     [Test]
     public void TargetCount_NightDemandWith1000Nodes_Returns100()
     {
-        // Deep-night demand = 0.10; 1000 * 0.10 = 100 vehicles
         Assert.That(TargetCount(1000, 0.10f), Is.EqualTo(100));
     }
 

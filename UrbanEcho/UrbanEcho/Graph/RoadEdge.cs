@@ -10,6 +10,10 @@ using UrbanEcho.Sim;
 
 public delegate void RoadEdgeStatsUpDateEvent(Stats stats);//called by Vehicle to update how long they spent on roadEdge
 
+/// <summary>
+/// A directed edge in the road graph connecting two nodes. Tracks live simulation stats
+/// and mirrors state (volume, speed, closed) back to the Mapsui feature layer for rendering.
+/// </summary>
 public sealed class RoadEdge
 {
     public event RoadEdgeStatsUpDateEvent? UpdateIntersectionStats;
@@ -21,8 +25,15 @@ public sealed class RoadEdge
 
     public IFeature Feature { get; }
 
+    /// <summary>
+    /// True if this edge runs in the same direction as the source LineString (start→end).
+    /// False means it was built as the reverse edge (end→start) for bidirectional roads.
+    /// </summary>
     public bool IsFromStartOfLineString { get; }
 
+    /// <summary>
+    /// When true the edge is treated as impassable by the pathfinder.
+    /// </summary>
     public bool IsClosed { get; private set; }
 
     public void Close()
@@ -32,6 +43,7 @@ public sealed class RoadEdge
         UpdateFeatureClosedStatus(true);
         if (!Helper.TestMode)
         {
+            // skip map refresh in tests - no map instance available
             EventQueueForUI.Instance.Add(new RefreshMapEvent(MainWindow.Instance.GetMap()));
         }
     }
@@ -62,6 +74,10 @@ public sealed class RoadEdge
         }
     }
 
+    /// <summary>
+    /// Called by a vehicle as it exits this edge. Fires <see cref="UpdateIntersectionStats"/>
+    /// for any listening intersection, then records the stats locally.
+    /// </summary>
     public void VehicleLeaving(Stats incomingStats)
     {
         UpdateIntersectionStats?.Invoke(incomingStats);
@@ -97,6 +113,10 @@ public sealed class RoadEdge
         }
     }
 
+    /// <summary>
+    /// Bumps the VehicleCount on the shared Mapsui feature so the heatmap renderer
+    /// picks up the new value. Also updates the simulation-wide max volume tracker.
+    /// </summary>
     public void IncrementFeatureVolume()
     {
         string key = Helper.TryGetFeatureKVPToString(Feature, "OBJECTID", "");
@@ -119,6 +139,10 @@ public sealed class RoadEdge
         }
     }
 
+    /// <summary>
+    /// Writes the latest average speed to the shared Mapsui feature for rendering.
+    /// For bidirectional roads, blends both directional speeds into one feature-level value.
+    /// </summary>
     public void UpdateAverageSpeed(double incomingSpeed)
     {
         string key = Helper.TryGetFeatureKVPToString(Feature, "OBJECTID", "");
@@ -140,6 +164,7 @@ public sealed class RoadEdge
                             double toFromSpeed = Helper.TryGetFeatureKVPToInt(dictionaryFeature, "ToFromSpeed", 0);
                             if (toFromSpeed > 0)
                             {
+                                // blend both directions into one feature-level speed for rendering
                                 dictionaryFeature["Speed"] = toFromSpeed / 2.0f + incomingSpeed / 2.0f;
                             }
                             else
@@ -153,6 +178,7 @@ public sealed class RoadEdge
 
                             if (fromToSpeed > 0)
                             {
+                                // blend both directions into one feature-level speed for rendering
                                 dictionaryFeature["Speed"] = fromToSpeed / 2.0f + incomingSpeed / 2.0f;
                             }
                             else
@@ -177,10 +203,12 @@ public sealed class RoadEdge
 
         if (IsClosed)
         {
+            // closed is a road state, not a stat - preserve it across resets
             stats.SetClosed();
         }
     }
 
+    // Length in metres, SpeedLimit in m/s -> result in seconds
     public double TravelTimeSeconds =>
         Length / Metadata.SpeedLimit;
 }
