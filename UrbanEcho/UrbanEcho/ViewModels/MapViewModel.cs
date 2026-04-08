@@ -56,8 +56,22 @@ public partial class MapViewModel : ObservableObject
         });
         WeakReferenceMessenger.Default.Register<MapFeatureSelectedMessage>(this, (r, m) =>
         {
-            if (m.Type != MapFeatureType.Road)
-                ProjectLayers.SetRoadSelection(null, MyMap);
+            if (m.Type != MapFeatureType.Road) { ProjectLayers.SetRoadSelection(null, MyMap); }
+
+            if (m.Type != MapFeatureType.Vehicle)
+            {
+                _trackedVehicle = null;
+                ProjectLayers.SetPathOverlay(null, MyMap);
+
+                if (ProjectLayers.PinLayer != null) { ProjectLayers.PinLayer.Enabled = false; }
+            }
+            else
+            {
+                _trackedVehicle = null;
+                ProjectLayers.SetPathOverlay(null, MyMap);
+
+                if (ProjectLayers.PinLayer != null) { ProjectLayers.PinLayer.Enabled = false; }
+            }
         });
         WeakReferenceMessenger.Default.Register<PickDestinationMessage>(this, (r, m) => _pendingDestinationVehicle = m.Vehicle);
         WeakReferenceMessenger.Default.Register<ShowVehiclePathMessage>(this, (r, m) =>
