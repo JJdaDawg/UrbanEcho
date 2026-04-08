@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Mapsui;
 using Mapsui.Layers;
 using Mapsui.Nts;
+using Mapsui.UI.Avalonia;
 using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
@@ -56,8 +57,22 @@ public partial class MapViewModel : ObservableObject
         });
         WeakReferenceMessenger.Default.Register<MapFeatureSelectedMessage>(this, (r, m) =>
         {
-            if (m.Type != MapFeatureType.Road)
-                ProjectLayers.SetRoadSelection(null, MyMap);
+            if (m.Type != MapFeatureType.Road) { ProjectLayers.SetRoadSelection(null, MyMap); }
+
+            if (m.Type != MapFeatureType.Vehicle)
+            {
+                _trackedVehicle = null;
+                ProjectLayers.SetPathOverlay(null, MyMap);
+
+                if (ProjectLayers.PinLayer != null) { ProjectLayers.PinLayer.Enabled = false; }
+            }
+            else
+            {
+                _trackedVehicle = null;
+                ProjectLayers.SetPathOverlay(null, MyMap);
+
+                if (ProjectLayers.PinLayer != null) { ProjectLayers.PinLayer.Enabled = false; }
+            }
         });
         WeakReferenceMessenger.Default.Register<PickDestinationMessage>(this, (r, m) => _pendingDestinationVehicle = m.Vehicle);
         WeakReferenceMessenger.Default.Register<ShowVehiclePathMessage>(this, (r, m) =>
@@ -83,10 +98,12 @@ public partial class MapViewModel : ObservableObject
         WeakReferenceMessenger.Default.Register<MoveSpawnerMessage>(this, (r, m) =>
         {
             _pendingMoveSpawner = m.SpawnPoint;
+            WeakReferenceMessenger.Default.Send(new ShowToastMessage("Click a node on the map to move the spawner"));
         });
         WeakReferenceMessenger.Default.Register<CancelMoveSpawnerMessage>(this, (r, m) =>
         {
             _pendingMoveSpawner = null;
+            WeakReferenceMessenger.Default.Send(new HideToastMessage());
         });
         WeakReferenceMessenger.Default.Register<AutoPlaceSpawnersFromExtentMessage>(this, (r, m) =>
             HandleAutoPlaceFromExtent(m));
@@ -257,8 +274,13 @@ public partial class MapViewModel : ObservableObject
     {
         _pendingMoveSpawner = null;
         var node = FindNearestSpawnableNode(worldPos);
-        if (node is null) return;
+        if (node is null)
+        {
+            WeakReferenceMessenger.Default.Send(new HideToastMessage());
+            return;
+        }
         ProjectLayers.MoveSpawnPoint(spawnPoint, node.X, node.Y, node.Id);
+        WeakReferenceMessenger.Default.Send(new HideToastMessage());
         WeakReferenceMessenger.Default.Send(new SpawnerMovedMessage());
         WeakReferenceMessenger.Default.Send(new MapFeatureSelectedMessage(MapFeatureType.Spawner, spawnPoint));
         WeakReferenceMessenger.Default.Send(new LogMessage($"Spawner moved to node {node.Id}", LogSource.Map));
