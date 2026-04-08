@@ -669,13 +669,13 @@ namespace UrbanEcho.FileManagement
             if (features is null || features.Count == 0)
             {
                 pathOverlayLayer.Features = new List<IFeature>();
-                //StopPathBlink();
+                pathOverlayLayer.DataHasChanged();
                 map?.Refresh();
                 return;
             }
 
             pathOverlayLayer.Features = new List<IFeature>(features);
-            //StartPathBlink(map);
+            pathOverlayLayer.DataHasChanged();
             map?.Refresh();
         }
 

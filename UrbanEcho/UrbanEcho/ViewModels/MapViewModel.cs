@@ -26,6 +26,7 @@ public partial class MapViewModel : ObservableObject
     private SelectionLayer _activeLayer = SelectionLayer.None;
 
     private VehicleReadOnly? _trackedVehicle;
+    private VehicleReadOnly? _pathVehicle;
     private VehicleReadOnly? _pendingDestinationVehicle;
     private SpawnPoint? _pendingMoveSpawner;
 
@@ -50,38 +51,31 @@ public partial class MapViewModel : ObservableObject
         WeakReferenceMessenger.Default.Register<MapFeatureDeselectedMessage>(this, (r, m) =>
         {
             _trackedVehicle = null;
+            _pathVehicle = null;
             _pendingMoveSpawner = null;
             ProjectLayers.SetRoadSelection(null, MyMap);
             ProjectLayers.SetPathOverlay(null, MyMap);
             ProjectLayers.SetIntersectionOverlay(null, MyMap);
+            if (ProjectLayers.PinLayer != null) { ProjectLayers.PinLayer.Enabled = false; }
         });
         WeakReferenceMessenger.Default.Register<MapFeatureSelectedMessage>(this, (r, m) =>
         {
             if (m.Type != MapFeatureType.Road) { ProjectLayers.SetRoadSelection(null, MyMap); }
 
-            if (m.Type != MapFeatureType.Vehicle)
-            {
-                _trackedVehicle = null;
-                ProjectLayers.SetPathOverlay(null, MyMap);
-
-                if (ProjectLayers.PinLayer != null) { ProjectLayers.PinLayer.Enabled = false; }
-            }
-            else
-            {
-                _trackedVehicle = null;
-                ProjectLayers.SetPathOverlay(null, MyMap);
-
-                if (ProjectLayers.PinLayer != null) { ProjectLayers.PinLayer.Enabled = false; }
-            }
+            _trackedVehicle = null;
+            _pathVehicle = null;
+            ProjectLayers.SetPathOverlay(null, MyMap);
+            if (ProjectLayers.PinLayer != null) { ProjectLayers.PinLayer.Enabled = false; }
         });
         WeakReferenceMessenger.Default.Register<PickDestinationMessage>(this, (r, m) => _pendingDestinationVehicle = m.Vehicle);
         WeakReferenceMessenger.Default.Register<ShowVehiclePathMessage>(this, (r, m) =>
         {
-            var features = m.Vehicle.GetRemainingPathFeatures();
-            ProjectLayers.SetPathOverlay(features, MyMap);
+            _pathVehicle = m.Vehicle;
+            ProjectLayers.SetPathOverlay(m.Vehicle.GetRemainingPathFeatures(), MyMap);
         });
         WeakReferenceMessenger.Default.Register<HideVehiclePathMessage>(this, (r, m) =>
         {
+            _pathVehicle = null;
             ProjectLayers.SetPathOverlay(null, MyMap);
         });
         WeakReferenceMessenger.Default.Register<ShowIntersectionOverlayMessage>(this, (r, m) =>
@@ -373,7 +367,12 @@ public partial class MapViewModel : ObservableObject
 
     public void UpdateTracking()
     {
-        if (_trackedVehicle is null || (!(SimManager.Instance.RunSimulation || SimManager.Instance.Paused || World.Created == false)))//Make sure this routine is only caused during simulation,
+        if (_pathVehicle is not null && (SimManager.Instance.RunSimulation || SimManager.Instance.Paused))
+        {
+            ProjectLayers.SetPathOverlay(_pathVehicle.GetRemainingPathFeatures(), MyMap);
+        }
+
+        if (_trackedVehicle is null || (!(SimManager.Instance.RunSimulation || SimManager.Instance.Paused || World.Created == false)))
                                                                                                                                       //or it can keep layers busy and prevent report running
         {
             if (ProjectLayers.PinLayer != null)
