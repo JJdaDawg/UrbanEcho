@@ -4,6 +4,7 @@
         xmlns:local="clr-namespace:UrbanEcho"
         xmlns:mapsui="clr-namespace:Mapsui.UI.Avalonia;assembly=Mapsui.UI.Avalonia"
         xmlns:vm="using:UrbanEcho.ViewModels"
+        Icon="/Assets/icon.ico"
         Width="1920" Height="1080"
         Title="Urban Echo"
         WindowState="Maximized"
