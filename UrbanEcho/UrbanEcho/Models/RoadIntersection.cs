@@ -1005,34 +1005,39 @@ namespace UrbanEcho.Models
         }
 
         /// <summary>
-        /// Updates what incoming edges to the stop sign intersection are blocked or not
+        /// Updates what incoming edges to the stop sign intersection are blocked or not.
+        /// Priority (NeverBlock) edges are always unblocked. Stopped edges cycle one-at-a-time
+        /// through only the stopped approaches so priority slots don't waste green time.
         /// </summary>
         private void UpdateStopSignRule()
         {
-            if (EdgesInto.Count != 0)
-            {
-                //allow one incoming to unblock at a time every 3.3 seconds
-                int every2Seconds = (int)((offsetTime + SimManager.Instance.GetSimTime()) * 0.3f);
-                int edgeToUnblock = every2Seconds % (EdgesInto.Count);
+            if (EdgesInto.Count == 0)
+                return;
 
-                for (int i = 0; i < EdgesInto.Count; i++)
+            // Separate priority approaches from stopped approaches.
+            var stoppedEdges = new List<EdgeTrafficRule>();
+            foreach (var edge in EdgesInto)
+            {
+                if (edge.TrafficRule.IsNeverBlockingTraffic())
                 {
-                    if (EdgesInto[i].TrafficRule.IsNeverBlockingTraffic() == false)
-                    {
-                        if (edgeToUnblock != i)
-                        {
-                            EdgesInto[i].TrafficRule.SetBlock(true);
-                        }
-                        else
-                        {
-                            EdgesInto[i].TrafficRule.SetBlock(false);
-                        }
-                    }
-                    else
-                    {
-                        EdgesInto[i].TrafficRule.SetBlock(false);
-                    }
+                    edge.TrafficRule.SetBlock(false);
                 }
+                else
+                {
+                    stoppedEdges.Add(edge);
+                }
+            }
+
+            if (stoppedEdges.Count == 0)
+                return;
+
+            // Cycle only through stopped approaches — one gets green every 3.3 s.
+            int slot = (int)((offsetTime + SimManager.Instance.GetSimTime()) * 0.3f);
+            int edgeToUnblock = slot % stoppedEdges.Count;
+
+            for (int i = 0; i < stoppedEdges.Count; i++)
+            {
+                stoppedEdges[i].TrafficRule.SetBlock(i != edgeToUnblock);
             }
         }
 
