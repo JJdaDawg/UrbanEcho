@@ -1,7 +1,0 @@
-{
-  "PathForThisFile": "C:\\courses\\capstone\\Project\\Urban Traffic Sim\\UrbanEcho\\UrbanEcho\\Resources\\OsmFiles\\osmToronto.uep",
-  "BackgroundLayerPath": "osm",
-  "RoadLayerPath": "C:\\courses\\capstone\\Project\\Urban Traffic Sim\\UrbanEcho\\UrbanEcho\\Resources\\OsmFiles\\toronto.osm",
-  "IntersectionLayerPath": "C:\\courses\\capstone\\Project\\Urban Traffic Sim\\UrbanEcho\\UrbanEcho\\Resources\\OsmFiles\\toronto.osm",
-  "CensusLayerPath": ""
-}
